@@ -1,0 +1,309 @@
+package app.wiis.designsystem
+
+import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+
+/**
+ * Every visual and audio decision in the launcher, as data.
+ *
+ * The same structure is edited in the Design Workbench and stored as `theme.json`. The built-in
+ * proposal lives in `assets/theme/default.json`; the defaults below mirror it field for field so a
+ * theme file that omits a key still renders (a unit test keeps the two identical).
+ *
+ * Nothing here is final until approved in the workbench: see docs/DESIGN.md.
+ */
+@Immutable
+@Serializable
+data class ThemeSpec(
+    val schema: Int = 1,
+    val name: String = "Hybrid proposal 1",
+    val layout: LayoutTokens = LayoutTokens(),
+    val colors: ColorTokens = ColorTokens(),
+    val systemColors: Map<String, String> = DEFAULT_SYSTEM_COLORS,
+    val shape: ShapeTokens = ShapeTokens(),
+    val spacing: SpacingTokens = SpacingTokens(),
+    val type: TypeTokens = TypeTokens(),
+    val shelf: ShelfTokens = ShelfTokens(),
+    val tile: TileTokens = TileTokens(),
+    val motion: MotionTokens = MotionTokens(),
+    val header: HeaderTokens = HeaderTokens(),
+    val hints: HintTokens = HintTokens(),
+    val companion: CompanionTokens = CompanionTokens(),
+    val sounds: SoundTokens = SoundTokens(),
+    val haptics: HapticTokens = HapticTokens(),
+) {
+    fun systemColor(systemId: String): Color =
+        systemColors[systemId].toColorOr(colors.accent.toColorOr(Color(0xFFFF6B4A)))
+
+    companion object {
+        val json = Json { ignoreUnknownKeys = true; coerceInputValues = true; encodeDefaults = true; prettyPrint = true }
+        fun parse(text: String): ThemeSpec = json.decodeFromString(serializer(), text)
+        fun encode(spec: ThemeSpec): String = json.encodeToString(serializer(), spec)
+    }
+}
+
+@Immutable @Serializable
+data class LayoutTokens(
+    /** "shelves" (one horizontal row per system) or "grid" (one vertical grid with headers). */
+    val games: String = "shelves",
+    val showRecent: Boolean = true,
+    val recentCount: Int = 12,
+    /** "registry" (fixed console order), "alphabetical", "mostGames". */
+    val systemOrder: String = "registry",
+    /** Where a row scrolls the focused tile: "edge" (minimal), "start", "center". */
+    val scrollAnchor: String = "start",
+)
+
+@Immutable @Serializable
+data class ColorTokens(
+    /** "solid", "gradient" (backgroundTop → background) or "glow" (gradient plus two soft light pools). */
+    val backgroundStyle: String = "glow",
+    val background: String = "#15141E",
+    val backgroundTop: String = "#1D1A2C",
+    val glowA: String = "#FF6B4A",
+    val glowB: String = "#3FA7F5",
+    val glowStrength: Float = 0.16f,
+    val surface: String = "#221F33",
+    val tile: String = "#2A2740",
+    val tileFocused: String = "#353052",
+    val text: String = "#F6F1E7",
+    val textMuted: String = "#A8A1B8",
+    val accent: String = "#FF6B4A",
+    val focusRing: String = "#FFD24A",
+    val focusGlow: String = "#FFD24A",
+    val focusGlowStrength: Float = 0.45f,
+    val tabActiveFill: String = "#FF6B4A",
+    val tabActiveText: String = "#15141E",
+    val tabIdleText: String = "#A8A1B8",
+    val hintBadge: String = "#3A3552",
+    val hintBadgeText: String = "#F6F1E7",
+    val messageBar: String = "#2E2A44",
+)
+
+val DEFAULT_SYSTEM_COLORS: Map<String, String> = linkedMapOf(
+    "recent" to "#FFD24A",
+    "nes" to "#E4483C",
+    "snes" to "#8C6CF0",
+    "n64" to "#2FB86B",
+    "gb" to "#9CB83A",
+    "gbc" to "#C653D9",
+    "gba" to "#5B6CFF",
+    "nds" to "#3FA7F5",
+    "n3ds" to "#EC4A63",
+    "gc" to "#7C5CFF",
+    "wii" to "#56C6F2",
+    "wiiu" to "#22A6C8",
+    "switch" to "#FF4B57",
+    "genesis" to "#2F6FE4",
+    "psx" to "#B4B8C6",
+    "ps2" to "#3D5BD9",
+    "psp" to "#7C8796",
+    "xbox360" to "#7BC043",
+    "steam" to "#5B8DEF",
+)
+
+@Immutable @Serializable
+data class ShapeTokens(
+    val tileWidth: Int = 196,
+    val tileHeight: Int = 196,
+    val tileRadius: Int = 22,
+    val tileBorderWidth: Int = 0,
+    val tileBorderColor: String = "#3A3552",
+    val focusRingWidth: Int = 4,
+    val focusRingGap: Int = 3,
+    /** "none", "soft" (blurred drop shadow) or "hard" (solid offset block, retro). */
+    val shadow: String = "soft",
+    val shadowColor: String = "#000000",
+    val shadowOffset: Int = 6,
+    /** Coloured band naming the system: "none", "top", "bottom", "left". */
+    val systemStrip: String = "bottom",
+    val systemStripSize: Int = 6,
+    /** "pill" (filled), "underline" or "text". */
+    val tabStyle: String = "pill",
+    val tabRadius: Int = 999,
+    val cardRadius: Int = 24,
+    val dialogRadius: Int = 28,
+    val badgeRadius: Int = 999,
+)
+
+@Immutable @Serializable
+data class SpacingTokens(
+    val screenPadding: Int = 28,
+    val headerGap: Int = 16,
+    val shelfGap: Int = 22,
+    val tileGap: Int = 18,
+    val shelfTitleGap: Int = 10,
+)
+
+@Immutable @Serializable
+data class TypeTokens(
+    /** Google Fonts family names; "System" uses the device font. */
+    val displayFont: String = "Fredoka",
+    val bodyFont: String = "Nunito",
+    val wordmarkSize: Int = 30,
+    val wordmarkWeight: Int = 700,
+    val tabSize: Int = 17,
+    val tabWeight: Int = 700,
+    val shelfTitleSize: Int = 14,
+    val shelfTitleWeight: Int = 800,
+    /** "upper", "title" (as written) or "lower". */
+    val shelfTitleCase: String = "upper",
+    val shelfTitleTracking: Float = 1.4f,
+    val tileTitleSize: Int = 16,
+    val tileTitleWeight: Int = 700,
+    val labelSize: Int = 12,
+    val labelWeight: Int = 700,
+    val clockSize: Int = 18,
+    val clockWeight: Int = 600,
+)
+
+@Immutable @Serializable
+data class ShelfTokens(
+    /** Shelf title colour: "system", "text" or "muted". */
+    val titleColor: String = "system",
+    /** Marker before the shelf title: "dot", "bar" or "none". */
+    val marker: String = "dot",
+    val showCount: Boolean = true,
+)
+
+@Immutable @Serializable
+data class TileTokens(
+    /** "full" (art fills the tile), "card" (art above a title strip) or "title" (no art). */
+    val artStyle: String = "full",
+    /** "contain" (whole cover visible) or "cover" (fill and crop). */
+    val artFit: String = "contain",
+    /** Title text on art tiles: "always", "focused" or "never". */
+    val titleVisibility: String = "focused",
+    /** System name badge: "always", "recent" (only in Recently played) or "never". */
+    val systemBadge: String = "recent",
+    val showFileType: Boolean = false,
+    /** Tile without art: "system" (system-colour panel) or "plain" (tile colour). */
+    val placeholder: String = "system",
+)
+
+@Immutable @Serializable
+data class MotionTokens(
+    val focusScale: Float = 1.08f,
+    val pressScale: Float = 0.94f,
+    /** Spring stiffness (Compose units: 50 very soft … 1500 snappy). */
+    val stiffness: Float = 400f,
+    /** Spring damping ratio: below 1 overshoots (bouncy), 1 settles without overshoot. */
+    val damping: Float = 0.55f,
+    val focusLift: Int = 4,
+    val idleBob: Boolean = true,
+    val idleBobAmplitude: Int = 2,
+    val idleBobPeriodMs: Int = 1800,
+    /** Between tabs: "none", "fade" or "slide". */
+    val tabTransition: String = "slide",
+    val tabTransitionMs: Int = 220,
+    val reduceMotion: Boolean = false,
+)
+
+@Immutable @Serializable
+data class HeaderTokens(
+    val showWordmark: Boolean = true,
+    val wordmark: String = "Wii-S",
+    val clock24h: Boolean = false,
+    val showDate: Boolean = false,
+    val tabGames: String = "Games",
+    val tabApps: String = "Apps",
+    val tabSystem: String = "System",
+)
+
+@Immutable @Serializable
+data class HintTokens(
+    val show: Boolean = true,
+    /** "start", "center" or "end". */
+    val align: String = "end",
+    /** "circle", "rounded" or "square". */
+    val badgeShape: String = "circle",
+    val colorA: String = "#3A3552",
+    val colorB: String = "#3A3552",
+    val colorX: String = "#3A3552",
+    val colorY: String = "#3A3552",
+    val colorOther: String = "#3A3552",
+)
+
+@Immutable @Serializable
+data class CompanionTokens(
+    /** Bottom screen: "art" (large cover + details), "info" (details card) or "minimal" (title only). */
+    val layout: String = "art",
+    /** "inherit" (same background as the top screen) or "color". */
+    val background: String = "inherit",
+    val backgroundColor: String = "#15141E",
+    val showPlaytime: Boolean = true,
+    val showLastPlayed: Boolean = true,
+    val showEmulator: Boolean = true,
+    val showClock: Boolean = true,
+    val showHints: Boolean = true,
+)
+
+@Immutable @Serializable
+data class SoundTokens(
+    val enabled: Boolean = true,
+    val volume: Float = 0.7f,
+    val events: Map<String, SynthSpec> = DEFAULT_SOUNDS,
+)
+
+/**
+ * A short synthesised sound. Rendered identically by the workbench (Web Audio) and the launcher
+ * ([Synth]): oscillator stepping through [notes], linear attack, hold, exponential decay,
+ * optional pitch sweep, noise mix and one-pole low-pass filter.
+ */
+@Immutable @Serializable
+data class SynthSpec(
+    /** "sine", "triangle", "square" or "saw". */
+    val wave: String = "triangle",
+    /** Frequencies in Hz, played one after another. */
+    val notes: List<Float> = listOf(880f),
+    val noteMs: Int = 30,
+    val attackMs: Int = 2,
+    val decayMs: Int = 60,
+    /** Pitch glide over the whole sound, in semitones (negative falls). */
+    val sweep: Float = 0f,
+    /** Low-pass cutoff in Hz. */
+    val lowpass: Float = 8000f,
+    /** 0 = pure tone, 1 = pure noise. */
+    val noise: Float = 0f,
+    val volume: Float = 0.5f,
+)
+
+val SOUND_EVENTS = listOf("move", "select", "back", "tab", "launch", "error", "bump")
+
+val DEFAULT_SOUNDS: Map<String, SynthSpec> = linkedMapOf(
+    "move" to SynthSpec("triangle", listOf(880f, 988f), 18, 2, 45, 0f, 7000f, 0f, 0.32f),
+    "select" to SynthSpec("triangle", listOf(659f, 988f), 45, 2, 90, 0f, 8000f, 0f, 0.5f),
+    "back" to SynthSpec("triangle", listOf(740f, 494f), 45, 2, 80, 0f, 6000f, 0f, 0.45f),
+    "tab" to SynthSpec("square", listOf(523f, 784f), 30, 1, 60, 0f, 3200f, 0f, 0.28f),
+    "launch" to SynthSpec("triangle", listOf(523f, 659f, 784f, 1047f), 70, 3, 220, 0f, 9000f, 0f, 0.55f),
+    "error" to SynthSpec("square", listOf(233f, 196f), 90, 2, 120, 0f, 2200f, 0f, 0.35f),
+    "bump" to SynthSpec("sine", listOf(150f), 20, 1, 50, -6f, 2000f, 0.15f, 0.5f),
+)
+
+@Immutable @Serializable
+data class HapticTokens(
+    val enabled: Boolean = true,
+    /** Per event: "off", "light", "medium" or "heavy". */
+    val events: Map<String, String> = linkedMapOf(
+        "move" to "light",
+        "select" to "medium",
+        "back" to "light",
+        "tab" to "light",
+        "launch" to "heavy",
+        "error" to "heavy",
+        "bump" to "light",
+    ),
+)
+
+/** "#RRGGBB" or "#AARRGGBB"; anything unparsable falls back. */
+fun String?.toColorOr(fallback: Color): Color {
+    val hex = this?.trim()?.removePrefix("#") ?: return fallback
+    val value = hex.toLongOrNull(16) ?: return fallback
+    return when (hex.length) {
+        6 -> Color(0xFF000000 or value)
+        8 -> Color(value)
+        else -> fallback
+    }
+}

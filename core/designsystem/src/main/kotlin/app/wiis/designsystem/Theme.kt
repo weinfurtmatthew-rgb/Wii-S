@@ -1,87 +1,136 @@
 package app.wiis.designsystem
 
-import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+/** Downloaded font families; [FontFamily.Default] until they arrive (or when "System" is chosen). */
+@Immutable
+data class WiisFonts(
+    val display: FontFamily = FontFamily.Default,
+    val body: FontFamily = FontFamily.Default,
+)
+
 /**
- * Placeholder tokens for Milestone 0. The full design system (iteration 2) replaces these values;
- * components already read from tokens, so the swap won't touch feature code.
+ * A [ThemeSpec] resolved into Compose values. Created once per theme change, read through
+ * [LocalWiis]. Display font: wordmark, tabs, shelf titles, bottom-screen title.
+ * Body font: everything else.
  */
 @Immutable
-data class WiisTokens(
-    val focusRing: Color,
-    val tileSurface: Color,
-    val tileSurfaceFocused: Color,
-    val accent: Color,
-    val muted: Color,
-)
+class WiisStyle(val spec: ThemeSpec, val fonts: WiisFonts) {
+    private val c = spec.colors
+    private val defaults = ColorTokens()
 
-private val LightTokens = WiisTokens(
-    focusRing = Color(0xFF2F7BF6),
-    tileSurface = Color(0xFFFFFFFF),
-    tileSurfaceFocused = Color(0xFFEAF2FF),
-    accent = Color(0xFFE8453C),
-    muted = Color(0xFF7A7F8C),
-)
+    val background = c.background.toColorOr(defaults.background.toColorOr(Color.Black))
+    val backgroundTop = c.backgroundTop.toColorOr(background)
+    val glowA = c.glowA.toColorOr(Color.Transparent)
+    val glowB = c.glowB.toColorOr(Color.Transparent)
+    val surface = c.surface.toColorOr(background)
+    val tile = c.tile.toColorOr(surface)
+    val tileFocused = c.tileFocused.toColorOr(tile)
+    val text = c.text.toColorOr(Color.White)
+    val textMuted = c.textMuted.toColorOr(text.copy(alpha = 0.7f))
+    val accent = c.accent.toColorOr(Color(0xFFFF6B4A))
+    val focusRing = c.focusRing.toColorOr(accent)
+    val focusGlow = c.focusGlow.toColorOr(focusRing)
+    val tabActiveFill = c.tabActiveFill.toColorOr(accent)
+    val tabActiveText = c.tabActiveText.toColorOr(background)
+    val tabIdleText = c.tabIdleText.toColorOr(textMuted)
+    val hintBadge = c.hintBadge.toColorOr(surface)
+    val hintBadgeText = c.hintBadgeText.toColorOr(text)
+    val messageBar = c.messageBar.toColorOr(surface)
+    val tileBorder = spec.shape.tileBorderColor.toColorOr(Color.Transparent)
+    val shadowColor = spec.shape.shadowColor.toColorOr(Color.Black)
+    val companionBackground = spec.companion.backgroundColor.toColorOr(background)
 
-private val DarkTokens = WiisTokens(
-    focusRing = Color(0xFF6FA8FF),
-    tileSurface = Color(0xFF232838),
-    tileSurfaceFocused = Color(0xFF2E3650),
-    accent = Color(0xFFFF6B5E),
-    muted = Color(0xFF9AA0AE),
-)
+    fun systemColor(systemId: String): Color = spec.systemColor(systemId)
 
-val LocalWiisTokens = staticCompositionLocalOf { LightTokens }
+    fun hintColor(button: String): Color = when (button) {
+        "A" -> spec.hints.colorA
+        "B" -> spec.hints.colorB
+        "X" -> spec.hints.colorX
+        "Y" -> spec.hints.colorY
+        else -> spec.hints.colorOther
+    }.toColorOr(hintBadge)
 
-private val WiisShapes = Shapes(
-    small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(20.dp),
-    large = RoundedCornerShape(28.dp),
-)
+    private val t = spec.type
+    val wordmark = TextStyle(fontFamily = fonts.display, fontWeight = FontWeight(t.wordmarkWeight.w()), fontSize = t.wordmarkSize.sp, color = accent)
+    val tab = TextStyle(fontFamily = fonts.display, fontWeight = FontWeight(t.tabWeight.w()), fontSize = t.tabSize.sp)
+    val shelfTitle = TextStyle(
+        fontFamily = fonts.display,
+        fontWeight = FontWeight(t.shelfTitleWeight.w()),
+        fontSize = t.shelfTitleSize.sp,
+        letterSpacing = t.shelfTitleTracking.sp,
+    )
+    val tileTitle = TextStyle(fontFamily = fonts.body, fontWeight = FontWeight(t.tileTitleWeight.w()), fontSize = t.tileTitleSize.sp, color = text)
+    val label = TextStyle(fontFamily = fonts.body, fontWeight = FontWeight(t.labelWeight.w()), fontSize = t.labelSize.sp, color = textMuted)
+    val clock = TextStyle(fontFamily = fonts.body, fontWeight = FontWeight(t.clockWeight.w()), fontSize = t.clockSize.sp, color = text)
+    val body = TextStyle(fontFamily = fonts.body, fontWeight = FontWeight.Medium, fontSize = 15.sp, color = text)
+    val heading = TextStyle(fontFamily = fonts.display, fontWeight = FontWeight(t.wordmarkWeight.w()), fontSize = (t.wordmarkSize * 0.9f).sp, color = text)
 
-private val WiisTypography = Typography(
-    headlineMedium = TextStyle(fontWeight = FontWeight.ExtraBold, fontSize = 28.sp, letterSpacing = 0.sp),
-    titleMedium = TextStyle(fontWeight = FontWeight.Bold, fontSize = 18.sp),
-    bodyMedium = TextStyle(fontWeight = FontWeight.Medium, fontSize = 15.sp),
-    labelMedium = TextStyle(fontWeight = FontWeight.SemiBold, fontSize = 13.sp),
-)
+    fun shelfTitleText(raw: String): String = when (t.shelfTitleCase) {
+        "upper" -> raw.uppercase()
+        "lower" -> raw.lowercase()
+        else -> raw
+    }
+
+    val tileShape = RoundedCornerShape(spec.shape.tileRadius.dp)
+    val cardShape = RoundedCornerShape(spec.shape.cardRadius.dp)
+    val dialogShape = RoundedCornerShape(spec.shape.dialogRadius.dp)
+    val tabShape = RoundedCornerShape(spec.shape.tabRadius.dp)
+    val badgeShape = RoundedCornerShape(spec.shape.badgeRadius.dp)
+
+    private fun Int.w() = coerceIn(100, 900)
+}
+
+val LocalWiis = staticCompositionLocalOf { WiisStyle(ThemeSpec(), WiisFonts()) }
 
 @Composable
-fun WiisTheme(dark: Boolean = isSystemInDarkTheme(), content: @Composable () -> Unit) {
-    val scheme = if (dark) {
+fun WiisTheme(
+    spec: ThemeSpec = ThemeSpec(),
+    fonts: WiisFonts = WiisFonts(),
+    feedback: UiFeedback = UiFeedback.None,
+    content: @Composable () -> Unit,
+) {
+    val style = remember(spec, fonts) { WiisStyle(spec, fonts) }
+    val scheme = remember(style) {
         darkColorScheme(
-            primary = DarkTokens.focusRing,
-            secondary = DarkTokens.accent,
-            background = Color(0xFF14161F),
-            surface = Color(0xFF1B1F2B),
-            onBackground = Color(0xFFF1F2F6),
-            onSurface = Color(0xFFF1F2F6),
-        )
-    } else {
-        lightColorScheme(
-            primary = LightTokens.focusRing,
-            secondary = LightTokens.accent,
-            background = Color(0xFFF6F3EE),
-            surface = Color(0xFFFFFFFF),
-            onBackground = Color(0xFF1C1E26),
-            onSurface = Color(0xFF1C1E26),
+            primary = style.focusRing,
+            onPrimary = style.background,
+            secondary = style.accent,
+            background = style.background,
+            onBackground = style.text,
+            surface = style.surface,
+            onSurface = style.text,
+            surfaceContainerHigh = style.surface,
+            onSurfaceVariant = style.textMuted,
         )
     }
-    androidx.compose.runtime.CompositionLocalProvider(LocalWiisTokens provides if (dark) DarkTokens else LightTokens) {
-        MaterialTheme(colorScheme = scheme, shapes = WiisShapes, typography = WiisTypography, content = content)
+    val typography = remember(style) {
+        Typography(
+            headlineMedium = style.heading,
+            titleMedium = style.tileTitle,
+            bodyMedium = style.body,
+            labelMedium = style.label,
+        )
+    }
+    val shapes = remember(style) {
+        Shapes(small = style.tileShape, medium = style.cardShape, large = style.dialogShape, extraLarge = style.dialogShape)
+    }
+    CompositionLocalProvider(LocalWiis provides style, LocalUiFeedback provides feedback) {
+        MaterialTheme(colorScheme = scheme, typography = typography, shapes = shapes, content = content)
     }
 }

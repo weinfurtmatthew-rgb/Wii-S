@@ -6,6 +6,8 @@ import android.os.SystemClock
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.wiis.designsystem.LayoutTokens
+import app.wiis.designsystem.UiEvent
 import app.wiis.emulator.EmulatorChoice
 import app.wiis.emulator.Game
 import app.wiis.emulator.LaunchResult
@@ -17,16 +19,21 @@ import app.wiis.launcher.Session
 import app.wiis.system.AppEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Section(val label: String) { Games("Games"), Apps("Apps"), Spike("System") }
+enum class Section { Games, Apps, System }
 
 sealed interface LibraryStatus {
     data object NoFolder : LibraryStatus
@@ -34,12 +41,12 @@ sealed interface LibraryStatus {
     data object Ready : LibraryStatus
 }
 
-/** One horizontal row on the Games screen. */
+/** One row (shelves layout) or one header group (grid layout) on the Games screen. */
 data class Shelf(val id: String, val title: String, val games: List<Game>)
 
 /**
  * Which tile should take focus. [token] changes every time focus must be (re)applied, so the UI
- * can react even when the target is the same game as last time.
+ * reacts even when the target is the same game as last time.
  */
 data class FocusTarget(val shelfId: String, val gameUri: String, val token: Long)
 
@@ -64,8 +71,14 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private val local = MutableStateFlow(HomeUiState())
     private var games: List<Game> = emptyList()
+    private var layout: LayoutTokens = graph.themes.spec.value.layout
     private var scanning = false
     private var lastScanAt = 0L
+    private var lastFocused: Pair<String, String>? = null
+
+    /** Sounds the screen should play for outcomes only the ViewModel knows (launch worked or failed). */
+    private val _events = MutableSharedFlow<UiEvent>(extraBufferCapacity = 8)
+    val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 
     val state: StateFlow<HomeUiState> =
         combine(local, graph.apps.apps) { s, apps -> s.copy(apps = apps) }
@@ -81,28 +94,50 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             // Always refresh in the background: picks up games copied since the last scan.
             if (rootUri() != null) rescan(silent = cached != null)
         }
+        viewModelScope.launch {
+            graph.themes.spec.map { it.layout }.distinctUntilChanged().collect { tokens ->
+                layout = tokens
+                if (games.isNotEmpty()) local.update { it.copy(shelves = buildShelves()) }
+            }
+        }
     }
 
     // ---- Navigation -------------------------------------------------------------------------
 
-    fun selectSection(section: Section) = local.update { it.copy(section = section) }
+    fun selectSection(section: Section) = local.update { s ->
+        if (s.section == section) return@update s
+        val target = if (section == Section.Games) restoreTarget(s.shelves) else null
+        s.copy(section = section, focusTarget = target ?: s.focusTarget)
+    }
 
-    fun cycleSection(delta: Int) = local.update {
+    fun cycleSection(delta: Int) {
         val all = Section.entries
-        it.copy(section = all[(all.indexOf(it.section) + delta).mod(all.size)])
+        selectSection(all[(all.indexOf(local.value.section) + delta).mod(all.size)])
     }
 
-    /** Start: system screen. Select: flip between Games and Apps. */
-    fun onStart() = selectSection(Section.Spike)
-    fun onSelect() = local.update {
-        it.copy(section = if (it.section == Section.Apps) Section.Games else Section.Apps)
+    /** Start: System screen. Select: flip between Games and Apps. */
+    fun onStart() = selectSection(Section.System)
+    fun onSelect() = selectSection(if (local.value.section == Section.Apps) Section.Games else Section.Apps)
+
+    fun focusGame(shelfId: String, game: Game) {
+        lastFocused = shelfId to game.uri
+        graph.shared.setFocus(Focus.OnGame(game))
     }
 
-    fun focusGame(game: Game) = graph.shared.setFocus(Focus.OnGame(game))
     fun focusApp(app: AppEntry) = graph.shared.setFocus(Focus.OnApp(app))
     fun focusConsumed() = local.update { it.copy(focusTarget = null) }
 
     fun launchApp(app: AppEntry) = graph.apps.launch(app)
+
+    private fun restoreTarget(shelves: List<Shelf>): FocusTarget? {
+        val token = SystemClock.uptimeMillis()
+        lastFocused?.let { (shelf, uri) ->
+            if (shelves.any { it.id == shelf && it.games.any { g -> g.uri == uri } }) return FocusTarget(shelf, uri, token)
+        }
+        val first = shelves.firstOrNull() ?: return null
+        val game = first.games.firstOrNull() ?: return null
+        return FocusTarget(first.id, game.uri, token)
+    }
 
     // ---- Library ----------------------------------------------------------------------------
 
@@ -144,7 +179,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
                 if (silent && added > 0) showMessage("Found $added new game${if (added == 1) "" else "s"}")
             }.onFailure { e ->
                 local.update { it.copy(library = if (games.isEmpty()) LibraryStatus.NoFolder else LibraryStatus.Ready) }
-                showMessage("Scan failed: ${e.message}. Re-pick the ROM folder from the System tab.")
+                showMessage("Scan failed: ${e.message}. Pick the ROM folder again from the System screen.", error = true)
             }
         }
     }
@@ -152,22 +187,25 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     private fun setGames(list: List<Game>, focusFirst: Boolean) {
         games = list
         val shelves = buildShelves()
-        local.update { s ->
-            val first = shelves.firstOrNull()?.let { sh -> sh.games.firstOrNull()?.let { FocusTarget(sh.id, it.uri, SystemClock.uptimeMillis()) } }
-            s.copy(shelves = shelves, focusTarget = if (focusFirst) first else s.focusTarget)
-        }
+        local.update { s -> s.copy(shelves = shelves, focusTarget = if (focusFirst) restoreTarget(shelves) else s.focusTarget) }
+        graph.art.refreshSummary(list)
+        graph.art.prefetch(list)
     }
 
     private fun buildShelves(): List<Shelf> {
-        val recent = games
+        val recent = if (!layout.showRecent) emptyList() else games
             .map { it to graph.playtime.lastPlayed(it.uri) }
             .filter { it.second > 0 }
             .sortedByDescending { it.second }
-            .take(RECENT_COUNT)
+            .take(layout.recentCount.coerceIn(1, 50))
             .map { it.first }
-        val bySystem = games.groupBy { it.systemId }
-            .toSortedMap(compareBy { systemOrder[it] ?: Int.MAX_VALUE })
-            .map { (id, list) -> Shelf(id, systemNames[id] ?: id, list) }
+        val groups = games.groupBy { it.systemId }
+        val ordered = when (layout.systemOrder) {
+            "alphabetical" -> groups.entries.sortedBy { (systemNames[it.key] ?: it.key).lowercase() }
+            "mostGames" -> groups.entries.sortedByDescending { it.value.size }
+            else -> groups.entries.sortedBy { systemOrder[it.key] ?: Int.MAX_VALUE }
+        }
+        val bySystem = ordered.map { (id, list) -> Shelf(id, systemNames[id] ?: id, list) }
         return listOfNotNull(recent.takeIf { it.isNotEmpty() }?.let { Shelf(RECENT_ID, "Recently played", it) }) + bySystem
     }
 
@@ -176,13 +214,14 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     fun launchGame(game: Game, choice: EmulatorChoice? = null) {
         local.update { it.copy(picker = null) }
         when (val r = graph.launcher.launch(game, choice)) {
-            is LaunchResult.Launched -> graph.shared.startSession(
-                Session(game, r.emulator.name, r.emulator.usesBothScreens, System.currentTimeMillis()),
-            )
-            is LaunchResult.NotInstalled -> showMessage("${r.emulator.name} isn't installed. Press Y to pick another emulator.")
-            is LaunchResult.NoEmulatorForSystem -> showMessage("No emulator configured for ${r.systemId}.")
-            is LaunchResult.NeedsFilePath -> showMessage("${r.emulator.name} needs a ROM folder on internal storage or an SD card.")
-            is LaunchResult.Failed -> showMessage("Couldn't start ${r.emulator?.name ?: "emulator"}: ${r.reason}")
+            is LaunchResult.Launched -> {
+                _events.tryEmit(UiEvent.Launch)
+                graph.shared.startSession(Session(game, r.emulator.name, r.emulator.usesBothScreens, System.currentTimeMillis()))
+            }
+            is LaunchResult.NotInstalled -> showMessage("${r.emulator.name} isn't installed. Press Y to pick another emulator.", error = true)
+            is LaunchResult.NoEmulatorForSystem -> showMessage("No emulator is set up for ${r.systemId}.", error = true)
+            is LaunchResult.NeedsFilePath -> showMessage("${r.emulator.name} needs the ROM on internal storage or an SD card.", error = true)
+            is LaunchResult.Failed -> showMessage("Couldn't start ${r.emulator?.name ?: "the emulator"}: ${r.reason}", error = true)
         }
     }
 
@@ -199,25 +238,29 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     /**
      * Top screen is back in front. Closes a running session, records playtime, rebuilds the
-     * "Recently played" shelf and puts focus back on the game that was just played (now first in
-     * that shelf). Also refreshes the library in the background if the last scan is stale.
+     * "Recently played" shelf and puts focus back on the game that was just played. Also refreshes
+     * the library in the background if the last scan is stale.
      */
     fun onReturnedHome() {
         val ended = graph.shared.endSession()
         if (ended != null) {
             graph.playtime.record(ended.game.uri, ended.startedAtMillis, System.currentTimeMillis())
+            val shelves = buildShelves()
+            val shelfId = if (shelves.any { it.id == RECENT_ID }) RECENT_ID else ended.game.systemId
+            lastFocused = shelfId to ended.game.uri
             local.update {
                 it.copy(
                     section = Section.Games,
-                    shelves = buildShelves(),
-                    focusTarget = FocusTarget(RECENT_ID, ended.game.uri, SystemClock.uptimeMillis()),
+                    shelves = shelves,
+                    focusTarget = FocusTarget(shelfId, ended.game.uri, SystemClock.uptimeMillis()),
                 )
             }
         }
         if (lastScanAt != 0L && SystemClock.elapsedRealtime() - lastScanAt > STALE_SCAN_MS) rescan(silent = true)
     }
 
-    private fun showMessage(text: String) {
+    private fun showMessage(text: String, error: Boolean = false) {
+        if (error) _events.tryEmit(UiEvent.Error)
         local.update { it.copy(message = text) }
         viewModelScope.launch {
             delay(5_000)
@@ -227,10 +270,9 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private fun rootUri(): Uri? = graph.prefs.getString(KEY_ROOT, null)?.let(Uri::parse)
 
-    private companion object {
+    companion object {
         const val KEY_ROOT = "rom_root"
         const val RECENT_ID = "recent"
-        const val RECENT_COUNT = 12
-        const val STALE_SCAN_MS = 10 * 60_000L
+        private const val STALE_SCAN_MS = 10 * 60_000L
     }
 }

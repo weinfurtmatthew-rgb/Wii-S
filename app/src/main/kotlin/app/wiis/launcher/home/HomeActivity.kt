@@ -7,8 +7,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import app.wiis.designsystem.WiisTheme
 import app.wiis.launcher.graph
+import app.wiis.launcher.ui.WiisRoot
 import app.wiis.system.RefreshRate
 
 class HomeActivity : ComponentActivity() {
@@ -23,13 +23,14 @@ class HomeActivity : ComponentActivity() {
         graph.perf.refreshHz = RefreshRate.preferHighest(this)
         graph.perf.attach(this)
         setContent {
-            WiisTheme { HomeScreen(viewModel) }
+            WiisRoot { HomeScreen(viewModel) }
         }
     }
 
     override fun onResume() {
         super.onResume()
         graph.perf.onResume(this)
+        graph.sounds.quietMoves(600)
         viewModel.onReturnedHome()
         graph.companionPlacer.ensurePlaced()
     }

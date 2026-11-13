@@ -2,6 +2,7 @@ package app.wiis.launcher
 
 import android.app.Application
 import android.content.Context
+import android.net.Uri
 import androidx.core.content.edit
 import app.wiis.emulator.EmulatorDiagnostics
 import app.wiis.emulator.EmulatorLauncher
@@ -9,6 +10,12 @@ import app.wiis.emulator.EmulatorRegistry
 import app.wiis.emulator.Game
 import app.wiis.emulator.LibraryStore
 import app.wiis.emulator.SystemDetector
+import app.wiis.emulator.art.ArtRepository
+import app.wiis.emulator.art.LibretroThumbnails
+import app.wiis.emulator.art.LocalArtFolder
+import app.wiis.launcher.sound.SoundEngine
+import app.wiis.launcher.theme.FontRepository
+import app.wiis.launcher.theme.ThemeRepository
 import app.wiis.system.AppEntry
 import app.wiis.system.AppRepository
 import app.wiis.system.DisplayProbe
@@ -18,6 +25,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.io.File
 
 class WiisApplication : Application() {
@@ -29,6 +37,7 @@ class WiisApplication : Application() {
         graph = AppGraph(this)
         graph.apps.start()
         graph.companionPlacer.start()
+        graph.startThemeServices()
     }
 }
 
@@ -57,6 +66,48 @@ class AppGraph(val context: Application) {
     val playtime by lazy { PlaytimeStore(prefs) }
     val perf = PerfMonitor()
     val companionPlacer by lazy { app.wiis.launcher.companion.CompanionPlacer(context, shared) }
+
+    val themes = ThemeRepository(context)
+    val fonts = FontRepository(context, scope)
+    val sounds = SoundEngine(context, scope)
+    val art by lazy { ArtRepository(context, registry, scope).also { configureArt(it) } }
+
+    /** Every theme change fetches its fonts and rebuilds its sounds. */
+    fun startThemeServices() {
+        scope.launch {
+            themes.spec.collect { spec ->
+                fonts.ensure(spec.type)
+                sounds.apply(spec.sounds)
+            }
+        }
+    }
+
+    // ---- Box art settings (device-level, not part of the theme) ----
+
+    var artEnabled: Boolean
+        get() = prefs.getBoolean("art_enabled", true)
+        set(value) { prefs.edit { putBoolean("art_enabled", value) }; configureArt(art) }
+
+    var artLibretro: Boolean
+        get() = prefs.getBoolean("art_libretro", true)
+        set(value) { prefs.edit { putBoolean("art_libretro", value) }; configureArt(art) }
+
+    var artFolder: Uri?
+        get() = prefs.getString("art_folder", null)?.let(Uri::parse)
+        set(value) {
+            prefs.edit { if (value == null) remove("art_folder") else putString("art_folder", value.toString()) }
+            configureArt(art)
+            art.clearMisses()
+        }
+
+    private fun configureArt(repo: ArtRepository) {
+        repo.providers = if (!artEnabled) emptyList() else buildList {
+            artFolder?.let { add(LocalArtFolder(context.contentResolver, it)) }
+            if (artLibretro) add(LibretroThumbnails())
+        }
+    }
+
+    fun currentGames(): List<Game> = libraryStore.load()?.games.orEmpty()
 }
 
 /** What the top screen is pointing at, as seen by the bottom screen. */

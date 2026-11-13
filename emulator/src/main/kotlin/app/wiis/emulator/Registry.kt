@@ -64,6 +64,8 @@ data class SystemDef(
     val folders: List<String>,
     /** Emulator choices in preference order; the first is the default. */
     val emulators: List<EmulatorChoice>,
+    /** Collection name on the libretro thumbnail server, e.g. "Nintendo - Nintendo DS". */
+    val libretroPlaylist: String? = null,
 )
 
 @Serializable

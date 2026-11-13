@@ -11,11 +11,14 @@
 | D1 | Stack | Delegated to me: "most efficient". Kotlin + Compose + UDF, as proposed, with two simplifications for Milestone 0 (see below) |
 | D2 | Android support | **Thor's Android 13 only**: `minSdk 33` |
 | D3 | Distribution | **GitHub downloads** (CI artifacts + tagged Releases); no Play Store constraints |
-| D4 | Emulators | RetroArch, Dolphin, PPSSPP, DuckStation, **Cemu, Azahar, Eden, GameNative, melonDS, NetherSX2, XenDroid** ("Zen droid", to be confirmed) |
+| D4 | Emulators | RetroArch, Dolphin, PPSSPP, DuckStation, **Cemu, Azahar, Eden, GameNative, melonDS, NetherSX2, XenDroid** ("Zen droid", confirmed) |
 | D5 | Device | **Thor Max**; owner can run `adb` |
 | D6 | Milestone 0 scope | Approved as written |
-| D8 | Iteration 1 scope | Approved: bottom-screen reliability, 120 Hz, controller polish, shelf home layout, performance numbers |
 | D7 | Dual-screen mode | **Mode B** (launcher places the companion on the bottom display), forced by the spike results below |
+| D8 | Iteration 1 scope | Approved: bottom-screen reliability, 120 Hz, controller polish, shelf home layout, performance numbers |
+| D9 | Design control | **The owner decides every design detail.** Hybrid mood approved as a direction. All values are proposals until approved in the Design Workbench; see `docs/DESIGN.md` |
+| D10 | Box art | Start now with no-account sources (your art folder, libretro thumbnails). Other services researched in `docs/SCRAPING.md`; which to add is the owner's call |
+| D11 | Sounds | Interface sounds on, synthesised from the theme; the owner can replace any sound with their own file on the device |
 
 **Stack simplifications (efficiency):**
 - **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.
@@ -46,6 +49,20 @@
 | Navigation | Shelves feel good; focus returns to the last played game | — |
 
 ---
+
+## Iteration 2: design system (in progress)
+
+| Piece | State in 0.2.0-i2 |
+|---|---|
+| Theme as data | Every visual and audio detail is a token in `theme.json` (143 details). The launcher draws only from it |
+| Design Workbench | Published privately. Live mockup of both screens, every token editable with per-detail approval. Choices save where Claude reads them |
+| Theme import on device | System → Theme → Import theme file. Google Fonts download once and are cached |
+| Sounds | 7 events synthesised from the theme, same samples as the workbench. Per-event custom files: System → Sounds |
+| Haptics | Per event, from the theme |
+| Box art | Your art folder + libretro thumbnails, cached, with coverage shown in the System report |
+| Stack note | The Compose UI renders from theme tokens; `WiisTile` implements focus scale, lift, spring, bob, ring, glow, soft/hard shadow and press-in |
+
+Next: the owner reviews and approves in the workbench, then I bake approved values into `default.json`. Choosing scraping services (see `docs/SCRAPING.md`) adds the next art sources.
 
 ## 0. Device assumptions (to verify on hardware)
 

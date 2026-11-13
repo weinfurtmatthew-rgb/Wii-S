@@ -135,3 +135,25 @@ class ScanRulesTest {
         assertEquals("ps2", detector.detect(listOf("ps2"), "Game.cue")?.id)
     }
 }
+
+class LibretroNamingTest {
+    @Test fun `reserved characters become underscores`() {
+        assertEquals("Beavis _ Butt-Head (USA)", app.wiis.emulator.art.LibretroThumbnails.thumbnailName("Beavis & Butt-Head (USA)"))
+        assertEquals("Mario Golf_ Toadstool Tour (Europe)", app.wiis.emulator.art.LibretroThumbnails.thumbnailName("Mario Golf: Toadstool Tour (Europe)"))
+    }
+
+    @Test fun `candidates try exact name then a cleaned one`() {
+        val names = app.wiis.emulator.art.LibretroThumbnails.candidateNames("Star Racer (USA) (Rev 1) [!].nds")
+        assertEquals(listOf("Star Racer (USA) (Rev 1) [!]", "Star Racer (USA)"), names)
+        assertEquals(listOf("Puzzle Time (Europe)"), app.wiis.emulator.art.LibretroThumbnails.candidateNames("Puzzle Time (Europe).gba"))
+    }
+
+    @Test fun `url segments encode spaces as percent-20`() {
+        assertEquals("Nintendo%20-%20Nintendo%20DS", app.wiis.emulator.art.LibretroThumbnails.encode("Nintendo - Nintendo DS"))
+    }
+
+    @Test fun `every libretro collection belongs to a known system`() {
+        val registry = EmulatorRegistry.parse(File("src/main/assets/emulators.json").readText())
+        assertTrue(registry.systems.count { it.libretroPlaylist != null } >= 15)
+    }
+}
