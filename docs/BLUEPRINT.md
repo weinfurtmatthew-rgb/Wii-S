@@ -1,8 +1,25 @@
 # Wii-S — Technical Blueprint & Development Roadmap
 
-**Target device:** AYN Thor (dual-screen Android handheld)
-**Phase:** 1 — Discovery & Architecture
-**Status:** Draft for review. Nothing in this document is approved yet; see §8 for the decisions I need from you.
+**Target device:** AYN Thor Max (dual-screen Android handheld)
+**Phase:** 1 — Discovery & Architecture → Milestone 0 in progress
+**Status:** Approved with the decisions below. Milestone 0 code is in the repo; the hardware spike (`docs/SPIKE.md`) is pending.
+
+## Decision log
+
+| # | Decision | Outcome |
+|---|---|---|
+| D1 | Stack | Delegated to me: "most efficient". Kotlin + Compose + UDF, as proposed, with two simplifications for Milestone 0 (see below) |
+| D2 | Android support | **Thor's Android 13 only**: `minSdk 33` |
+| D3 | Distribution | **GitHub downloads** (CI artifacts + tagged Releases); no Play Store constraints |
+| D4 | Emulators | RetroArch, Dolphin, PPSSPP, DuckStation, **Cemu, Azahar, Eden, GameNative, melonDS, NetherSX2, XenDroid** ("Zen droid", to be confirmed) |
+| D5 | Device | **Thor Max**; owner can run `adb` |
+| D6 | Milestone 0 scope | Approved as written |
+
+**Stack simplifications (efficiency):**
+- **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.
+- **No Room yet.** The library is cached as one JSON file, which loads instantly for thousands of games. Room comes in when we need queries (search, collections, metadata).
+- **No All Files Access.** ROM folders are read through SAF. For path-only emulators (RetroArch), the path is derived from the SAF document ID and the emulator opens it with its own storage access. The launcher never needs the broad permission.
+- Detekt/ktlint deferred; CI runs Android Lint and unit tests.
 
 ---
 
@@ -222,7 +239,21 @@ Emulator definitions live in versioned JSON, not code, so we can add or fix an e
 | `CONTENT_URI_EXTRA` — URI string in an extra + `ClipData` grant | Some newer forks | SAF tree grant only |
 | `PATH_EXTRA` — absolute file path in an extra | RetroArch, Dolphin (`AutoStartFile`), DuckStation (`bootPath`) | We must resolve a real path, which needs All Files Access (§4.5) |
 
-The component names and extras above are **illustrative and must be verified during the spike** against the emulator versions installed on your Thor. They change between releases and forks; that churn is the reason the registry is data, not code. ES-DE's and Daijishō's published launch definitions are good cross-references.
+The live registry is `emulator/src/main/assets/emulators.json`. Its launch definitions were cross-checked against ES-DE's Android find rules. Each entry stays `verified: false` until the spike confirms it on the Thor Max. The spike report lists, for every emulator, the installed package and version and whether its activity resolves. When an activity doesn't resolve, it also lists that package's exported activities, so one report is enough to fix a broken entry.
+
+| Emulator | Systems | Packages tried, in order | ROM handed over as |
+|---|---|---|---|
+| RetroArch | NES, SNES, N64, GB/GBC/GBA, Genesis, (PSX, PSP, NDS alt.) | `com.retroarch.aarch64`, `.ra32`, `com.retroarch` | File path + core `.so` |
+| Dolphin | GameCube, Wii | `org.dolphinemu.dolphinemu` | SAF URI in `AutoStartFile` |
+| PPSSPP | PSP | `org.ppsspp.ppssppgold`, `org.ppsspp.ppsspp` | SAF URI as data |
+| DuckStation | PS1 | `com.github.stenzek.duckstation` | SAF URI in `bootPath` |
+| Cemu | Wii U | `info.cemu.cemu`, `info.cemu.Cemu` | SAF URI as data |
+| Azahar | 3DS | `org.azahar_emu.azahar`, AzaharPlus, Lime3DS | SAF URI as data |
+| Eden | Switch | `dev.eden.eden_emulator`, legacy, nightly | SAF URI as data |
+| melonDS | DS | `me.magnum.melonds`, MelonDualDS, nightly | SAF URI in `uri` |
+| NetherSX2 | PS2 | `xyz.aethersx2.android`, Turnip variants | SAF URI in `bootPath` |
+| XenDroid | Xbox 360 | `xendroid.compose` | SAF URI as data |
+| GameNative | Steam | `app.gamenative` | Steam app id read from a `.steam` file |
 
 ### 4.3 Launch sequence
 

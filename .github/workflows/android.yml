@@ -1,0 +1,52 @@
+name: Android
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write   # needed only by the release job to attach the APK
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Unit tests, lint, APKs
+        run: ./gradlew testDebugUnitTest :app:lintDebug assembleDebug assembleRelease :benchmark:assembleBenchmark --stacktrace
+      - name: Name the APK
+        run: cp app/build/outputs/apk/release/app-release.apk "Wii-S-${GITHUB_REF_NAME//\//-}-${GITHUB_SHA::7}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wii-s-apk
+          path: Wii-S-*.apk
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reports
+          path: |
+            **/build/reports/
+            **/build/test-results/
+
+  release:
+    # Push a tag like v0.1.0 to publish a GitHub Release with the APK attached.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: wii-s-apk
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: Wii-S-*.apk
+          generate_release_notes: true
