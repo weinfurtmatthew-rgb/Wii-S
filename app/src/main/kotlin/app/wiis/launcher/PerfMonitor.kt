@@ -53,9 +53,13 @@ class PerfMonitor {
         jankStats?.isTrackingEnabled = false
     }
 
-    fun report(): String = buildString {
+    fun report(actualHz: Float?): String = buildString {
         appendLine("== Performance (top screen) ==")
-        appendLine("Refresh rate requested: ${refreshHz?.let { "%.0f Hz".format(it) } ?: "n/a"}")
+        val requested = refreshHz
+        appendLine("Refresh rate: requested ${requested?.let { "%.0f Hz".format(it) } ?: "n/a"}, running ${actualHz?.let { "%.0f Hz".format(it) } ?: "n/a"}")
+        if (requested != null && actualHz != null && actualHz + 1 < requested) {
+            appendLine("  System setting is capping the rate: raise it in Settings > Display to allow ${"%.0f".format(requested)} Hz.")
+        }
         appendLine("Cold start → first frame: ${coldStartMs?.let { "$it ms" } ?: "n/a"}  (budget 500 ms)")
         val samples = synchronized(resumeSamples) { resumeSamples.toList().sorted() }
         if (samples.isNotEmpty()) {

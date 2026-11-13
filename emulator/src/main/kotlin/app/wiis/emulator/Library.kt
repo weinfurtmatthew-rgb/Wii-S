@@ -67,11 +67,13 @@ class RomScanner(
         val games = ArrayList<Game>()
         val unrecognized = HashMap<String, Int>()
         val examples = ArrayList<String>()
+        val exampleExts = HashSet<String>()
         var visited = 0
 
         fun walk(docId: String, folders: List<String>, depth: Int) {
             if (depth > maxDepth || visited >= maxFiles) return
             val children = DocumentsContract.buildChildDocumentsUriUsingTree(treeUri, docId)
+            val here = ArrayList<Game>()
             resolver.query(children, PROJECTION, null, null, null)?.use { c ->
                 while (c.moveToNext() && visited < maxFiles) {
                     visited++
@@ -80,29 +82,38 @@ class RomScanner(
                     val mime = c.getString(2)
                     if (name.startsWith('.')) continue
                     if (mime == DocumentsContract.Document.MIME_TYPE_DIR) {
-                        walk(id, folders + name, depth + 1)
-                    } else {
-                        val system = detector.detect(folders, name)
-                        if (system == null) {
-                            val ext = SystemDetector.extensionOf(name).ifEmpty { "(none)" }
-                            if (ext !in IGNORED_EXTENSIONS) {
-                                unrecognized[ext] = (unrecognized[ext] ?: 0) + 1
-                                if (examples.size < MAX_EXAMPLES) examples += (folders + name).joinToString("/")
-                            }
-                            continue
-                        }
-                        games += Game(
-                            uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id).toString(),
-                            authority = authority,
-                            documentId = id,
-                            title = cleanTitle(name),
-                            fileName = name,
-                            systemId = system.id,
-                            sizeBytes = c.getLong(3),
-                        )
+                        if (!isSupportFolder(name)) walk(id, folders + name, depth + 1)
+                        continue
                     }
+                    val system = detector.detect(folders, name)
+                    if (system == null) {
+                        val ext = SystemDetector.extensionOf(name).ifEmpty { "(none)" }
+                        if (ext in IGNORED_EXTENSIONS) continue
+                        unrecognized[ext] = (unrecognized[ext] ?: 0) + 1
+                        if (ext !in exampleExts && examples.size < MAX_EXAMPLES) {
+                            exampleExts += ext
+                            val path = (folders + name).joinToString("/")
+                            val folderSystem = detector.folderSystem(folders)
+                            examples += if (folderSystem != null) {
+                                "$path  <- .$ext is not a ${folderSystem.name} format its emulator opens"
+                            } else {
+                                "$path  <- not inside a recognised system folder"
+                            }
+                        }
+                        continue
+                    }
+                    here += Game(
+                        uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id).toString(),
+                        authority = authority,
+                        documentId = id,
+                        title = cleanTitle(name),
+                        fileName = name,
+                        systemId = system.id,
+                        sizeBytes = c.getLong(3),
+                    )
                 }
             }
+            games += collapseTrackFiles(here)
             onProgress(games.size)
         }
 
@@ -115,13 +126,38 @@ class RomScanner(
     }
 
     companion object {
-        private const val MAX_EXAMPLES = 12
+        private const val MAX_EXAMPLES = 15
 
-        /** Companion files that are never games on their own. */
+        /** Companion files that are never games on their own (incl. BIOS dump parts, Switch keys). */
         private val IGNORED_EXTENSIONS = setOf(
             "txt", "nfo", "jpg", "jpeg", "png", "webp", "xml", "dat", "sav", "srm", "state",
             "cfg", "ini", "json", "md", "pdf", "sha1", "md5", "sfv", "db", "nomedia",
+            "mec", "nvm", "rom0", "rom1", "rom2", "erom", "diff", "inf", "keys",
         )
+
+        /** BIOS/firmware folders hold system files, not games: skip them entirely. */
+        fun isSupportFolder(name: String): Boolean {
+            val n = SystemDetector.normalize(name)
+            return "bios" in n || n == "firmware" || n == "keys"
+        }
+
+        /**
+         * A disc listed by a .cue/.m3u also has .bin/.img track files next to it. Show the
+         * disc once: drop track files when a sheet for the same system sits in the same folder.
+         */
+        fun collapseTrackFiles(folderGames: List<Game>): List<Game> {
+            val sheetSystems = folderGames
+                .filter { SystemDetector.extensionOf(it.fileName) in SHEET_EXTENSIONS }
+                .map { it.systemId }
+                .toSet()
+            if (sheetSystems.isEmpty()) return folderGames
+            return folderGames.filterNot {
+                it.systemId in sheetSystems && SystemDetector.extensionOf(it.fileName) in TRACK_EXTENSIONS
+            }
+        }
+
+        private val SHEET_EXTENSIONS = setOf("cue", "m3u")
+        private val TRACK_EXTENSIONS = setOf("bin", "img")
 
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,

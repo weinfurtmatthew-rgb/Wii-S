@@ -34,6 +34,17 @@
 | Emulators | All 11 activities resolve. Dolphin, NetherSX2 and XenDroid confirmed by real launches | Registry entries for those three marked `verified` |
 | Controller | Feels fine with stock Compose focus | Iteration 1 focus work narrowed to stick navigation and focus restore |
 
+## Iteration 1 results (0.1.0-i1 on Thor Max)
+
+| Metric | Measured | Budget |
+|---|---|---|
+| Cold start → first frame | 78 ms | ≤ 500 ms |
+| Resume → frame | 56 ms median | ≤ 150 ms |
+| Janky frames | 0 / 918 (0.00 %) | < 1 % |
+| Refresh | Both panels offer 60 and 120 Hz; launcher requests 120 but runs at 60, so a system setting is likely capping it | — |
+| Library | 58 games after folder-name normalisation and archive support (was 16). DS fixed; Switch games not found in `Download/ROMs` | — |
+| Navigation | Shelves feel good; focus returns to the last played game | — |
+
 ---
 
 ## 0. Device assumptions (to verify on hardware)

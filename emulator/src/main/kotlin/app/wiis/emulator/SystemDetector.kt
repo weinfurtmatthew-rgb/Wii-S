@@ -37,6 +37,10 @@ class SystemDetector(registry: EmulatorRegistry) {
         return candidates.singleOrNull()
     }
 
+    /** System named by the nearest recognised folder, regardless of file type. */
+    fun folderSystem(folders: List<String>): SystemDef? =
+        folders.asReversed().firstNotNullOfOrNull { byFolder[normalize(it)] }
+
     companion object {
         fun extensionOf(fileName: String): String = fileName.substringAfterLast('.', "").lowercase()
 

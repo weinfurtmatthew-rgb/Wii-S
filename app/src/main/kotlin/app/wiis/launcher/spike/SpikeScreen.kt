@@ -109,7 +109,7 @@ private fun buildReport(context: Context): String = buildString {
         else "Companion: NOT visible",
     )
     appendLine()
-    append(g.perf.report())
+    append(g.perf.report(probe.displays().firstOrNull { it.id == 0 }?.refreshHz))
     appendLine()
     append(g.diagnostics.report(g.diagnostics.run()))
     appendLine()

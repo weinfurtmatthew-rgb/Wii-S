@@ -106,3 +106,32 @@ class FolderNamingTest {
         assertEquals("switch", detector.detect(emptyList(), "app.nro")?.id)
     }
 }
+
+class ScanRulesTest {
+    private fun game(name: String, system: String) = Game("u/$name", "a", name, name, name, system, 0)
+
+    @Test fun `cue hides its bin tracks`() {
+        val kept = RomScanner.collapseTrackFiles(
+            listOf(game("Game.cue", "psx"), game("Game (Track 1).bin", "psx"), game("Game (Track 2).bin", "psx")),
+        )
+        assertEquals(listOf("Game.cue"), kept.map { it.fileName })
+    }
+
+    @Test fun `lone bin is kept`() {
+        assertEquals(1, RomScanner.collapseTrackFiles(listOf(game("Game.bin", "ps2"))).size)
+    }
+
+    @Test fun `bios folders are skipped`() {
+        assertTrue(RomScanner.isSupportFolder("ps2 bios usa"))
+        assertTrue(RomScanner.isSupportFolder("BIOS"))
+        assertTrue(!RomScanner.isSupportFolder("ps2"))
+    }
+
+    @Test fun `folder system is reported for unsupported formats`() {
+        val registry = EmulatorRegistry.parse(File("src/main/assets/emulators.json").readText())
+        val detector = SystemDetector(registry)
+        assertNull(detector.detect(listOf("GC"), "Mario Kart.7z"))
+        assertEquals("gc", detector.folderSystem(listOf("ROMs", "GC"))?.id)
+        assertEquals("ps2", detector.detect(listOf("ps2"), "Game.cue")?.id)
+    }
+}

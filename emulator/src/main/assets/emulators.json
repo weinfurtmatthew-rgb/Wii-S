@@ -593,7 +593,10 @@
         "iso",
         "chd",
         "cso",
-        "gz"
+        "gz",
+        "bin",
+        "cue",
+        "img"
       ],
       "folders": [
         "ps2",
