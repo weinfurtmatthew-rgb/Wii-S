@@ -13,6 +13,7 @@
   - Sounds come from the same synthesiser as the launcher. A unit test checks the two produce the same samples.
 - **On-device preview.** Export `theme.json` from the workbench, then on the Thor go to System → Theme → Import. Any Google Fonts family downloads once.
 - **Baking.** When details are approved, I copy those exact values into `default.json`, record them below, and ship a build. Values that aren't approved stay as proposals and stay listed as open.
+- **Design Outline** (`design/outline.html`, published privately at https://claude.ai/artifact/LRMxPnLTb2qKpCQAkFTU19). A numbered, read-only summary of the current draft: both screens, palette with contrast ratios, type scale, tile anatomy, spacing, motion curve, sounds. Tweaks are made there with the Tweak buttons or by item number in chat. Rebuild with `design/tools/`.
 - **Custom sounds** are a device setting (System → Sounds → Use my file…), not part of the theme. They override the theme's sound for that event on that device.
 
 ## What's not a token yet

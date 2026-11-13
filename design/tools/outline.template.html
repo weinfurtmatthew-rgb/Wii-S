@@ -1,0 +1,632 @@
+<title>Wii-S Design Outline</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Nunito:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a brand-book spine. Numbered contents on the left, one long spec column on the right;
+   every launcher specimen sits on its own dark "screen" stage in the launcher's real colours. */
+:root {
+  --paper: #F5F3F8;
+  --card: #FFFFFF;
+  --ink: #1F1C29;
+  --muted: #6B6578;
+  --rule: #DDD8E6;
+  --accent: #C9452B;
+  --mine-bg: #FFE9DF;
+  --mine-fg: #9A3218;
+  --chip-bg: #ECE8F3;
+  --stage: #15141E;
+  --stage-ink: #F6F1E7;
+  --stage-muted: #A8A1B8;
+  --display: "Fredoka", "Nunito", system-ui, sans-serif;
+  --body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121119; --card: #1A1824; --ink: #EEEAF3; --muted: #A39DB2; --rule: #2E2B3A; --accent: #FF8466;
+    --mine-bg: #3B1E16; --mine-fg: #FFB39F; --chip-bg: #252232; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121119; --card: #1A1824; --ink: #EEEAF3; --muted: #A39DB2; --rule: #2E2B3A; --accent: #FF8466;
+  --mine-bg: #3B1E16; --mine-fg: #FFB39F; --chip-bg: #252232; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { background: var(--paper); color: var(--ink); }
+body { font: 16px/1.55 var(--body); padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 64px; }
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+
+.page { max-width: 1240px; margin: 0 auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; }
+@media (min-width: 1000px) { .page { grid-template-columns: 220px minmax(0, 1fr); } .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; } }
+
+/* ---------- Header ---------- */
+.masthead { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 14px; }
+.eyebrow { font: 600 12px/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font: 700 clamp(34px, 6vw, 56px)/1 var(--display); margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.lede { max-width: 65ch; margin: 0; color: var(--muted); font-size: 17px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: 600 12px/1 var(--mono); padding: 7px 10px; border-radius: 99px; background: var(--chip-bg); color: var(--ink); white-space: nowrap; }
+.chip.mine { background: var(--mine-bg); color: var(--mine-fg); }
+.howto { background: var(--card); border: 1px solid var(--rule); border-radius: 16px; padding: 14px 16px; max-width: 80ch; }
+.howto p { margin: 0; }
+
+/* ---------- Contents ---------- */
+.toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.toc a { display: grid; grid-template-columns: 2.2em 1fr auto; gap: 6px; align-items: baseline; padding: 6px 8px; border-radius: 8px; color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14px; }
+.toc a:hover { background: var(--chip-bg); }
+.toc .n { font: 500 12px var(--mono); color: var(--muted); }
+.toc .dot { width: 7px; height: 7px; border-radius: 99px; background: var(--accent); }
+@media (max-width: 999px) { .toc ol { flex-direction: row; flex-wrap: wrap; gap: 6px; } .toc a { display: inline-flex; gap: 6px; background: var(--card); border: 1px solid var(--rule); padding: 5px 10px; } .toc .dot { display: none; } }
+
+/* ---------- Sections ---------- */
+main { min-width: 0; display: flex; flex-direction: column; gap: 56px; }
+section { min-width: 0; scroll-margin-top: calc(env(safe-area-inset-top, 0px) + 20px); }
+.sec-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.sec-num { font: 500 15px var(--mono); color: var(--muted); }
+h2 { font: 600 28px/1.15 var(--display); margin: 0; text-wrap: balance; }
+.sec-head .tweak { margin-left: auto; }
+.summary { margin: 0 0 18px; max-width: 70ch; color: var(--muted); }
+.summary b { color: var(--ink); font-weight: 700; }
+
+.stage { background: var(--stage); color: var(--stage-ink); border-radius: 18px; padding: 18px; min-width: 0; overflow: hidden; }
+.stage-cap { font: 500 12px var(--mono); color: var(--stage-muted); letter-spacing: .03em; display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.screens { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.screen-box { position: relative; width: 100%; overflow: hidden; border-radius: 10px; }
+.screen-box > .scaler { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+.figure-note { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+.specimens { display: flex; flex-wrap: wrap; gap: 28px 32px; align-items: flex-end; padding: 18px 10px 8px; }
+.specimen { display: flex; flex-direction: column; gap: 14px; align-items: flex-start; min-width: 0; }
+.specimen > .label { font: 500 12px var(--mono); color: var(--stage-muted); }
+
+/* Spec tables */
+.spec { margin-top: 18px; border-top: 1px solid var(--rule); }
+.item { display: grid; grid-template-columns: 3.4em minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 10px 4px; border-bottom: 1px solid var(--rule); }
+.item .no { font: 500 13px var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.item .name { font-weight: 700; min-width: 0; }
+.item .name small { display: block; font-weight: 500; color: var(--muted); font-size: 13px; }
+.item .value { grid-column: 2 / 3; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; min-width: 0; font-size: 15px; }
+.item .side { grid-row: 1 / span 2; grid-column: 3; display: flex; align-items: center; gap: 8px; }
+.sw { width: 26px; height: 26px; border-radius: 8px; border: 1px solid rgba(127,127,127,.35); flex: none; }
+.code { font: 500 13px var(--mono); color: var(--muted); }
+.status { font: 600 11px/1 var(--mono); padding: 5px 8px; border-radius: 6px; background: var(--chip-bg); color: var(--muted); white-space: nowrap; }
+.status.mine { background: var(--mine-bg); color: var(--mine-fg); }
+.tweak { border: 1px solid var(--rule); background: var(--card); color: var(--ink); border-radius: 8px; padding: 5px 10px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.tweak:hover { border-color: var(--accent); color: var(--accent); }
+.play { border: 0; background: var(--accent); color: #fff; border-radius: 99px; padding: 4px 12px; font-size: 13px; font-weight: 700; }
+
+/* Palette */
+.palette { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.pal { background: var(--card); border: 1px solid var(--rule); border-radius: 14px; overflow: hidden; min-width: 0; }
+.pal .fill { height: 64px; }
+.pal .meta { padding: 8px 10px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.pal .meta b { font-size: 13px; line-height: 1.25; }
+.pal .meta span { font: 500 12px var(--mono); color: var(--muted); }
+.contrast { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; margin-top: 14px; }
+.ratio { border-radius: 12px; padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ratio b { font: 600 15px var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Diagrams */
+.anatomy { position: relative; display: inline-block; margin: 26px 120px 30px 26px; }
+.callout { position: absolute; font: 500 11px/1.2 var(--mono); color: var(--stage-muted); white-space: nowrap; }
+.callout::before { content: ""; position: absolute; background: var(--stage-muted); opacity: .6; }
+.callout.right { left: calc(100% + 22px); }
+.callout.right::before { width: 16px; height: 1px; right: calc(100% + 4px); top: .6em; }
+.radii { display: flex; flex-wrap: wrap; gap: 18px; align-items: flex-end; }
+.radius-shape { border: 2px solid var(--stage-muted); display: flex; align-items: flex-end; justify-content: center; padding: 6px; font: 500 11px var(--mono); color: var(--stage-muted); }
+.spacing-diagram { position: relative; overflow-x: auto; }
+.chart-wrap { overflow-x: auto; }
+svg text { font-family: var(--mono); }
+.demo-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.facts { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-top: 14px; }
+.fact { background: var(--card); border: 1px solid var(--rule); border-radius: 12px; padding: 10px 12px; }
+.fact b { display: block; font: 600 20px/1.2 var(--display); }
+.fact span { color: var(--muted); font-size: 13px; }
+.fixed-list { margin: 0; padding-left: 1.2em; max-width: 70ch; }
+.fixed-list li { margin: 4px 0; }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 10px; font-weight: 700; z-index: 20; }
+
+/* ---------- Launcher mock (captured from the Design Workbench) ---------- */
+.mock { position: relative; width: 100%; height: 100%; overflow: hidden; color: var(--t-text); font-family: var(--t-body); }
+.mock .bg-layer { position: absolute; inset: 0; }
+.mock .content { position: absolute; inset: 0; display: flex; flex-direction: column; }
+.m-header { display: flex; align-items: center; gap: 10px; flex: none; }
+.m-wordmark { font-family: var(--t-display); color: var(--t-accent); margin-right: 14px; white-space: nowrap; line-height: 1; }
+.m-tab { position: relative; padding: 8px 16px; font-family: var(--t-display); white-space: nowrap; display: flex; flex-direction: column; align-items: center; }
+.m-tab .ul { width: 28px; height: 3px; border-radius: 2px; margin-top: 4px; }
+.m-clock { margin-left: auto; white-space: nowrap; }
+.m-body { position: relative; flex: 1; min-height: 0; overflow: hidden; }
+.m-scroll { position: absolute; left: 0; right: 0; top: 0; }
+.m-shelf-title { display: flex; align-items: center; white-space: nowrap; }
+.m-row { overflow: visible; position: relative; }
+.m-track { display: flex; }
+.m-grid { display: flex; flex-wrap: wrap; }
+.focusable { position: relative; flex: none; }
+.tile-surface { position: absolute; inset: 0; overflow: hidden; }
+.tile-ring { position: absolute; pointer-events: none; opacity: 0; }
+.tile-glow { position: absolute; inset: 0; filter: blur(22px); opacity: 0; pointer-events: none; transform: scale(1.04, 1.06); }
+.tile-hard { position: absolute; inset: 0; }
+.tile-inner { position: absolute; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+.cover { position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.cover .band { flex: none; height: 13%; display: flex; align-items: center; padding: 0 6%; font: 800 9px/1 system-ui, sans-serif; letter-spacing: .08em; color: #fff; background: rgba(0,0,0,.35); }
+.cover .art-shapes { position: absolute; inset: 13% 0 0 0; }
+.cover .cover-title { position: absolute; left: 7%; right: 7%; bottom: 8%; font: 900 15px/1.05 system-ui, sans-serif; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.35); letter-spacing: -.01em; }
+.scrim { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 12px; background: linear-gradient(transparent, rgba(0,0,0,.78)); color: #fff; }
+.badge { position: absolute; left: 10px; top: 10px; padding: 2px 8px; z-index: 2; }
+.strip { position: absolute; z-index: 2; }
+.m-hints { display: flex; gap: 18px; align-items: center; flex: none; padding-top: 10px; }
+.m-hint { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.m-hint i { font-style: normal; height: 22px; min-width: 22px; padding: 0 7px; display: inline-flex; align-items: center; justify-content: center; }
+.m-msg { margin-top: 10px; padding: 14px; flex: none; }
+@media (prefers-reduced-motion: reduce) { .demo-note { display: block !important; } }
+</style>
+
+<div class="page">
+  <header class="masthead">
+    <span class="eyebrow">Wii-S launcher · AYN Thor · Draft 1 · 13 Nov 2026</span>
+    <h1>Design Outline <span>Draft 1</span></h1>
+    <p class="lede">A preliminary look for the launcher: a modern dark layout with warm, chunky, colourful tiles and playful sounds. Everything is open to change. Nothing here is approved yet.</p>
+    <div class="chips" id="statusChips"></div>
+    <div class="howto" data-uncommentable>
+      <p id="howtoText">To ask for a tweak, press <b>Tweak</b> next to any item and write what you want, or reply in chat with its number (for example "3.12 more orange"). I make the change in the <a href="https://claude.ai/artifact/VPcG1tqcsKakm9WAkhXM5s" target="_blank" rel="noopener">Design Workbench</a>, and nothing becomes final until you approve it there.</p>
+    </div>
+  </header>
+
+  <nav class="toc" aria-label="Contents" data-uncommentable><ol id="toc"></ol></nav>
+
+  <main id="main">
+    <section id="s1" data-comment-target>
+      <div class="sec-head"><span class="sec-num">1</span><h2>At a glance</h2></div>
+      <p class="summary">Both Thor screens with Draft 1 applied. The top screen shows the Games tab with the third game in <b>Recently played</b> focused. The bottom screen follows whatever is focused.</p>
+      <div class="stage">
+        <div class="screens">
+          <div><div class="stage-cap"><span>TOP SCREEN · 1920×1080 · 833×468 dp</span><span>Games</span></div><div class="screen-box" data-w="833" data-h="468"><div class="scaler" id="shotATop"></div></div></div>
+          <div style="max-width:538px"><div class="stage-cap"><span>BOTTOM SCREEN · 1240×1080 · 538×468 dp</span><span>follows focus</span></div><div class="screen-box" data-w="538" data-h="468"><div class="scaler" id="shotABottom"></div></div></div>
+        </div>
+      </div>
+      <p class="figure-note">Covers and game titles are invented placeholders. Real box art appears on the device.</p>
+      <div class="facts" id="glanceFacts"></div>
+    </section>
+    <div id="groupSections"></div>
+    <section id="s16" data-comment-target>
+      <div class="sec-head"><span class="sec-num">16</span><h2>Fixed for now</h2><button class="tweak" type="button" data-tweak="s16">Tweak</button></div>
+      <p class="summary">These don't have a setting yet. Any of them can become adjustable if you want control over it.</p>
+      <ol class="fixed-list">
+        <li>Size and padding of the System screen's panels</li>
+        <li>Width of the bottom screen's cover panel (220 dp)</li>
+        <li>The dark gradient behind titles shown on box art</li>
+        <li>How far the focus glow spreads (22 dp blur)</li>
+        <li>Title size in dialogs, such as the emulator picker</li>
+      </ol>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script type="application/json" id="draft">__DRAFT__</script>
+<script type="application/json" id="proposal">__PROPOSAL__</script>
+<script type="application/json" id="snaps">__SNAPS__</script>
+<script>
+"use strict";
+const DRAFT = JSON.parse(document.getElementById("draft").textContent);
+const PROPOSAL = JSON.parse(document.getElementById("proposal").textContent);
+const SNAPS = JSON.parse(document.getElementById("snaps").textContent);
+const T = DRAFT;
+const $ = (s, r = document) => r.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const getPath = (o, p) => p.split(".").reduce((a, k) => (a == null ? undefined : a[k]), o);
+const same = (p) => JSON.stringify(getPath(DRAFT, p)) === JSON.stringify(getPath(PROPOSAL, p));
+const fontStack = (n) => n === "System" ? "system-ui, sans-serif" : `'${String(n).replace(/['"<>]/g, "")}', system-ui, sans-serif`;
+function css(hex) {
+  if (!/^#([0-9a-f]{6}|[0-9a-f]{8})$/i.test(hex || "")) return "transparent";
+  if (hex.length === 7) return hex;
+  return `rgba(${parseInt(hex.slice(3, 5), 16)},${parseInt(hex.slice(5, 7), 16)},${parseInt(hex.slice(7, 9), 16)},${(parseInt(hex.slice(1, 3), 16) / 255).toFixed(3)})`;
+}
+function rgb(hex) { const h = (hex || "#000000").replace("#", "").slice(-6); return [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) || 0); }
+function relLum(hex) { return rgb(hex).map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }).reduce((s, v, i) => s + v * [0.2126, 0.7152, 0.0722][i], 0); }
+function contrast(a, b) { const x = relLum(a), y = relLum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+
+// ---------------- Catalogue (same groups and order as the Design Workbench) ----------------
+const SYSTEMS = { recent: "Recently played", nes: "NES / Famicom", snes: "Super NES", n64: "Nintendo 64", gb: "Game Boy", gbc: "Game Boy Color", gba: "Game Boy Advance", nds: "Nintendo DS", n3ds: "Nintendo 3DS", gc: "GameCube", wii: "Wii", wiiu: "Wii U", switch: "Switch", genesis: "Genesis / Mega Drive", psx: "PlayStation", ps2: "PlayStation 2", psp: "PSP", xbox360: "Xbox 360", steam: "Steam (GameNative)" };
+const W = { 300: "Light 300", 400: "Regular 400", 500: "Medium 500", 600: "Semibold 600", 700: "Bold 700", 800: "Extra bold 800", 900: "Black 900" };
+const EV = ["move", "select", "back", "tab", "launch", "error", "bump"];
+const EVL = { move: "Move focus", select: "Select", back: "Back", tab: "Switch tab", launch: "Start a game", error: "Error", bump: "End of a row" };
+const C = (p, l, h) => ({ p, l, t: "color", h });
+const R = (p, l, u, h, cap) => ({ p, l, t: "num", u, h, cap });
+const S = (p, l, o, h) => ({ p, l, t: "sel", o, h });
+const B = (p, l, h) => ({ p, l, t: "bool", h });
+const X = (p, l) => ({ p, l, t: "text" });
+const F = (p, l) => ({ p, l, t: "font" });
+const WT = (p, l) => ({ p, l, t: "sel", o: W });
+const GROUPS = [
+  { n: 2, id: "layout", title: "Layout", items: [
+    S("layout.games", "Games arrangement", { shelves: "A row per system", grid: "One grid with headings" }),
+    B("layout.showRecent", "Recently played row"),
+    R("layout.recentCount", "Games in Recently played", "games"),
+    S("layout.systemOrder", "System order", { registry: "Console order", alphabetical: "A to Z", mostGames: "Most games first" }),
+    S("layout.scrollAnchor", "Where the focused tile sits in its row", { start: "Near the left", center: "Centred", edge: "Only scroll when needed" }),
+  ]},
+  { n: 3, id: "colors", title: "Colours", items: [
+    S("colors.backgroundStyle", "Background style", { solid: "Solid", gradient: "Gradient", glow: "Gradient + glow" }),
+    C("colors.background", "Background", "Bottom of the gradient"), C("colors.backgroundTop", "Background, top of gradient"),
+    C("colors.glowA", "Glow colour, top left"), C("colors.glowB", "Glow colour, bottom right"), R("colors.glowStrength", "Glow strength", ""),
+    C("colors.surface", "Surfaces", "Cards, dialogs, settings panels"), C("colors.tile", "Tile"), C("colors.tileFocused", "Tile when focused"),
+    C("colors.text", "Text"), C("colors.textMuted", "Secondary text", "Labels, counts, hints"), C("colors.accent", "Accent", "Wordmark, active tab, highlights"),
+    C("colors.focusRing", "Focus ring"), C("colors.focusGlow", "Focus glow"), R("colors.focusGlowStrength", "Focus glow strength", ""),
+    C("colors.tabActiveFill", "Active tab fill"), C("colors.tabActiveText", "Active tab text"), C("colors.tabIdleText", "Other tabs' text"),
+    C("colors.hintBadge", "Hint badge (default)"), C("colors.hintBadgeText", "Hint badge text"), C("colors.messageBar", "Message bar"),
+  ]},
+  { n: 4, id: "systems", title: "System colours", items: Object.keys(DRAFT.systemColors).map((id) => C(`systemColors.${id}`, SYSTEMS[id] || id)) },
+  { n: 5, id: "shape", title: "Shape & depth", items: [
+    R("shape.tileWidth", "Tile width", "dp"), R("shape.tileHeight", "Tile height", "dp"), R("shape.tileRadius", "Tile corner radius", "dp"),
+    R("shape.tileBorderWidth", "Tile border", "dp"), C("shape.tileBorderColor", "Tile border colour"),
+    R("shape.focusRingWidth", "Focus ring thickness", "dp"), R("shape.focusRingGap", "Gap between tile and ring", "dp"),
+    S("shape.shadow", "Tile shadow", { none: "None", soft: "Soft", hard: "Hard offset (retro)" }), C("shape.shadowColor", "Shadow colour"),
+    R("shape.shadowOffset", "Hard shadow offset", "dp", "Only used by the hard shadow"),
+    S("shape.systemStrip", "System colour strip on tiles", { none: "None", top: "Top", bottom: "Bottom", left: "Left" }), R("shape.systemStripSize", "Strip thickness", "dp"),
+    S("shape.tabStyle", "Tab style", { pill: "Filled pill", underline: "Underline", text: "Coloured text" }), R("shape.tabRadius", "Tab corner radius", "dp", "", 40),
+    R("shape.cardRadius", "Card and button radius", "dp"), R("shape.dialogRadius", "Dialog radius", "dp"), R("shape.badgeRadius", "Badge radius", "dp", "", 40),
+  ]},
+  { n: 6, id: "spacing", title: "Spacing", items: [
+    R("spacing.screenPadding", "Screen edge padding", "dp"), R("spacing.headerGap", "Gap below the header", "dp"), R("spacing.shelfGap", "Gap between rows", "dp"),
+    R("spacing.tileGap", "Gap between tiles", "dp"), R("spacing.shelfTitleGap", "Gap below row titles", "dp"),
+  ]},
+  { n: 7, id: "type", title: "Type", items: [
+    F("type.displayFont", "Display font"), F("type.bodyFont", "Body font"),
+    R("type.wordmarkSize", "Wordmark size", "sp"), WT("type.wordmarkWeight", "Wordmark weight"), R("type.tabSize", "Tab size", "sp"), WT("type.tabWeight", "Tab weight"),
+    R("type.shelfTitleSize", "Row title size", "sp"), WT("type.shelfTitleWeight", "Row title weight"), S("type.shelfTitleCase", "Row title case", { upper: "UPPERCASE", title: "As written", lower: "lowercase" }),
+    R("type.shelfTitleTracking", "Row title letter spacing", "sp"), R("type.tileTitleSize", "Game title size", "sp"), WT("type.tileTitleWeight", "Game title weight"),
+    R("type.labelSize", "Label size", "sp"), WT("type.labelWeight", "Label weight"), R("type.clockSize", "Clock size", "sp"), WT("type.clockWeight", "Clock weight"),
+  ]},
+  { n: 8, id: "shelf", title: "Row titles", items: [
+    S("shelf.titleColor", "Row title colour", { system: "System colour", text: "Text colour", muted: "Secondary text" }),
+    S("shelf.marker", "Marker before the title", { dot: "Dot", bar: "Bar", none: "None" }), B("shelf.showCount", "Show the number of games"),
+  ]},
+  { n: 9, id: "tile", title: "Tiles & box art", items: [
+    S("tile.artStyle", "Tile style", { full: "Art fills the tile", card: "Art above a title strip", title: "Title only, no art" }),
+    S("tile.artFit", "Box art fit", { contain: "Whole cover visible", cover: "Fill and crop" }),
+    S("tile.titleVisibility", "Title on art tiles", { always: "Always", focused: "When focused", never: "Never" }),
+    S("tile.systemBadge", "System badge on tiles", { always: "Always", recent: "Only in Recently played", never: "Never" }),
+    B("tile.showFileType", "File type on title-only tiles"), S("tile.placeholder", "Tile without art", { system: "System-colour panel", plain: "Plain tile colour" }),
+  ]},
+  { n: 10, id: "motion", title: "Motion", items: [
+    R("motion.focusScale", "Focus scale", "×"), R("motion.pressScale", "Press-in scale", "×"), R("motion.stiffness", "Spring stiffness", ""), R("motion.damping", "Spring damping", "", "Below 1 overshoots"),
+    R("motion.focusLift", "Focus lift", "dp"), B("motion.idleBob", "Gentle bob on the focused tile"), R("motion.idleBobAmplitude", "Bob height", "dp"), R("motion.idleBobPeriodMs", "Bob cycle", "ms"),
+    S("motion.tabTransition", "Tab change animation", { slide: "Slide", fade: "Fade", none: "None" }), R("motion.tabTransitionMs", "Tab change duration", "ms"), B("motion.reduceMotion", "Reduce motion"),
+  ]},
+  { n: 11, id: "header", title: "Header", items: [
+    B("header.showWordmark", "Show the wordmark"), X("header.wordmark", "Wordmark text"), B("header.clock24h", "24-hour clock"), B("header.showDate", "Show the date"),
+    X("header.tabGames", "Games tab label"), X("header.tabApps", "Apps tab label"), X("header.tabSystem", "System tab label"),
+  ]},
+  { n: 12, id: "hints", title: "Controller hints", items: [
+    B("hints.show", "Show the hint bar"), S("hints.align", "Position", { start: "Left", center: "Centre", end: "Right" }), S("hints.badgeShape", "Button badge shape", { circle: "Circle", rounded: "Rounded square", square: "Square" }),
+    C("hints.colorA", "A button colour"), C("hints.colorB", "B button colour"), C("hints.colorX", "X button colour"), C("hints.colorY", "Y button colour"), C("hints.colorOther", "Other buttons (L1/R1, Start, Select)"),
+  ]},
+  { n: 13, id: "companion", title: "Bottom screen", items: [
+    S("companion.layout", "Layout", { art: "Large cover + details", info: "Details card", minimal: "Title only" }), S("companion.background", "Background", { inherit: "Same as the top screen", color: "Its own colour" }),
+    C("companion.backgroundColor", "Own background colour", "Only used with its own colour"), B("companion.showPlaytime", "Show time played"), B("companion.showLastPlayed", "Show last played"),
+    B("companion.showEmulator", "Show the emulator"), B("companion.showClock", "Show the clock"), B("companion.showHints", "Show button hints"),
+  ]},
+  { n: 14, id: "sounds", title: "Sounds", items: [
+    B("sounds.enabled", "Interface sounds"), R("sounds.volume", "Overall volume", ""), ...EV.map((e) => ({ p: `sounds.events.${e}`, l: EVL[e], t: "sound", e })),
+  ]},
+  { n: 15, id: "haptics", title: "Haptics", items: [
+    B("haptics.enabled", "Haptic feedback"), ...EV.map((e) => S(`haptics.events.${e}`, EVL[e], { off: "Off", light: "Light", medium: "Medium", heavy: "Heavy" })),
+  ]},
+];
+const ALL = GROUPS.flatMap((g) => g.items.map((it, i) => ({ ...it, no: `${g.n}.${i + 1}`, g })));
+const mine = ALL.filter((it) => !same(it.p));
+
+// ---------------- Music helpers ----------------
+const NAMES = ["C", "C♯", "D", "D♯", "E", "F", "F♯", "G", "G♯", "A", "A♯", "B"];
+function noteName(f) { const m = 69 + 12 * Math.log2(f / 440); const r = Math.round(m); const cents = Math.round((m - r) * 100); return `${NAMES[((r % 12) + 12) % 12]}${Math.floor(r / 12) - 1}${Math.abs(cents) >= 10 ? (cents > 0 ? "+" : "") + cents + "¢" : ""}`; }
+function soundLength(s) { return s.notes.length * s.noteMs + s.decayMs; }
+
+// ---------------- Value rendering ----------------
+function valueHtml(it) {
+  const v = getPath(DRAFT, it.p);
+  switch (it.t) {
+    case "color": return `<span class="sw" style="background:${css(v)}"></span><span class="code">${esc(v)}</span>`;
+    case "num": return it.cap && v >= it.cap ? `Fully round <span class="code">(${v})</span>` : `${esc(v)}${it.u ? " " + esc(it.u) : ""}`;
+    case "sel": return esc(it.o[v] ?? v);
+    case "bool": return v ? "On" : "Off";
+    case "text": return `“${esc(v)}”`;
+    case "font": return `<span style="font-family:${fontStack(v)};font-size:18px;font-weight:600">${esc(v)}</span>`;
+    case "sound": return `${esc(v.wave)} · ${v.notes.map((f) => `${noteName(f)}`).join(" → ")} · ${soundLength(v)} ms · volume ${v.volume} <button class="play" type="button" data-play="${it.e}">Play</button>`;
+  }
+  return esc(JSON.stringify(v));
+}
+function itemsHtml(g) {
+  return `<div class="spec">${g.items.map((it, i) => {
+    const no = `${g.n}.${i + 1}`, changed = !same(it.p);
+    return `<div class="item" id="i${no.replace(".", "-")}" data-comment-target>
+      <span class="no">${no}</span>
+      <span class="name">${esc(it.l)}${it.h ? `<small>${esc(it.h)}</small>` : ""}</span>
+      <span class="side"><span class="status ${changed ? "mine" : ""}">${changed ? "Your change" : "Proposal"}</span><button class="tweak" type="button" data-tweak="i${no.replace(".", "-")}">Tweak</button></span>
+      <span class="value">${valueHtml(it)}</span>
+    </div>`;
+  }).join("")}</div>`;
+}
+
+// ---------------- Specimens per section ----------------
+const vars = `--t-text:${css(T.colors.text)};--t-accent:${css(T.colors.accent)};--t-display:${fontStack(T.type.displayFont)};--t-body:${fontStack(T.type.bodyFont)};`;
+function stage(inner, cap) { return `<div class="stage" style="${vars}">${cap ? `<div class="stage-cap">${cap}</div>` : ""}${inner}</div>`; }
+function screenBox(id, w, h) { return `<div class="screen-box" data-w="${w}" data-h="${h}"><div class="scaler" id="${id}"></div></div>`; }
+function bgCss() {
+  const c = T.colors, grad = `linear-gradient(${css(c.backgroundTop)}, ${css(c.background)})`;
+  if (c.backgroundStyle === "solid") return `background:${css(c.background)}`;
+  if (c.backgroundStyle === "gradient") return `background:${grad}`;
+  const a = c.glowStrength;
+  return `background:radial-gradient(circle at 12% 5%, rgba(${rgb(c.glowA)},${a}) 0, transparent 55%), radial-gradient(circle at 92% 100%, rgba(${rgb(c.glowB)},${a}) 0, transparent 50%), ${grad}`;
+}
+
+function springSeries(k, z, ms = 700) {
+  const c = 2 * z * Math.sqrt(k); let p = 0, v = 0; const out = [];
+  for (let t = 0; t <= ms; t += 1) { out.push([t, p]); const h = 0.001 / 4; for (let i = 0; i < 4; i++) { const a = -k * (p - 1) - c * v; v += a * h; p += v * h; } }
+  return out;
+}
+function springFacts() {
+  const s = springSeries(T.motion.stiffness, T.motion.damping);
+  let peak = s[0]; for (const pt of s) if (pt[1] > peak[1]) peak = pt;
+  let settle = 0; for (const [t, p] of s) if (Math.abs(p - 1) > 0.02) settle = t;
+  return { series: s, peakT: peak[0], overshoot: Math.max(0, peak[1] - 1), settle };
+}
+function chartSvg() {
+  const f = springFacts(), m = T.motion, W2 = 640, H2 = 260, L = 56, Rr = 18, Tp = 18, Bt = 40;
+  const maxMs = 600, s0 = 1, s1 = 1 + (m.focusScale - 1) * Math.max(1.15, 1 + f.overshoot + 0.05);
+  const x = (t) => L + (t / maxMs) * (W2 - L - Rr);
+  const y = (sc) => Tp + (1 - (sc - s0) / (s1 - s0)) * (H2 - Tp - Bt);
+  const sc = (p) => 1 + (m.focusScale - 1) * p;
+  const pts = f.series.filter(([t]) => t <= maxMs).map(([t, p]) => `${x(t).toFixed(1)},${y(sc(p)).toFixed(1)}`).join(" ");
+  const area = `${x(0)},${y(s0)} ${pts} ${x(maxMs)},${y(s0)}`;
+  let ticks = "";
+  for (let t = 0; t <= maxMs; t += 100) ticks += `<line x1="${x(t)}" x2="${x(t)}" y1="${Tp}" y2="${H2 - Bt}" style="stroke:var(--rule);stroke-width:1"/><text x="${x(t)}" y="${H2 - Bt + 18}" text-anchor="middle" font-size="11" style="fill:var(--muted)">${t}</text>`;
+  const ySteps = []; const step = (s1 - s0) > 0.12 ? 0.04 : 0.02;
+  for (let v = s0; v <= s1 + 1e-9; v += step) ySteps.push(v);
+  for (const v of ySteps) ticks += `<line x1="${L}" x2="${W2 - Rr}" y1="${y(v)}" y2="${y(v)}" style="stroke:var(--rule);stroke-width:1"/><text x="${L - 8}" y="${y(v) + 4}" text-anchor="end" font-size="11" style="fill:var(--muted)">${v.toFixed(2)}</text>`;
+  const peakX = x(f.peakT), peakY = y(sc(1 + f.overshoot));
+  return `<svg viewBox="0 0 ${W2} ${H2}" width="100%" style="max-width:${W2}px;display:block" role="img" aria-label="Focus scale over time: rises from 1.00 to ${m.focusScale.toFixed(2)}, peaking at ${(1 + (m.focusScale - 1) * (1 + f.overshoot)).toFixed(3)} after ${f.peakT} ms">
+    ${ticks}
+    <line x1="${L}" x2="${W2 - Rr}" y1="${y(m.focusScale)}" y2="${y(m.focusScale)}" style="stroke:var(--accent);stroke-width:1.5;stroke-dasharray:5 4"/>
+    <text x="${W2 - Rr}" y="${y(m.focusScale) - 6}" text-anchor="end" font-size="11" style="fill:var(--accent)">target ${m.focusScale.toFixed(2)}×</text>
+    <polygon points="${area}" style="fill:var(--accent);fill-opacity:0.10"/>
+    <polyline points="${pts}" style="fill:none;stroke:var(--accent);stroke-width:2.5;stroke-linejoin:round"/>
+    <circle cx="${peakX}" cy="${peakY}" r="5" style="fill:var(--accent)"/>
+    <text x="${peakX + 10}" y="${peakY - 8}" font-size="11" style="fill:var(--ink)">peak ${(1 + (m.focusScale - 1) * (1 + f.overshoot)).toFixed(3)}× at ${f.peakT} ms</text>
+    <text x="${(L + W2 - Rr) / 2}" y="${H2 - 6}" text-anchor="middle" font-size="11" style="fill:var(--muted)">milliseconds after focus arrives</text>
+  </svg>`;
+}
+
+const SPEC = {
+  layout: () => `<p class="summary">Shown with the <b>Nintendo DS</b> row focused on its third game: with your change (2.5) the focused tile sits in the middle of its row, so you see games on both sides.</p>` +
+    stage(screenBox("shotBTop", 833, 468), `<span>TOP SCREEN · rows per system · focused tile centred</span>`),
+  colors: () => {
+    const c = T.colors;
+    const keys = ["background", "backgroundTop", "surface", "tile", "tileFocused", "text", "textMuted", "accent", "focusRing", "focusGlow", "tabActiveFill", "tabActiveText", "tabIdleText", "hintBadge", "hintBadgeText", "messageBar", "glowA", "glowB"];
+    const label = Object.fromEntries(GROUPS[1].items.map((it) => [it.p.split(".")[1], it.l]));
+    const pairs = [["Text on background", c.text, c.background], ["Text on tile", c.text, c.tile], ["Secondary text on tile", c.textMuted, c.tile], ["Secondary text on background", c.textMuted, c.background], ["Active tab text on its fill", c.tabActiveText, c.tabActiveFill], ["Hint text on badge", c.hintBadgeText, c.hintBadge]];
+    return `<div class="palette">${keys.map((k) => `<div class="pal"><div class="fill" style="background:${css(c[k])}"></div><div class="meta"><b>${esc(label[k] || k)}</b><span>${esc(c[k])}</span></div></div>`).join("")}</div>
+      <div class="contrast">${pairs.map(([n, fg, bg]) => { const r = contrast(fg, bg); return `<div class="ratio" style="background:${css(bg)};color:${css(fg)}"><span>${n}</span><b>${r.toFixed(1)}:1</b></div>`; }).join("")}</div>
+      <p class="figure-note">Contrast ratios use the WCAG formula. 4.5:1 is the usual minimum for small text and 3:1 for large text.</p>
+      <div style="margin-top:14px">${stage(`<div style="height:120px;border-radius:12px;${bgCss()}"></div>`, `<span>BACKGROUND · ${esc(GROUPS[1].items[0].o[c.backgroundStyle])} · glow ${c.glowStrength}</span>`)}</div>`;
+  },
+  systems: () => `<div class="palette">${Object.entries(T.systemColors).map(([id, hex]) => `<div class="pal"><div class="fill" style="background:${css(hex)}"></div><div class="meta"><b>${esc(SYSTEMS[id] || id)}</b><span>${esc(hex)}</span></div></div>`).join("")}</div>`,
+  shape: () => {
+    const sh = T.shape, ringOut = sh.focusRingGap + sh.focusRingWidth;
+    const anatomy = `<div class="anatomy"><div id="anatomyTile"></div>
+      <span class="callout right" style="top:4px">${sh.tileWidth} × ${sh.tileHeight} dp</span>
+      <span class="callout right" style="top:34px">corner radius ${sh.tileRadius} dp</span>
+      <span class="callout right" style="top:64px">ring ${sh.focusRingWidth} dp, ${sh.focusRingGap} dp gap</span>
+      <span class="callout right" style="top:94px">${esc(GROUPS[3].items[7].o[sh.shadow])} shadow</span>
+      <span class="callout right" style="top:${sh.tileHeight - 20}px">${esc(sh.systemStrip)} strip ${sh.systemStripSize} dp</span></div>`;
+    const r = (label, w, h, rad) => `<div class="radius-shape" style="width:${w}px;height:${h}px;border-radius:${Math.min(rad, h / 2)}px">${label}</div>`;
+    return stage(`<div style="overflow-x:auto">${anatomy}</div><div class="radii">${r(`tab ${sh.tabRadius >= 40 ? "round" : sh.tabRadius}`, 96, 36, sh.tabRadius)}${r(`card ${sh.cardRadius}`, 120, 80, sh.cardRadius)}${r(`dialog ${sh.dialogRadius}`, 150, 100, sh.dialogRadius)}${r(`badge ${sh.badgeRadius >= 40 ? "round" : sh.badgeRadius}`, 56, 22, sh.badgeRadius)}</div>`, `<span>FOCUSED TILE · ANATOMY</span><span>ring sits ${ringOut} dp outside the tile</span>`);
+  },
+  spacing: () => {
+    const sp = T.spacing, sh = T.shape, k = 0.5;
+    const tile = (n) => `<div style="width:${sh.tileWidth * k}px;height:${sh.tileHeight * k}px;border-radius:${sh.tileRadius * k}px;background:${css(T.colors.tile)};flex:none;display:flex;align-items:center;justify-content:center;font:500 10px var(--mono);color:var(--stage-muted)">${n}</div>`;
+    const gapLabel = (px, text) => `<div style="width:${px * k}px;flex:none;position:relative"><span style="position:absolute;left:50%;top:-16px;transform:translateX(-50%);font:500 10px var(--mono);color:${css(T.colors.focusRing)};white-space:nowrap">${text}</span><div style="position:absolute;left:0;right:0;top:50%;height:1px;background:${css(T.colors.focusRing)}"></div></div>`;
+    const row = (title) => `<div style="display:flex;flex-direction:column;gap:${sp.shelfTitleGap * k}px"><div style="font:600 10px var(--mono);color:var(--stage-muted);letter-spacing:.05em">${title}</div><div style="display:flex;align-items:center">${tile("tile")}${gapLabel(sp.tileGap, sp.tileGap)}${tile("tile")}${gapLabel(sp.tileGap, sp.tileGap)}${tile("tile")}</div></div>`;
+    return stage(`<div class="spacing-diagram"><div style="display:inline-flex;flex-direction:column;gap:${sp.shelfGap * k}px;padding:22px ${sp.screenPadding * k}px 10px;border:1px dashed var(--stage-muted);border-radius:10px;position:relative">
+        <span style="position:absolute;left:4px;top:4px;font:500 10px var(--mono);color:var(--stage-muted)">screen edge · padding ${sp.screenPadding} dp</span>
+        <div style="height:${sp.headerGap * k}px;border-left:1px solid ${css(T.colors.focusRing)};font:500 10px var(--mono);color:${css(T.colors.focusRing)};padding-left:6px;line-height:${Math.max(10, sp.headerGap * k)}px">header gap ${sp.headerGap}</div>
+        ${row("ROW TITLE · gap below " + sp.shelfTitleGap)}
+        <div style="font:500 10px var(--mono);color:${css(T.colors.focusRing)}">↕ ${sp.shelfGap} dp between rows</div>
+        ${row("ROW TITLE")}
+      </div></div>`, `<span>SPACING · drawn at half size</span><span>numbers in dp</span>`);
+  },
+  type: () => {
+    const t = T.type, c = T.colors;
+    const line = (label, html) => `<div style="display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 18px;align-items:baseline;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08)"><div style="min-width:0">${html}</div><span style="font:500 11px var(--mono);color:var(--stage-muted);text-align:right">${label}</span></div>`;
+    return stage(
+      line(`${esc(t.displayFont)} ${t.wordmarkSize}/${t.wordmarkWeight}`, `<span style="font-family:${fontStack(t.displayFont)};font-size:${t.wordmarkSize}px;font-weight:${t.wordmarkWeight};color:${css(c.accent)}">${esc(T.header.wordmark)}</span>`) +
+      line(`${esc(t.displayFont)} ${t.tabSize}/${t.tabWeight}`, `<span style="font-family:${fontStack(t.displayFont)};font-size:${t.tabSize}px;font-weight:${t.tabWeight}">Games &nbsp; Apps &nbsp; System</span>`) +
+      line(`${esc(t.displayFont)} ${t.shelfTitleSize}/${t.shelfTitleWeight} · +${t.shelfTitleTracking}`, `<span style="font-family:${fontStack(t.displayFont)};font-size:${t.shelfTitleSize}px;font-weight:${t.shelfTitleWeight};letter-spacing:${t.shelfTitleTracking}px;color:${css(T.systemColors.nds)}">${t.shelfTitleCase === "upper" ? "NINTENDO DS" : "Nintendo DS"}</span>`) +
+      line(`${esc(t.bodyFont)} ${t.tileTitleSize}/${t.tileTitleWeight}`, `<span style="font-family:${fontStack(t.bodyFont)};font-size:${t.tileTitleSize}px;font-weight:${t.tileTitleWeight}">Star Courier</span>`) +
+      line(`${esc(t.bodyFont)} ${t.labelSize}/${t.labelWeight}`, `<span style="font-family:${fontStack(t.bodyFont)};font-size:${t.labelSize}px;font-weight:${t.labelWeight};color:${css(c.textMuted)}">Played 3 h 12 min · Last played yesterday</span>`) +
+      line(`${esc(t.bodyFont)} ${t.clockSize}/${t.clockWeight}`, `<span style="font-family:${fontStack(t.bodyFont)};font-size:${t.clockSize}px;font-weight:${t.clockWeight}">5:08 PM</span>`),
+      `<span>TYPE SCALE · sizes in sp</span><span>display: ${esc(t.displayFont)} · body: ${esc(t.bodyFont)}</span>`);
+  },
+  shelf: () => stage(`<div style="display:flex;flex-direction:column;gap:14px">${SNAPS.parts.shelfTitles.join("")}</div>`, `<span>ROW TITLES · bar marker (your change 8.2)</span>`),
+  tile: () => stage(`<div class="specimens">
+      <div class="specimen"><div id="spRest"></div><span class="label">At rest</span></div>
+      <div class="specimen"><div id="spFocus"></div><span class="label">Focused</span></div>
+      <div class="specimen"><div id="spPress"></div><span class="label">Pressed (A held)</span></div>
+      <div class="specimen"><div id="spNoArt"></div><span class="label">No art yet</span></div></div>`, `<span>TILE STATES · actual size</span><span>title shows on focus</span>`),
+  motion: () => {
+    const f = springFacts(), m = T.motion;
+    return `<div class="chart-wrap">${chartSvg()}</div>
+      <div class="facts">
+        <div class="fact"><b>${(f.overshoot * 100).toFixed(1)}%</b><span>overshoot past the target</span></div>
+        <div class="fact"><b>${f.peakT} ms</b><span>to the peak</span></div>
+        <div class="fact"><b>${f.settle} ms</b><span>until within 2% of target</span></div>
+        <div class="fact"><b>${m.idleBobAmplitude} dp / ${(m.idleBobPeriodMs / 1000).toFixed(1)} s</b><span>idle bob while focused</span></div>
+      </div>
+      <div style="margin-top:14px">${stage(`<div class="demo-row"><div id="demoTile" style="padding:30px"></div><div style="display:flex;flex-direction:column;gap:10px"><button class="play" type="button" id="demoFocus">Focus</button><button class="play" type="button" id="demoPress">Press</button><span class="demo-note" style="display:none;font-size:12px;color:var(--stage-muted)">Your device asks for reduced motion, so the demo jumps instead of springing.</span></div></div>`, `<span>LIVE DEMO · same spring maths as the launcher</span>`)}</div>`;
+  },
+  header: () => stage(`<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">${SNAPS.parts.wordmark}${SNAPS.parts.tabActive}${SNAPS.parts.tabIdle}</div>`, `<span>HEADER PIECES · wordmark, active tab, other tab</span>`),
+  hints: () => stage(SNAPS.parts.hints, `<span>HINT BAR · right-aligned, circle badges</span>`),
+  companion: () => `<p class="summary">Here the bottom screen is following the focused <b>Garden Days</b> from section 2.</p>` + stage(`<div style="max-width:538px">${screenBox("shotBBottom", 538, 468)}</div>`, `<span>BOTTOM SCREEN · large cover + details</span>`),
+  sounds: () => `<p class="summary">Seven short sounds made from these settings. The Thor plays the same samples. You can also swap any of them for your own file on the device (System → Sounds). <b>Play</b> buttons below use your speakers.</p>`,
+  haptics: () => `<p class="summary">Vibration strength for each event. These can't be felt in a browser, only on the Thor.</p>`,
+};
+const SUMMARY = {
+  layout: "One horizontal row per system under a Recently played row of 12 games, in console order.",
+  colors: "Warm off-white text on deep violet-black, with a coral accent and a sunny yellow focus ring and glow.",
+  systems: "Each system has its own colour, used for row titles and markers, tile strips, badges and tiles with no art.",
+  shape: "Chunky square tiles with generous rounding, a soft shadow and a coloured strip naming the system.",
+  spacing: "Comfortable gaps sized for viewing at arm's length on a 6-inch screen.",
+  type: "Fredoka for display, rounded and friendly. Nunito for everything else, also rounded and very legible at small sizes.",
+  shelf: "Row titles in the system's colour, uppercase, with a bar marker and a game count.",
+  tile: "Box art fills the tile with the whole cover visible. Titles appear when a tile is focused.",
+  motion: "Bouncy focus with a short overshoot, a small lift, and a gentle bob while a tile stays focused.",
+  header: "Wordmark, three tabs and a 12-hour clock.",
+  hints: "A single quiet badge colour for every button, aligned right.",
+  companion: "A large cover with time played, last played and emulator, plus clock and hints.",
+  sounds: "The Pop set: soft triangle-wave blips that rise for select and fall for back. Move uses a sine wave (your change).",
+  haptics: "Light ticks for movement, medium for select, heavy for starting a game or an error.",
+};
+
+// ---------------- Build ----------------
+function buildChips() {
+  $("#statusChips").innerHTML = `<span class="chip">Draft 1 · preliminary</span><span class="chip">0 of ${ALL.length} approved</span><span class="chip mine">${mine.length} changed by you</span><span class="chip">Open to change</span>`;
+}
+function buildToc() {
+  const items = [[1, "s1", "At a glance", false], ...GROUPS.map((g) => [g.n, `s${g.n}`, g.title, g.items.some((it) => !same(it.p))]), [16, "s16", "Fixed for now", false]];
+  $("#toc").innerHTML = items.map(([n, id, t, dot]) => `<li><a href="#${id}"><span class="n">${n}</span><span>${esc(t)}</span>${dot ? `<span class="dot" title="Includes your change"></span>` : "<span></span>"}</a></li>`).join("");
+}
+function buildSections() {
+  $("#groupSections").outerHTML = GROUPS.map((g) => `<section id="s${g.n}" data-comment-target>
+    <div class="sec-head"><span class="sec-num">${g.n}</span><h2>${esc(g.title)}</h2><button class="tweak" type="button" data-tweak="s${g.n}">Tweak</button></div>
+    <p class="summary">${esc(SUMMARY[g.id] || "")}</p>
+    ${SPEC[g.id] ? SPEC[g.id]() : ""}
+    ${itemsHtml(g)}
+  </section>`).join("");
+}
+function buildGlance() {
+  const f = springFacts();
+  $("#glanceFacts").innerHTML = [
+    [`${T.shape.tileWidth} dp`, "square tiles, " + T.shape.tileRadius + " dp corners"],
+    [`${T.type.displayFont} + ${T.type.bodyFont}`, "display and body fonts"],
+    [`${(f.overshoot * 100).toFixed(0)}% bounce`, "on focus, settles in " + f.settle + " ms"],
+    ["Pop", "sound set, 7 sounds"],
+  ].map(([b, s]) => `<div class="fact"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
+}
+function place(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
+function fitScreens() {
+  document.querySelectorAll(".screen-box").forEach((box) => {
+    const w = +box.dataset.w, h = +box.dataset.h, s = Math.min(1, box.clientWidth / w);
+    box.style.height = `${h * s}px`;
+    const sc = box.querySelector(".scaler"); sc.style.width = `${w}px`; sc.style.height = `${h}px`; sc.style.transform = `scale(${s})`;
+  });
+}
+
+// ---------------- Specimen placement ----------------
+function specimen(html, mutate) {
+  const wrap = document.createElement("div"); wrap.innerHTML = html.trim();
+  const el = wrap.firstElementChild; if (mutate) mutate(el);
+  return el ? el.outerHTML : "";
+}
+function placeSpecimens() {
+  place("shotATop", SNAPS.a.top); place("shotABottom", SNAPS.a.bottom);
+  place("shotBTop", SNAPS.b.top); place("shotBBottom", SNAPS.b.bottom);
+  const m = T.motion;
+  place("spRest", SNAPS.parts.rest);
+  place("spFocus", SNAPS.parts.focused);
+  place("spPress", specimen(SNAPS.parts.focused, (el) => { el.style.transform = `translateY(${-m.focusLift}px) scale(${(m.focusScale * m.pressScale).toFixed(4)})`; }));
+  place("spNoArt", SNAPS.parts.noArt);
+  place("anatomyTile", specimen(SNAPS.parts.focused, (el) => { el.style.transform = "none"; }));
+  place("demoTile", specimen(SNAPS.parts.rest, (el) => { el.id = "demoEl"; el.style.transform = "none"; }));
+}
+
+// ---------------- Live spring demo ----------------
+const demo = { p: 0, v: 0, target: 0, press: 0, pv: 0, ptarget: 0, raf: null, last: 0 };
+function demoStep(now) {
+  const el = document.getElementById("demoEl"); if (!el) return;
+  const m = T.motion, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const dt = Math.min(0.05, (now - demo.last) / 1000); demo.last = now;
+  if (reduce) { demo.p = demo.target; demo.press = demo.ptarget; demo.v = demo.pv = 0; }
+  else {
+    const k = m.stiffness, c = 2 * m.damping * Math.sqrt(k), h = dt / 8, kp = 1500, cp = 2 * Math.sqrt(kp);
+    for (let i = 0; i < 8; i++) { let a = -k * (demo.p - demo.target) - c * demo.v; demo.v += a * h; demo.p += demo.v * h; a = -kp * (demo.press - demo.ptarget) - cp * demo.pv; demo.pv += a * h; demo.press += demo.pv * h; }
+  }
+  const pc = Math.max(0, Math.min(1, demo.p));
+  const bob = demo.target === 1 && m.idleBob && !reduce ? Math.sin((now / m.idleBobPeriodMs) * 2 * Math.PI) : 0;
+  el.style.transform = `translateY(${-m.focusLift * demo.p + m.idleBobAmplitude * bob}px) scale(${(1 + (m.focusScale - 1) * demo.p) * (1 - (1 - m.pressScale) * demo.press)})`;
+  const ring = el.querySelector(":scope > .tile-ring"); if (ring) ring.style.opacity = pc;
+  const glow = el.querySelector(":scope > .tile-glow"); if (glow) glow.style.opacity = T.colors.focusGlowStrength * pc;
+  const surf = el.querySelector(":scope > .tile-surface"); if (surf) surf.style.background = `color-mix(in srgb, ${css(T.colors.tileFocused)} ${Math.round(pc * 100)}%, ${css(T.colors.tile)})`;
+  const moving = Math.abs(demo.p - demo.target) > 0.001 || Math.abs(demo.v) > 0.001 || Math.abs(demo.press - demo.ptarget) > 0.001 || bob !== 0;
+  demo.raf = moving ? requestAnimationFrame(demoStep) : null;
+}
+function demoKick() { if (!demo.raf) { demo.last = performance.now(); demo.raf = requestAnimationFrame(demoStep); } }
+
+// ---------------- Sound (same synthesiser as the launcher) ----------------
+const SR = 44100;
+function synth(spec) {
+  const f = Math.fround, notes = (spec.notes && spec.notes.length ? spec.notes : [440]).map(f);
+  const noteLen = Math.max(1, spec.noteMs | 0) / 1000, hold = notes.length * noteLen, decay = Math.max(0, spec.decayMs | 0) / 1000, total = hold + decay;
+  const count = Math.max(1, Math.round(total * SR)), attack = Math.max(0, spec.attackMs | 0) / 1000;
+  const noise = Math.min(1, Math.max(0, f(spec.noise))), alpha = 1 - Math.exp(-2 * Math.PI * Math.min(20000, Math.max(20, f(spec.lowpass))) / SR);
+  const volume = Math.min(1, Math.max(0, f(spec.volume))), sweep = f(spec.sweep || 0);
+  const out = new Float32Array(count); let phase = 0, lp = 0, seed = 0x2545F491 | 0;
+  for (let i = 0; i < count; i++) {
+    const t = i / SR, index = Math.min(notes.length - 1, Math.floor(t / noteLen));
+    const freq = notes[index] * Math.pow(2, sweep * (t / total) / 12);
+    phase += freq / SR; phase -= Math.floor(phase);
+    const osc = spec.wave === "sine" ? Math.sin(2 * Math.PI * phase) : spec.wave === "square" ? (phase < 0.5 ? 1 : -1) * 0.6 : spec.wave === "saw" ? (2 * phase - 1) * 0.6 : 1 - 4 * Math.abs(phase - 0.5);
+    seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
+    const white = (seed >>> 0) / 4294967296 * 2 - 1, raw = osc * (1 - noise) + white * noise;
+    const env = t < attack ? t / attack : t < hold ? 1 : decay > 0 ? Math.exp(-5 * (t - hold) / decay) : 0;
+    lp += alpha * (raw * env - lp); out[i] = lp * volume;
+  }
+  return out;
+}
+let audio = null;
+function play(event) {
+  const spec = T.sounds.events[event]; if (!spec) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)({ sampleRate: SR });
+    if (audio.state === "suspended") audio.resume();
+    const data = synth(spec), buf = audio.createBuffer(1, data.length, SR); buf.copyToChannel(data, 0);
+    const src = audio.createBufferSource(); src.buffer = buf; const g = audio.createGain(); g.gain.value = T.sounds.volume;
+    src.connect(g).connect(audio.destination); src.start();
+  } catch (e) { toast("Sound can't play in this view."); }
+}
+function toast(msg) { const t = $("#toast"); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600); }
+
+// ---------------- Tweaks (opens the claude.ai comment composer on that item) ----------------
+let comments = null;
+async function initComments() {
+  try { comments = window.claude && window.claude.use ? await window.claude.use("comments") : null; } catch (e) { comments = null; }
+  if (!comments) {
+    document.querySelectorAll(".tweak").forEach((b) => (b.hidden = true));
+    $("#howtoText").innerHTML = `To ask for a tweak, reply in chat with the item's number (for example "3.12 more orange"). I make the change in the <a href="https://claude.ai/artifact/VPcG1tqcsKakm9WAkhXM5s" target="_blank" rel="noopener">Design Workbench</a>, and nothing becomes final until you approve it there.`;
+  }
+}
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.play) { play(b.dataset.play); return; }
+  if (b.id === "demoFocus") { demo.target = demo.target ? 0 : 1; b.textContent = demo.target ? "Unfocus" : "Focus"; if (demo.target) play("move"); demoKick(); return; }
+  if (b.id === "demoPress") { demo.ptarget = 1; demoKick(); play("select"); setTimeout(() => { demo.ptarget = 0; demoKick(); }, 140); return; }
+  if (b.dataset.tweak) {
+    const target = document.getElementById(b.dataset.tweak);
+    if (!comments || !target) return;
+    try {
+      const r = await comments.openComposer({ element: target });
+      if (!r.opened) toast("Finish the comment you already have open first.");
+    } catch (err) {
+      if (err && err.code === "unavailable") { document.querySelectorAll(".tweak").forEach((x) => (x.hidden = true)); toast("Comments are off here. Reply in chat with the item number instead."); }
+      else if (err && err.code === "rate_limited") toast("One moment, then try again.");
+    }
+  }
+});
+
+buildChips(); buildToc(); buildSections(); buildGlance(); placeSpecimens(); fitScreens();
+new ResizeObserver(fitScreens).observe(document.body);
+initComments();
+</script>
