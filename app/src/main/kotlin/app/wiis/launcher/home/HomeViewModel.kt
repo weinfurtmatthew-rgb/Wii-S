@@ -2,6 +2,7 @@ package app.wiis.launcher.home
 
 import android.content.Intent
 import android.net.Uri
+import android.os.SystemClock
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -25,13 +26,22 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Section { Games, Apps, Spike }
+enum class Section(val label: String) { Games("Games"), Apps("Apps"), Spike("System") }
 
 sealed interface LibraryStatus {
     data object NoFolder : LibraryStatus
     data class Scanning(val found: Int) : LibraryStatus
-    data class Ready(val games: List<Game>) : LibraryStatus
+    data object Ready : LibraryStatus
 }
+
+/** One horizontal row on the Games screen. */
+data class Shelf(val id: String, val title: String, val games: List<Game>)
+
+/**
+ * Which tile should take focus. [token] changes every time focus must be (re)applied, so the UI
+ * can react even when the target is the same game as last time.
+ */
+data class FocusTarget(val shelfId: String, val gameUri: String, val token: Long)
 
 data class EmulatorOption(val choice: EmulatorChoice, val name: String, val installed: Boolean)
 data class EmulatorPicker(val game: Game, val options: List<EmulatorOption>)
@@ -40,17 +50,22 @@ data class HomeUiState(
     val section: Section = Section.Games,
     val apps: List<AppEntry> = emptyList(),
     val library: LibraryStatus = LibraryStatus.NoFolder,
-    val systemNames: Map<String, String> = emptyMap(),
+    val shelves: List<Shelf> = emptyList(),
+    val focusTarget: FocusTarget? = null,
     val picker: EmulatorPicker? = null,
     val message: String? = null,
 )
 
-/** Unidirectional: the screen sends intents (functions), state flows back as one immutable value. */
+/** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
 class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
-    private val local = MutableStateFlow(
-        HomeUiState(systemNames = graph.registry.systems.associate { it.id to it.name }),
-    )
+    private val systemNames = graph.registry.systems.associate { it.id to it.name }
+    private val systemOrder = graph.registry.systems.mapIndexed { i, s -> s.id to i }.toMap()
+
+    private val local = MutableStateFlow(HomeUiState())
+    private var games: List<Game> = emptyList()
+    private var scanning = false
+    private var lastScanAt = 0L
 
     val state: StateFlow<HomeUiState> =
         combine(local, graph.apps.apps) { s, apps -> s.copy(apps = apps) }
@@ -59,10 +74,16 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     init {
         viewModelScope.launch {
             val cached = withContext(Dispatchers.IO) { graph.libraryStore.load() }
-            if (cached != null) local.update { it.copy(library = LibraryStatus.Ready(cached.games)) }
-            else if (rootUri() != null) rescan()
+            if (cached != null) {
+                setGames(cached.games, focusFirst = true)
+                local.update { it.copy(library = LibraryStatus.Ready) }
+            }
+            // Always refresh in the background: picks up games copied since the last scan.
+            if (rootUri() != null) rescan(silent = cached != null)
         }
     }
+
+    // ---- Navigation -------------------------------------------------------------------------
 
     fun selectSection(section: Section) = local.update { it.copy(section = section) }
 
@@ -71,10 +92,19 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         it.copy(section = all[(all.indexOf(it.section) + delta).mod(all.size)])
     }
 
+    /** Start: system screen. Select: flip between Games and Apps. */
+    fun onStart() = selectSection(Section.Spike)
+    fun onSelect() = local.update {
+        it.copy(section = if (it.section == Section.Apps) Section.Games else Section.Apps)
+    }
+
     fun focusGame(game: Game) = graph.shared.setFocus(Focus.OnGame(game))
     fun focusApp(app: AppEntry) = graph.shared.setFocus(Focus.OnApp(app))
+    fun focusConsumed() = local.update { it.copy(focusTarget = null) }
 
     fun launchApp(app: AppEntry) = graph.apps.launch(app)
+
+    // ---- Library ----------------------------------------------------------------------------
 
     fun onFolderPicked(uri: Uri?) {
         uri ?: return
@@ -82,29 +112,66 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
         )
         graph.prefs.edit { putString(KEY_ROOT, uri.toString()) }
-        rescan()
+        rescan(silent = false)
     }
 
-    fun rescan() {
+    fun rescan() = rescan(silent = false)
+
+    private fun rescan(silent: Boolean) {
         val root = rootUri() ?: return
-        local.update { it.copy(library = LibraryStatus.Scanning(0)) }
+        if (scanning) return
+        scanning = true
+        if (!silent) local.update { it.copy(library = LibraryStatus.Scanning(0)) }
         viewModelScope.launch {
-            val games = runCatching {
+            val result = runCatching {
                 withContext(Dispatchers.IO) {
                     RomScanner(graph.context.contentResolver, graph.detector).scan(root) { found ->
-                        local.update { it.copy(library = LibraryStatus.Scanning(found)) }
+                        if (!silent) local.update { it.copy(library = LibraryStatus.Scanning(found)) }
                     }
                 }
-            }.getOrElse { e ->
-                showMessage("Scan failed: ${e.message}. Re-pick the ROM folder.")
-                emptyList()
             }
-            withContext(Dispatchers.IO) {
-                graph.libraryStore.save(LibrarySnapshot(root.toString(), System.currentTimeMillis(), games))
+            scanning = false
+            lastScanAt = SystemClock.elapsedRealtime()
+            result.onSuccess { r ->
+                withContext(Dispatchers.IO) {
+                    graph.libraryStore.save(
+                        LibrarySnapshot(root.toString(), System.currentTimeMillis(), r.games, r.unrecognized, r.unrecognizedExamples),
+                    )
+                }
+                val added = r.games.size - games.size
+                setGames(r.games, focusFirst = !silent)
+                local.update { it.copy(library = LibraryStatus.Ready) }
+                if (silent && added > 0) showMessage("Found $added new game${if (added == 1) "" else "s"}")
+            }.onFailure { e ->
+                local.update { it.copy(library = if (games.isEmpty()) LibraryStatus.NoFolder else LibraryStatus.Ready) }
+                showMessage("Scan failed: ${e.message}. Re-pick the ROM folder from the System tab.")
             }
-            local.update { it.copy(library = LibraryStatus.Ready(games)) }
         }
     }
+
+    private fun setGames(list: List<Game>, focusFirst: Boolean) {
+        games = list
+        val shelves = buildShelves()
+        local.update { s ->
+            val first = shelves.firstOrNull()?.let { sh -> sh.games.firstOrNull()?.let { FocusTarget(sh.id, it.uri, SystemClock.uptimeMillis()) } }
+            s.copy(shelves = shelves, focusTarget = if (focusFirst) first else s.focusTarget)
+        }
+    }
+
+    private fun buildShelves(): List<Shelf> {
+        val recent = games
+            .map { it to graph.playtime.lastPlayed(it.uri) }
+            .filter { it.second > 0 }
+            .sortedByDescending { it.second }
+            .take(RECENT_COUNT)
+            .map { it.first }
+        val bySystem = games.groupBy { it.systemId }
+            .toSortedMap(compareBy { systemOrder[it] ?: Int.MAX_VALUE })
+            .map { (id, list) -> Shelf(id, systemNames[id] ?: id, list) }
+        return listOfNotNull(recent.takeIf { it.isNotEmpty() }?.let { Shelf(RECENT_ID, "Recently played", it) }) + bySystem
+    }
+
+    // ---- Launching --------------------------------------------------------------------------
 
     fun launchGame(game: Game, choice: EmulatorChoice? = null) {
         local.update { it.copy(picker = null) }
@@ -130,10 +197,24 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     fun dismissPicker() = local.update { it.copy(picker = null) }
 
-    /** Called when the top screen comes back to the foreground: closes any running session. */
+    /**
+     * Top screen is back in front. Closes a running session, records playtime, rebuilds the
+     * "Recently played" shelf and puts focus back on the game that was just played (now first in
+     * that shelf). Also refreshes the library in the background if the last scan is stale.
+     */
     fun onReturnedHome() {
-        val ended = graph.shared.endSession() ?: return
-        graph.playtime.record(ended.game.uri, ended.startedAtMillis, System.currentTimeMillis())
+        val ended = graph.shared.endSession()
+        if (ended != null) {
+            graph.playtime.record(ended.game.uri, ended.startedAtMillis, System.currentTimeMillis())
+            local.update {
+                it.copy(
+                    section = Section.Games,
+                    shelves = buildShelves(),
+                    focusTarget = FocusTarget(RECENT_ID, ended.game.uri, SystemClock.uptimeMillis()),
+                )
+            }
+        }
+        if (lastScanAt != 0L && SystemClock.elapsedRealtime() - lastScanAt > STALE_SCAN_MS) rescan(silent = true)
     }
 
     private fun showMessage(text: String) {
@@ -148,5 +229,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private companion object {
         const val KEY_ROOT = "rom_root"
+        const val RECENT_ID = "recent"
+        const val RECENT_COUNT = 12
+        const val STALE_SCAN_MS = 10 * 60_000L
     }
 }

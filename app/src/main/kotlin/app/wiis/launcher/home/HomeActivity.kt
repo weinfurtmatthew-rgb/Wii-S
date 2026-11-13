@@ -9,6 +9,7 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.wiis.designsystem.WiisTheme
 import app.wiis.launcher.graph
+import app.wiis.system.RefreshRate
 
 class HomeActivity : ComponentActivity() {
 
@@ -19,6 +20,8 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        graph.perf.refreshHz = RefreshRate.preferHighest(this)
+        graph.perf.attach(this)
         setContent {
             WiisTheme { HomeScreen(viewModel) }
         }
@@ -26,7 +29,13 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        graph.perf.onResume(this)
         viewModel.onReturnedHome()
         graph.companionPlacer.ensurePlaced()
+    }
+
+    override fun onPause() {
+        graph.perf.onPause()
+        super.onPause()
     }
 }

@@ -85,3 +85,24 @@ class EmulatorLogicTest {
         assertEquals("my game", RomScanner.cleanTitle("my_game.gba"))
     }
 }
+
+class FolderNamingTest {
+    private val registry = EmulatorRegistry.parse(File("src/main/assets/emulators.json").readText())
+    private val detector = SystemDetector(registry)
+
+    @Test fun `descriptive folder names are recognised`() {
+        assertEquals("nds", detector.detect(listOf("ROMs", "Nintendo DS"), "game.zip")?.id)
+        assertEquals("nds", detector.detect(listOf("ROMs", "Nintendo - DS"), "game.7z")?.id)
+        assertEquals("switch", detector.detect(listOf("ROMs", "Nintendo Switch"), "game.nsp")?.id)
+        assertEquals("ps2", detector.detect(listOf("PlayStation 2"), "game.iso")?.id)
+        assertEquals("gba", detector.detect(listOf("Game Boy Advance"), "game.zip")?.id)
+    }
+
+    @Test fun `archives outside a system folder are not guessed`() {
+        assertNull(detector.detect(listOf("ROMs"), "game.zip"))
+    }
+
+    @Test fun `switch homebrew and nca are recognised anywhere`() {
+        assertEquals("switch", detector.detect(emptyList(), "app.nro")?.id)
+    }
+}

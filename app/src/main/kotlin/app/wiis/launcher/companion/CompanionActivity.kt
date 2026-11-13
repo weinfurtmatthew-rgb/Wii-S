@@ -48,6 +48,7 @@ class CompanionActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        app.wiis.system.RefreshRate.preferHighest(this)
         setContent { WiisTheme { CompanionScreen(graph.shared) } }
     }
 

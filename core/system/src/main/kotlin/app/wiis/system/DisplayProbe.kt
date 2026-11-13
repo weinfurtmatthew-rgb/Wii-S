@@ -22,6 +22,7 @@ class DisplayProbe(private val context: Context) {
         val refreshHz: Float,
         val flags: List<String>,
         val state: String,
+        val supportedModes: List<String>,
     )
 
     fun displays(): List<DisplaySnapshot> {
@@ -42,6 +43,9 @@ class DisplayProbe(private val context: Context) {
                     Display.STATE_OFF -> "OFF"
                     Display.STATE_DOZE -> "DOZE"
                     else -> "STATE_${d.state}"
+                },
+                supportedModes = d.supportedModes.map {
+                    "${it.physicalWidth}x${it.physicalHeight}@${"%.0f".format(it.refreshRate)}" + if (it.modeId == mode.modeId) "*" else ""
                 },
             )
         }

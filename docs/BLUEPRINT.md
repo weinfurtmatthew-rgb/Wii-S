@@ -14,6 +14,7 @@
 | D4 | Emulators | RetroArch, Dolphin, PPSSPP, DuckStation, **Cemu, Azahar, Eden, GameNative, melonDS, NetherSX2, XenDroid** ("Zen droid", to be confirmed) |
 | D5 | Device | **Thor Max**; owner can run `adb` |
 | D6 | Milestone 0 scope | Approved as written |
+| D8 | Iteration 1 scope | Approved: bottom-screen reliability, 120 Hz, controller polish, shelf home layout, performance numbers |
 | D7 | Dual-screen mode | **Mode B** (launcher places the companion on the bottom display), forced by the spike results below |
 
 **Stack simplifications (efficiency):**

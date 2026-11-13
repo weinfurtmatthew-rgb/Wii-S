@@ -14,8 +14,8 @@ android {
         applicationId = "app.wiis.launcher"
         minSdk = WiisSdk.MIN
         targetSdk = WiisSdk.TARGET
-        versionCode = 2
-        versionName = "0.0.2-m0"
+        versionCode = 3
+        versionName = "0.1.0-i1"
     }
 
     signingConfigs {
@@ -65,5 +65,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.profileinstaller)
+    implementation(libs.jankstats)
     implementation(libs.kotlinx.coroutines.android)
 }

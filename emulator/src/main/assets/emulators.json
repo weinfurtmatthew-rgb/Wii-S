@@ -6,9 +6,18 @@
       "id": "retroarch",
       "name": "RetroArch",
       "targets": [
-        { "package": "com.retroarch.aarch64", "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture" },
-        { "package": "com.retroarch.ra32", "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture" },
-        { "package": "com.retroarch", "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture" }
+        {
+          "package": "com.retroarch.aarch64",
+          "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture"
+        },
+        {
+          "package": "com.retroarch.ra32",
+          "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture"
+        },
+        {
+          "package": "com.retroarch",
+          "activity": "com.retroarch.browser.retroactivity.RetroActivityFuture"
+        }
       ],
       "launch": {
         "action": "android.intent.action.MAIN",
@@ -18,27 +27,41 @@
           "ROM": "{rom.path}"
         }
       },
-      "control": { "type": "retroarch_udp", "port": 55355 }
+      "control": {
+        "type": "retroarch_udp",
+        "port": 55355
+      }
     },
     {
       "id": "dolphin",
       "verified": true,
       "name": "Dolphin",
       "targets": [
-        { "package": "org.dolphinemu.dolphinemu", "activity": "org.dolphinemu.dolphinemu.ui.main.TvMainActivity" }
+        {
+          "package": "org.dolphinemu.dolphinemu",
+          "activity": "org.dolphinemu.dolphinemu.ui.main.TvMainActivity"
+        }
       ],
       "launch": {
         "action": "android.intent.action.MAIN",
         "category": "android.intent.category.LEANBACK_LAUNCHER",
-        "extras": { "AutoStartFile": "{rom.uri}" }
+        "extras": {
+          "AutoStartFile": "{rom.uri}"
+        }
       }
     },
     {
       "id": "ppsspp",
       "name": "PPSSPP",
       "targets": [
-        { "package": "org.ppsspp.ppssppgold", "activity": "org.ppsspp.ppsspp.PpssppActivity" },
-        { "package": "org.ppsspp.ppsspp", "activity": "org.ppsspp.ppsspp.PpssppActivity" }
+        {
+          "package": "org.ppsspp.ppssppgold",
+          "activity": "org.ppsspp.ppsspp.PpssppActivity"
+        },
+        {
+          "package": "org.ppsspp.ppsspp",
+          "activity": "org.ppsspp.ppsspp.PpssppActivity"
+        }
       ],
       "launch": {
         "action": "android.intent.action.VIEW",
@@ -50,33 +73,63 @@
       "id": "duckstation",
       "name": "DuckStation",
       "targets": [
-        { "package": "com.github.stenzek.duckstation", "activity": "com.github.stenzek.duckstation.EmulationActivity" }
+        {
+          "package": "com.github.stenzek.duckstation",
+          "activity": "com.github.stenzek.duckstation.EmulationActivity"
+        }
       ],
       "launch": {
-        "flags": ["CLEAR_TASK", "CLEAR_TOP"],
-        "boolExtras": { "resumeState": false },
-        "extras": { "bootPath": "{rom.uri}" }
+        "flags": [
+          "CLEAR_TASK",
+          "CLEAR_TOP"
+        ],
+        "boolExtras": {
+          "resumeState": false
+        },
+        "extras": {
+          "bootPath": "{rom.uri}"
+        }
       }
     },
     {
       "id": "cemu",
       "name": "Cemu",
       "targets": [
-        { "package": "info.cemu.cemu", "activity": "info.cemu.cemu.emulation.EmulationActivity" },
-        { "package": "info.cemu.Cemu", "activity": "info.cemu.Cemu.emulation.EmulationActivity" }
+        {
+          "package": "info.cemu.cemu",
+          "activity": "info.cemu.cemu.emulation.EmulationActivity"
+        },
+        {
+          "package": "info.cemu.Cemu",
+          "activity": "info.cemu.Cemu.emulation.EmulationActivity"
+        }
       ],
-      "launch": { "data": "{rom.uri}" }
+      "launch": {
+        "data": "{rom.uri}"
+      }
     },
     {
       "id": "azahar",
       "name": "Azahar",
       "targets": [
-        { "package": "org.azahar_emu.azahar", "activity": "org.citra.citra_emu.activities.EmulationActivity" },
-        { "package": "io.github.azaharplus.android", "activity": "org.citra.citra_emu.activities.EmulationActivity" },
-        { "package": "io.github.lime3ds.android", "activity": "org.citra.citra_emu.activities.EmulationActivity" }
+        {
+          "package": "org.azahar_emu.azahar",
+          "activity": "org.citra.citra_emu.activities.EmulationActivity"
+        },
+        {
+          "package": "io.github.azaharplus.android",
+          "activity": "org.citra.citra_emu.activities.EmulationActivity"
+        },
+        {
+          "package": "io.github.lime3ds.android",
+          "activity": "org.citra.citra_emu.activities.EmulationActivity"
+        }
       ],
       "launch": {
-        "flags": ["CLEAR_TASK", "CLEAR_TOP"],
+        "flags": [
+          "CLEAR_TASK",
+          "CLEAR_TOP"
+        ],
         "data": "{rom.uri}"
       },
       "usesBothScreens": true
@@ -85,9 +138,18 @@
       "id": "eden",
       "name": "Eden",
       "targets": [
-        { "package": "dev.eden.eden_emulator", "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity" },
-        { "package": "dev.legacy.eden_emulator", "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity" },
-        { "package": "dev.eden.eden_emulator.nightly", "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity" }
+        {
+          "package": "dev.eden.eden_emulator",
+          "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity"
+        },
+        {
+          "package": "dev.legacy.eden_emulator",
+          "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity"
+        },
+        {
+          "package": "dev.eden.eden_emulator.nightly",
+          "activity": "org.yuzu.yuzu_emu.activities.EmulationActivity"
+        }
       ],
       "launch": {
         "action": "android.nfc.action.TECH_DISCOVERED",
@@ -98,25 +160,43 @@
       "id": "gamenative",
       "name": "GameNative",
       "targets": [
-        { "package": "app.gamenative", "activity": "app.gamenative.MainActivity" }
+        {
+          "package": "app.gamenative",
+          "activity": "app.gamenative.MainActivity"
+        }
       ],
       "launch": {
         "action": "app.gamenative.LAUNCH_GAME",
-        "extras": { "game_source": "STEAM" },
-        "intExtras": { "app_id": "{rom.contents}" }
+        "extras": {
+          "game_source": "STEAM"
+        },
+        "intExtras": {
+          "app_id": "{rom.contents}"
+        }
       }
     },
     {
       "id": "melonds",
       "name": "melonDS",
       "targets": [
-        { "package": "me.magnum.melonds", "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity" },
-        { "package": "me.magnum.melondualds", "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity" },
-        { "package": "me.magnum.melonds.nightly", "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity" }
+        {
+          "package": "me.magnum.melonds",
+          "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity"
+        },
+        {
+          "package": "me.magnum.melondualds",
+          "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity"
+        },
+        {
+          "package": "me.magnum.melonds.nightly",
+          "activity": "me.magnum.melonds.ui.emulator.EmulatorActivity"
+        }
       ],
       "launch": {
         "action": "me.magnum.melonds.LAUNCH_ROM",
-        "extras": { "uri": "{rom.uri}" }
+        "extras": {
+          "uri": "{rom.uri}"
+        }
       },
       "usesBothScreens": true
     },
@@ -125,14 +205,28 @@
       "verified": true,
       "name": "NetherSX2",
       "targets": [
-        { "package": "xyz.aethersx2.android", "activity": "xyz.aethersx2.android.EmulationActivity" },
-        { "package": "xyz.aethersx2.tturnip", "activity": "xyz.aethersx2.android.EmulationActivity" },
-        { "package": "xyz.aethersx2.cturnip", "activity": "xyz.aethersx2.android.EmulationActivity" }
+        {
+          "package": "xyz.aethersx2.android",
+          "activity": "xyz.aethersx2.android.EmulationActivity"
+        },
+        {
+          "package": "xyz.aethersx2.tturnip",
+          "activity": "xyz.aethersx2.android.EmulationActivity"
+        },
+        {
+          "package": "xyz.aethersx2.cturnip",
+          "activity": "xyz.aethersx2.android.EmulationActivity"
+        }
       ],
       "launch": {
         "action": "android.intent.action.MAIN",
-        "flags": ["CLEAR_TASK", "CLEAR_TOP"],
-        "extras": { "bootPath": "{rom.uri}" }
+        "flags": [
+          "CLEAR_TASK",
+          "CLEAR_TOP"
+        ],
+        "extras": {
+          "bootPath": "{rom.uri}"
+        }
       }
     },
     {
@@ -140,47 +234,437 @@
       "verified": true,
       "name": "XenDroid",
       "targets": [
-        { "package": "xendroid.compose", "activity": "xendroid.compose.EmulatorHostActivity" }
+        {
+          "package": "xendroid.compose",
+          "activity": "xendroid.compose.EmulatorHostActivity"
+        }
       ],
-      "launch": { "data": "{rom.uri}" }
+      "launch": {
+        "data": "{rom.uri}"
+      }
     }
   ],
   "systems": [
-    { "id": "nes", "name": "NES / Famicom", "extensions": ["nes", "fds", "unf", "unif"], "folders": ["nes", "famicom", "fc", "fds"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "fceumm" } } ] },
-    { "id": "snes", "name": "Super NES", "extensions": ["sfc", "smc"], "folders": ["snes", "sfc", "superfamicom", "snesna"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "snes9x" } } ] },
-    { "id": "n64", "name": "Nintendo 64", "extensions": ["n64", "z64", "v64"], "folders": ["n64"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "mupen64plus_next" } } ] },
-    { "id": "gb", "name": "Game Boy", "extensions": ["gb"], "folders": ["gb", "gameboy"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "gambatte" } } ] },
-    { "id": "gbc", "name": "Game Boy Color", "extensions": ["gbc"], "folders": ["gbc"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "gambatte" } } ] },
-    { "id": "gba", "name": "Game Boy Advance", "extensions": ["gba"], "folders": ["gba"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "mgba" } } ] },
-    { "id": "nds", "name": "Nintendo DS", "extensions": ["nds", "dsi"], "folders": ["nds", "ds"],
-      "emulators": [ { "emulator": "melonds" }, { "emulator": "retroarch", "vars": { "core": "melondsds" } } ] },
-    { "id": "n3ds", "name": "Nintendo 3DS", "extensions": ["3ds", "cci", "cxi", "3dsx", "cia"], "folders": ["n3ds", "3ds"],
-      "emulators": [ { "emulator": "azahar" } ] },
-    { "id": "gc", "name": "GameCube", "extensions": ["gcm", "gcz", "ciso", "rvz", "iso"], "folders": ["gc", "gamecube", "ngc"],
-      "emulators": [ { "emulator": "dolphin" } ] },
-    { "id": "wii", "name": "Wii", "extensions": ["wbfs", "wad", "rvz", "iso"], "folders": ["wii"],
-      "emulators": [ { "emulator": "dolphin" } ] },
-    { "id": "wiiu", "name": "Wii U", "extensions": ["wua", "wud", "wux", "rpx"], "folders": ["wiiu"],
-      "emulators": [ { "emulator": "cemu" } ] },
-    { "id": "switch", "name": "Switch", "extensions": ["nsp", "xci", "nsz", "xcz"], "folders": ["switch", "nsw"],
-      "emulators": [ { "emulator": "eden" } ] },
-    { "id": "genesis", "name": "Genesis / Mega Drive", "extensions": ["md", "gen", "smd"], "folders": ["genesis", "megadrive", "md"],
-      "emulators": [ { "emulator": "retroarch", "vars": { "core": "genesis_plus_gx" } } ] },
-    { "id": "psx", "name": "PlayStation", "extensions": ["cue", "chd", "pbp", "m3u", "iso", "bin"], "folders": ["psx", "ps1", "playstation"],
-      "emulators": [ { "emulator": "duckstation" }, { "emulator": "retroarch", "vars": { "core": "pcsx_rearmed" } } ] },
-    { "id": "ps2", "name": "PlayStation 2", "extensions": ["iso", "chd", "cso", "gz"], "folders": ["ps2"],
-      "emulators": [ { "emulator": "nethersx2" } ] },
-    { "id": "psp", "name": "PSP", "extensions": ["iso", "cso", "pbp", "chd"], "folders": ["psp"],
-      "emulators": [ { "emulator": "ppsspp" }, { "emulator": "retroarch", "vars": { "core": "ppsspp" } } ] },
-    { "id": "xbox360", "name": "Xbox 360", "extensions": ["iso", "xex", "zar"], "folders": ["xbox360", "x360"],
-      "emulators": [ { "emulator": "xendroid" } ] },
-    { "id": "steam", "name": "Steam (GameNative)", "extensions": ["steam"], "folders": ["steam"],
-      "emulators": [ { "emulator": "gamenative" } ] }
+    {
+      "id": "nes",
+      "name": "NES / Famicom",
+      "extensions": [
+        "nes",
+        "fds",
+        "unf",
+        "unif",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "nes",
+        "famicom",
+        "fc",
+        "fds",
+        "nintendoentertainmentsystem",
+        "famicomdisksystem"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "fceumm"
+          }
+        }
+      ]
+    },
+    {
+      "id": "snes",
+      "name": "Super NES",
+      "extensions": [
+        "sfc",
+        "smc",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "snes",
+        "sfc",
+        "superfamicom",
+        "snesna",
+        "supernintendo",
+        "supernes",
+        "supernintendoentertainmentsystem",
+        "supernintendosnes"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "snes9x"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n64",
+      "name": "Nintendo 64",
+      "extensions": [
+        "n64",
+        "z64",
+        "v64",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "n64",
+        "nintendo64"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "mupen64plus_next"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gb",
+      "name": "Game Boy",
+      "extensions": [
+        "gb",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "gb",
+        "gameboy",
+        "nintendogameboy"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "gambatte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gbc",
+      "name": "Game Boy Color",
+      "extensions": [
+        "gbc",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "gbc",
+        "gameboycolor",
+        "nintendogameboycolor"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "gambatte"
+          }
+        }
+      ]
+    },
+    {
+      "id": "gba",
+      "name": "Game Boy Advance",
+      "extensions": [
+        "gba",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "gba",
+        "gameboyadvance",
+        "nintendogameboyadvance"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "mgba"
+          }
+        }
+      ]
+    },
+    {
+      "id": "nds",
+      "name": "Nintendo DS",
+      "extensions": [
+        "nds",
+        "dsi",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "nds",
+        "ds",
+        "nintendods",
+        "nintendodsi",
+        "dsi"
+      ],
+      "emulators": [
+        {
+          "emulator": "melonds"
+        },
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "melondsds"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n3ds",
+      "name": "Nintendo 3DS",
+      "extensions": [
+        "3ds",
+        "cci",
+        "cxi",
+        "3dsx",
+        "cia",
+        "zcci",
+        "zcxi",
+        "z3dsx"
+      ],
+      "folders": [
+        "n3ds",
+        "3ds",
+        "nintendo3ds",
+        "3dsroms"
+      ],
+      "emulators": [
+        {
+          "emulator": "azahar"
+        }
+      ]
+    },
+    {
+      "id": "gc",
+      "name": "GameCube",
+      "extensions": [
+        "gcm",
+        "gcz",
+        "ciso",
+        "rvz",
+        "iso"
+      ],
+      "folders": [
+        "gc",
+        "gamecube",
+        "ngc",
+        "nintendogamecube",
+        "gcn"
+      ],
+      "emulators": [
+        {
+          "emulator": "dolphin"
+        }
+      ]
+    },
+    {
+      "id": "wii",
+      "name": "Wii",
+      "extensions": [
+        "wbfs",
+        "wad",
+        "rvz",
+        "iso"
+      ],
+      "folders": [
+        "wii",
+        "nintendowii"
+      ],
+      "emulators": [
+        {
+          "emulator": "dolphin"
+        }
+      ]
+    },
+    {
+      "id": "wiiu",
+      "name": "Wii U",
+      "extensions": [
+        "wua",
+        "wud",
+        "wux",
+        "rpx"
+      ],
+      "folders": [
+        "wiiu",
+        "nintendowiiu"
+      ],
+      "emulators": [
+        {
+          "emulator": "cemu"
+        }
+      ]
+    },
+    {
+      "id": "switch",
+      "name": "Switch",
+      "extensions": [
+        "nsp",
+        "xci",
+        "nsz",
+        "xcz",
+        "nca",
+        "nro"
+      ],
+      "folders": [
+        "switch",
+        "nsw",
+        "nintendoswitch",
+        "ns",
+        "yuzu",
+        "eden"
+      ],
+      "emulators": [
+        {
+          "emulator": "eden"
+        }
+      ]
+    },
+    {
+      "id": "genesis",
+      "name": "Genesis / Mega Drive",
+      "extensions": [
+        "md",
+        "gen",
+        "smd",
+        "zip",
+        "7z"
+      ],
+      "folders": [
+        "genesis",
+        "megadrive",
+        "md",
+        "segagenesis",
+        "segamegadrive"
+      ],
+      "emulators": [
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "genesis_plus_gx"
+          }
+        }
+      ]
+    },
+    {
+      "id": "psx",
+      "name": "PlayStation",
+      "extensions": [
+        "cue",
+        "chd",
+        "pbp",
+        "m3u",
+        "iso",
+        "bin"
+      ],
+      "folders": [
+        "psx",
+        "ps1",
+        "playstation",
+        "playstation1",
+        "sonyplaystation",
+        "psone"
+      ],
+      "emulators": [
+        {
+          "emulator": "duckstation"
+        },
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "pcsx_rearmed"
+          }
+        }
+      ]
+    },
+    {
+      "id": "ps2",
+      "name": "PlayStation 2",
+      "extensions": [
+        "iso",
+        "chd",
+        "cso",
+        "gz"
+      ],
+      "folders": [
+        "ps2",
+        "playstation2",
+        "sonyplaystation2"
+      ],
+      "emulators": [
+        {
+          "emulator": "nethersx2"
+        }
+      ]
+    },
+    {
+      "id": "psp",
+      "name": "PSP",
+      "extensions": [
+        "iso",
+        "cso",
+        "pbp",
+        "chd"
+      ],
+      "folders": [
+        "psp",
+        "playstationportable",
+        "sonyplaystationportable"
+      ],
+      "emulators": [
+        {
+          "emulator": "ppsspp"
+        },
+        {
+          "emulator": "retroarch",
+          "vars": {
+            "core": "ppsspp"
+          }
+        }
+      ]
+    },
+    {
+      "id": "xbox360",
+      "name": "Xbox 360",
+      "extensions": [
+        "iso",
+        "xex",
+        "zar"
+      ],
+      "folders": [
+        "xbox360",
+        "x360",
+        "microsoftxbox360"
+      ],
+      "emulators": [
+        {
+          "emulator": "xendroid"
+        }
+      ]
+    },
+    {
+      "id": "steam",
+      "name": "Steam (GameNative)",
+      "extensions": [
+        "steam"
+      ],
+      "folders": [
+        "steam"
+      ],
+      "emulators": [
+        {
+          "emulator": "gamenative"
+        }
+      ]
+    }
   ]
 }

@@ -20,7 +20,21 @@ data class Game(
 )
 
 @Serializable
-data class LibrarySnapshot(val rootUri: String, val scannedAtMillis: Long, val games: List<Game>)
+data class LibrarySnapshot(
+    val rootUri: String,
+    val scannedAtMillis: Long,
+    val games: List<Game>,
+    /** Files the scanner saw but could not place, by extension. Shown in the spike report. */
+    val unrecognized: Map<String, Int> = emptyMap(),
+    /** A few example paths of unrecognised files, to diagnose folder naming. */
+    val unrecognizedExamples: List<String> = emptyList(),
+)
+
+data class ScanResult(
+    val games: List<Game>,
+    val unrecognized: Map<String, Int>,
+    val unrecognizedExamples: List<String>,
+)
 
 /** Persists the last scan as JSON so the library is instant on cold start. Room comes later if queries need it. */
 class LibraryStore(private val file: File) {
@@ -47,10 +61,12 @@ class RomScanner(
     private val maxDepth: Int = 5,
     private val maxFiles: Int = 50_000,
 ) {
-    fun scan(treeUri: Uri, onProgress: (Int) -> Unit = {}): List<Game> {
-        val authority = treeUri.authority ?: return emptyList()
+    fun scan(treeUri: Uri, onProgress: (Int) -> Unit = {}): ScanResult {
+        val authority = treeUri.authority ?: return ScanResult(emptyList(), emptyMap(), emptyList())
         val rootId = DocumentsContract.getTreeDocumentId(treeUri)
         val games = ArrayList<Game>()
+        val unrecognized = HashMap<String, Int>()
+        val examples = ArrayList<String>()
         var visited = 0
 
         fun walk(docId: String, folders: List<String>, depth: Int) {
@@ -66,7 +82,15 @@ class RomScanner(
                     if (mime == DocumentsContract.Document.MIME_TYPE_DIR) {
                         walk(id, folders + name, depth + 1)
                     } else {
-                        val system = detector.detect(folders, name) ?: continue
+                        val system = detector.detect(folders, name)
+                        if (system == null) {
+                            val ext = SystemDetector.extensionOf(name).ifEmpty { "(none)" }
+                            if (ext !in IGNORED_EXTENSIONS) {
+                                unrecognized[ext] = (unrecognized[ext] ?: 0) + 1
+                                if (examples.size < MAX_EXAMPLES) examples += (folders + name).joinToString("/")
+                            }
+                            continue
+                        }
                         games += Game(
                             uri = DocumentsContract.buildDocumentUriUsingTree(treeUri, id).toString(),
                             authority = authority,
@@ -83,10 +107,22 @@ class RomScanner(
         }
 
         walk(rootId, emptyList(), 0)
-        return games.sortedWith(compareBy({ it.systemId }, { it.title.lowercase() }))
+        return ScanResult(
+            games = games.sortedWith(compareBy({ it.systemId }, { it.title.lowercase() })),
+            unrecognized = unrecognized,
+            unrecognizedExamples = examples,
+        )
     }
 
     companion object {
+        private const val MAX_EXAMPLES = 12
+
+        /** Companion files that are never games on their own. */
+        private val IGNORED_EXTENSIONS = setOf(
+            "txt", "nfo", "jpg", "jpeg", "png", "webp", "xml", "dat", "sav", "srm", "state",
+            "cfg", "ini", "json", "md", "pdf", "sha1", "md5", "sfv", "db", "nomedia",
+        )
+
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,

@@ -98,6 +98,7 @@ private fun buildReport(context: Context): String = buildString {
     probe.displays().forEach { d ->
         appendLine("#${d.id} \"${d.name}\" ${d.widthPx}x${d.heightPx} @${"%.0f".format(d.refreshHz)}Hz ${d.densityDpi}dpi ${d.state}")
         appendLine("    flags: ${d.flags.joinToString(" ")}")
+        appendLine("    modes: ${d.supportedModes.joinToString(" ")}")
     }
     appendLine()
     appendLine("== Home resolution ==")
@@ -108,6 +109,8 @@ private fun buildReport(context: Context): String = buildString {
         else "Companion: NOT visible",
     )
     appendLine()
+    append(g.perf.report())
+    appendLine()
     append(g.diagnostics.report(g.diagnostics.run()))
     appendLine()
     appendLine("== Library ==")
@@ -115,6 +118,11 @@ private fun buildReport(context: Context): String = buildString {
     if (lib == null) appendLine("No ROM folder scanned yet") else {
         appendLine("${lib.games.size} games from ${lib.rootUri}")
         lib.games.groupingBy { it.systemId }.eachCount().forEach { (s, n) -> appendLine("  $s: $n") }
+        if (lib.unrecognized.isNotEmpty()) {
+            appendLine("Skipped (not recognised): " + lib.unrecognized.entries.sortedByDescending { it.value }.joinToString { "${it.key}: ${it.value}" })
+            lib.unrecognizedExamples.forEach { appendLine("    $it") }
+            appendLine("  Tip: ambiguous types (zip, 7z, iso, chd…) need a system folder, e.g. nds/, switch/, psp/.")
+        }
     }
 }
 

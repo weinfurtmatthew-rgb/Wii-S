@@ -55,6 +55,7 @@ class AppGraph(val context: Application) {
 
     val shared = SharedState()
     val playtime by lazy { PlaytimeStore(prefs) }
+    val perf = PerfMonitor()
     val companionPlacer by lazy { app.wiis.launcher.companion.CompanionPlacer(context, shared) }
 }
 
