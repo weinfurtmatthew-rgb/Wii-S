@@ -2,7 +2,6 @@ package app.wiis.launcher.spike
 
 import android.content.Context
 import android.content.Intent
-import android.view.Display
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,7 +29,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wiis.designsystem.WiisTile
 import app.wiis.launcher.BuildConfigInfo
-import app.wiis.launcher.companion.CompanionActivity
 import app.wiis.launcher.graph
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -62,8 +60,8 @@ fun SpikeScreen(onPickFolder: () -> Unit) {
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SpikeButton("Refresh") { refresh++ }
-            SpikeButton("Test mode B: place bottom screen") {
-                secondaryDisplayId(context)?.let { CompanionActivity.launchOnDisplay(context, it) }
+            SpikeButton("Re-place bottom screen") {
+                context.graph.companionPlacer.ensurePlaced(force = true)
                 refresh++
             }
             SpikeButton("Share report") { share(context, report) }
@@ -89,10 +87,6 @@ private fun SpikeButton(label: String, onClick: () -> Unit) {
     WiisTile(onClick = onClick) { Text(label, Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) }
 }
 
-private fun secondaryDisplayId(context: Context): Int? =
-    context.getSystemService(android.hardware.display.DisplayManager::class.java)
-        .displays.firstOrNull { it.displayId != Display.DEFAULT_DISPLAY }?.displayId
-
 private fun buildReport(context: Context): String = buildString {
     val g = context.graph
     val probe = g.displayProbe
@@ -111,7 +105,7 @@ private fun buildReport(context: Context): String = buildString {
     val c = g.shared.companion.value
     appendLine(
         if (c != null) "Companion: RUNNING on display ${c.displayId}, mode ${c.mode}"
-        else "Companion: NOT running (mode A did not start it)",
+        else "Companion: NOT visible",
     )
     appendLine()
     append(g.diagnostics.report(g.diagnostics.run()))

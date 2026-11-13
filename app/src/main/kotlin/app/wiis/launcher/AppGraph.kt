@@ -28,6 +28,7 @@ class WiisApplication : Application() {
         super.onCreate()
         graph = AppGraph(this)
         graph.apps.start()
+        graph.companionPlacer.start()
     }
 }
 
@@ -54,6 +55,7 @@ class AppGraph(val context: Application) {
 
     val shared = SharedState()
     val playtime by lazy { PlaytimeStore(prefs) }
+    val companionPlacer by lazy { app.wiis.launcher.companion.CompanionPlacer(context, shared) }
 }
 
 /** What the top screen is pointing at, as seen by the bottom screen. */

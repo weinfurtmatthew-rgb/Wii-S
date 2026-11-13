@@ -27,5 +27,6 @@ class HomeActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         viewModel.onReturnedHome()
+        graph.companionPlacer.ensurePlaced()
     }
 }

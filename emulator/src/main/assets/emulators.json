@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "notes": "Launch definitions cross-checked against ES-DE's Android find rules. 'verified' flips to true once confirmed on an AYN Thor Max.",
+  "notes": "Cross-checked against ES-DE's Android find rules. All 11 activities resolved on a Thor Max (spike 2026-11-13); verified=true means a game was actually launched.",
   "emulators": [
     {
       "id": "retroarch",
@@ -22,6 +22,7 @@
     },
     {
       "id": "dolphin",
+      "verified": true,
       "name": "Dolphin",
       "targets": [
         { "package": "org.dolphinemu.dolphinemu", "activity": "org.dolphinemu.dolphinemu.ui.main.TvMainActivity" }
@@ -121,6 +122,7 @@
     },
     {
       "id": "nethersx2",
+      "verified": true,
       "name": "NetherSX2",
       "targets": [
         { "package": "xyz.aethersx2.android", "activity": "xyz.aethersx2.android.EmulationActivity" },
@@ -135,6 +137,7 @@
     },
     {
       "id": "xendroid",
+      "verified": true,
       "name": "XenDroid",
       "targets": [
         { "package": "xendroid.compose", "activity": "xendroid.compose.EmulatorHostActivity" }

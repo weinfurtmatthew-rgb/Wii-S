@@ -14,12 +14,24 @@
 | D4 | Emulators | RetroArch, Dolphin, PPSSPP, DuckStation, **Cemu, Azahar, Eden, GameNative, melonDS, NetherSX2, XenDroid** ("Zen droid", to be confirmed) |
 | D5 | Device | **Thor Max**; owner can run `adb` |
 | D6 | Milestone 0 scope | Approved as written |
+| D7 | Dual-screen mode | **Mode B** (launcher places the companion on the bottom display), forced by the spike results below |
 
 **Stack simplifications (efficiency):**
 - **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.
 - **No Room yet.** The library is cached as one JSON file, which loads instantly for thousands of games. Room comes in when we need queries (search, collections, metadata).
 - **No All Files Access.** ROM folders are read through SAF. For path-only emulators (RetroArch), the path is derived from the SAF document ID and the emulator opens it with its own storage access. The launcher never needs the broad permission.
 - Detekt/ktlint deferred; CI runs Android Lint and unit tests.
+
+## Milestone 0 spike results (Thor Max, firmware `Thor_V1.0.0.377`, 2026-11-13)
+
+| Finding | Value | Consequence |
+|---|---|---|
+| Top screen | Display 0, 1080×1920 (portrait-native panel), reporting **60 Hz** | Iteration 1 requests the highest refresh mode explicitly |
+| Bottom screen | **Display 4**, "Screen-2", 1080×1240, 60 Hz, flags `PRESENTATION`, **no** `SHOULD_SHOW_SYSTEM_DECORATIONS` | Android never starts any SECONDARY_HOME on it, so **mode A is impossible on this firmware**. Display ID is not 1, so it is never hard-coded |
+| Mode B (self-placed companion) | **Works** | **Chosen mode (D7).** `CompanionPlacer` places it on Home resume and on display on/added events. The window is non-focusable, so the controller stays on the top screen |
+| Other launchers present | `com.iisulauncher` was default HOME; stock Launcher3 owns `config_secondaryHomePackage` | Wii-S must be set as the default Home app; no conflict otherwise |
+| Emulators | All 11 activities resolve. Dolphin, NetherSX2 and XenDroid confirmed by real launches | Registry entries for those three marked `verified` |
+| Controller | Feels fine with stock Compose focus | Iteration 1 focus work narrowed to stick navigation and focus restore |
 
 ---
 
