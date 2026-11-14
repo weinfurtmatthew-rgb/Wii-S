@@ -20,6 +20,26 @@ class ThemeSpecTest {
         assertEquals(ThemeSpec().sounds, spec.sounds)
     }
 
+    @Test fun `a theme from before dark mode looks the same in both modes`() {
+        val old = ThemeSpec.parse(java.io.File("../../design/themes/draft-3-2026-11-14.json").readText())
+        assertEquals(4, old.schema)
+        assertEquals("art", old.colors.backgroundStyle)
+        assertEquals(old.colors, old.resolve(dark = true).colors)
+        assertEquals(old.glass, old.resolve(dark = true).glass)
+    }
+
+    @Test fun `dark mode swaps only the palette`() {
+        val light = ThemeSpec()
+        val dark = light.resolve(dark = true)
+        assertEquals(light.dark.colors, dark.colors)
+        assertEquals(light.dark.glass.fill, dark.glass.fill)
+        assertEquals(light.glass.radius, dark.glass.radius)
+        assertEquals(light.type, dark.type)
+        assertEquals(light.motion, dark.motion)
+        assertEquals(light.dark.hints.colorA, dark.hints.colorA)
+        assertEquals(light.hints.align, dark.hints.align)
+    }
+
     @Test fun `encode and parse round trip`() {
         val spec = ThemeSpec().copy(name = "Round trip")
         assertEquals(spec, ThemeSpec.parse(ThemeSpec.encode(spec)))

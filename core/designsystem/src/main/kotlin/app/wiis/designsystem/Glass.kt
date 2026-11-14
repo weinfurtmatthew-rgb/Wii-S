@@ -6,10 +6,15 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ClipOp
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.Path
@@ -124,3 +129,20 @@ fun DrawScope.drawBoxShadow(shape: Shape, offsetYPx: Float, blurPx: Float, color
         canvas.restore()
     }
 }
+
+/**
+ * The workbench's dot grid: a dot of [color] at 11% (radius about 1.15 dp) in the middle of every
+ * 14 dp cell. Drawn from one repeated cell, cached until the size, density or colour changes.
+ */
+fun Modifier.dotGrid(color: Color, cell: Dp = 14.dp, alpha: Float = 0.11f): Modifier = drawWithCache {
+    val px = cell.toPx().coerceAtLeast(2f)
+    val n = kotlin.math.ceil(px).toInt()
+    val bmp = android.graphics.Bitmap.createBitmap(n, n, android.graphics.Bitmap.Config.ARGB_8888)
+    android.graphics.Canvas(bmp).drawCircle(
+        n / 2f, n / 2f, 1.15f * density,
+        android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply { this.color = color.copy(alpha = alpha).toArgb() },
+    )
+    val brush = ShaderBrush(ImageShader(bmp.asImageBitmap(), TileMode.Repeated, TileMode.Repeated))
+    onDrawBehind { drawRect(brush) }
+}
+

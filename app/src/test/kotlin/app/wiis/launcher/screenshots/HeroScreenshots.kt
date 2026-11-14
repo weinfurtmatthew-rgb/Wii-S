@@ -93,6 +93,10 @@ class HeroScreenshots {
 
     @Test fun apps() = shoot("top-6-apps", home(focus = null).copy(section = Section.Apps))
 
+    @Test fun homeHeroDark() = shoot("top-7-home-hero-dark", home(focus = HomeViewModel.KEY_HERO), dark = true)
+
+    @Test fun homeSystemDark() = shoot("top-8-home-system-dark", home(focus = HomeViewModel.sysKey("nds")), dark = true)
+
     // ---- Sample data (design/workbench.html: LIB, RECENT, APPS, DOCK) ------------------------
 
     private val lib = listOf(
@@ -135,6 +139,7 @@ class HeroScreenshots {
             recent = recent,
             systems = systems,
             allPreview = HomeModel.allTilePreview(hero, recent, systems),
+            systemSamples = HomeModel.systemSamples(library, { played[it.title] ?: 0L }, { ratios[it.uri] != null }, hero),
             heroFocus = focus?.let { HeroFocus(it, 1L) },
             dock = listOf("Browser", "Video", "Store", "Music", "Files").map(::app),
         )
@@ -142,7 +147,8 @@ class HeroScreenshots {
 
     // ---- Rendering --------------------------------------------------------------------------
 
-    private fun shoot(name: String, state: HomeUiState) {
+    private fun shoot(name: String, state: HomeUiState, dark: Boolean = false) {
+        val theme = spec.resolve(dark)
         compose.mainClock.autoAdvance = false
         compose.setContent {
             // Controller mode first, as on the Thor once a button has been pressed: in touch mode
@@ -154,7 +160,7 @@ class HeroScreenshots {
                 ready = true
             }
             if (ready) {
-                WiisTheme(spec = spec, fonts = fonts(), feedback = UiFeedback.None) {
+                WiisTheme(spec = theme, fonts = fonts(), feedback = UiFeedback.None) {
                     CompositionLocalProvider(LocalImageSource provides images) {
                         HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), NoActions) {}
                     }

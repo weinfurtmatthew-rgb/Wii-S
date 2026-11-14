@@ -3,6 +3,7 @@ package app.wiis.launcher.ui
 import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.wiis.designsystem.LocalWiis
@@ -53,11 +55,27 @@ fun WiisRoot(content: @Composable () -> Unit) {
     val graph = LocalContext.current.graph
     val spec by graph.themes.spec.collectAsStateWithLifecycle()
     val fonts by graph.fonts.fonts.collectAsStateWithLifecycle()
+    val appearance by graph.appearance.collectAsStateWithLifecycle()
+    val dark = isDark(appearance, spec.appearance, isSystemInDarkTheme())
+    val resolved = remember(spec, dark) { spec.resolve(dark) }
     val view = LocalView.current
     val feedback = remember(view, spec.haptics) { AppFeedback(graph.sounds, view, spec.haptics) }
     val images = remember(graph) { GraphImageSource(graph) }
     CompositionLocalProvider(LocalImageSource provides images) {
-        WiisTheme(spec = spec, fonts = fonts, feedback = feedback, content = content)
+        WiisTheme(spec = resolved, fonts = fonts, feedback = feedback, content = content)
+    }
+}
+
+/**
+ * Light or dark: the device setting wins ("light", "dark", "system"); "theme" defers to the
+ * theme's own appearance, where "system" means Android's dark theme setting.
+ */
+fun isDark(deviceSetting: String, themeAppearance: String, systemDark: Boolean): Boolean {
+    val mode = if (deviceSetting == "theme" || deviceSetting.isBlank()) themeAppearance else deviceSetting
+    return when (mode) {
+        "dark" -> true
+        "light" -> false
+        else -> systemDark
     }
 }
 
@@ -110,14 +128,14 @@ fun rememberClockText(): String {
 
 /** Controller legend, styled by the theme's hint tokens. */
 @Composable
-fun HintBar(hints: List<Pair<String, String>>, modifier: Modifier = Modifier, fill: Boolean = true) {
+fun HintBar(hints: List<Pair<String, String>>, modifier: Modifier = Modifier, fill: Boolean = true, gap: Dp = 18.dp) {
     val style = LocalWiis.current
     val tokens = style.spec.hints
     if (!tokens.show || hints.isEmpty()) return
     val arrangement = when (tokens.align) {
-        "start" -> Arrangement.spacedBy(18.dp, Alignment.Start)
-        "center" -> Arrangement.spacedBy(18.dp, Alignment.CenterHorizontally)
-        else -> Arrangement.spacedBy(18.dp, Alignment.End)
+        "start" -> Arrangement.spacedBy(gap, Alignment.Start)
+        "center" -> Arrangement.spacedBy(gap, Alignment.CenterHorizontally)
+        else -> Arrangement.spacedBy(gap, Alignment.End)
     }
     Row(if (fill) modifier.fillMaxWidth() else modifier, horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) {
         hints.forEach { (button, label) ->
@@ -135,10 +153,10 @@ fun HintBar(hints: List<Pair<String, String>>, modifier: Modifier = Modifier, fi
                         .padding(horizontal = if (button.length == 1) 0.dp else 7.dp),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(button, style = style.label.copy(color = style.hintBadgeText))
+                    Text(button, style = style.label.copy(color = style.hintBadgeText), maxLines = 1, softWrap = false)
                 }
                 Spacer(Modifier.width(6.dp))
-                Text(label, style = style.label)
+                Text(label, style = style.label, maxLines = 1, softWrap = false)
             }
         }
     }

@@ -32,6 +32,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.createBitmap
 import app.wiis.designsystem.LocalWiis
+import app.wiis.designsystem.dotGrid
 import app.wiis.designsystem.mix
 import app.wiis.emulator.Game
 import kotlinx.coroutines.Dispatchers
@@ -110,8 +111,40 @@ fun ArtBackground(subject: BgSubject, modifier: Modifier = Modifier) {
             Look.Plain -> Unit
         }
         val dim = colors.artDim.coerceIn(0f, 1f)
-        if (dim > 0f) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = dim)))
+        // "artLight" washes the art with the background colour instead of darkening it.
+        val veil = if (colors.backgroundStyle == "artLight") style.background else Color.Black
+        if (dim > 0f) Box(Modifier.fillMaxSize().background(veil.copy(alpha = dim)))
     }
+}
+
+/**
+ * The "dots" background from the workbench: the theme gradient, two soft pools of the focused
+ * item's colour (top right and bottom left) and a fine dot grid in the text colour.
+ */
+@Composable
+fun DotsBackground(subject: BgSubject, modifier: Modifier = Modifier) {
+    val style = LocalWiis.current
+    val color = when (subject) {
+        is BgSubject.OfGame -> style.systemColor(subject.game.systemId)
+        is BgSubject.OfSystem -> if (subject.systemId == "all") style.accent else style.systemColor(subject.systemId)
+        BgSubject.Plain -> style.accent
+    }
+    val alpha = (style.spec.colors.glowStrength * 2f).coerceIn(0f, 0.6f)
+    Box(
+        modifier
+            .background(Brush.verticalGradient(listOf(style.backgroundTop, style.background)))
+            .drawBehind {
+                // CSS radial-gradient(circle at x y, c 0, transparent p%): p% of the distance to the farthest corner.
+                fun pool(cx: Float, cy: Float, stop: Float, a: Float) {
+                    val center = Offset(size.width * cx, size.height * cy)
+                    val far = hypot(maxOf(center.x, size.width - center.x), maxOf(center.y, size.height - center.y))
+                    drawRect(Brush.radialGradient(listOf(color.copy(alpha = a), color.copy(alpha = 0f)), center = center, radius = (far * stop).coerceAtLeast(1f)))
+                }
+                pool(0.92f, 0.06f, 0.44f, alpha)
+                pool(0.04f, 0.98f, 0.40f, alpha * 0.75f)
+            }
+            .dotGrid(style.text),
+    )
 }
 
 private sealed interface Look {

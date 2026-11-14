@@ -21,6 +21,7 @@
 | D11 | Sounds | Interface sounds on, synthesised from the theme; the owner can replace any sound with their own file on the device |
 | D12 | Look and layout (Draft 2) | From the owner's inspiration pictures: frosted light glass over the focused game's art; Jump back in + systems grid + recent row; art + app dock on the bottom screen; full-art tiles in a console-colour ring with a console line drawing; focus by grow and bounce. Values open until approved (`docs/DESIGN.md`) |
 | D13 | Iteration 3 scope | Build Draft 3 into the launcher (0.3.0): hero home, navigation dock, art background and glass, system view, bottom screen following systems |
+| D14 | Iteration 4 scope | Draft 4 (Look B with light and dark modes, your review answers) and bottom-screen pages: details, stats and RetroAchievements for games and systems (0.4.0) |
 
 **Stack simplifications (efficiency):**
 - **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.
@@ -79,6 +80,17 @@ Next: the owner reviews and approves in the workbench, then I bake approved valu
 | Screenshot tests | Robolectric + Roborazzi render the real screens at 833 × 468 dp. Opt-in: `./gradlew :app:testDebugUnitTest -Pscreenshots` (CI skips them) |
 
 Open design questions from this iteration are in `docs/DESIGN.md` (marked "Proposed, not in the workbench").
+
+## Iteration 4: Draft 4, dark mode, bottom-screen pages (0.4.0-i4)
+
+| Piece | State in 0.4.0-i4 |
+|---|---|
+| Draft 4 | Light dot-grid background with a colour glow, white surfaces, Poppins, XMB system icons, corner tabs, title pill with hints beside the dock, grow-and-bounce focus with a refined mint ring |
+| Light and dark | Theme schema 4: a dark palette beside the light one. Follows Android's dark theme unless the theme or System → Theme → Appearance says otherwise. Both screens switch together |
+| Bottom-screen pages | Details, Stats, Achievements in a touch pager (tabs or dots), for the highlighted game, the game being played, or a system |
+| Stats | Sessions are logged from 0.4.0 on (`sessions.tsv`); totals also include older play time |
+| RetroAchievements | Username and Web API key in System → RetroAchievements (kept out of backups). ROMs are matched by RetroAchievements' own fingerprint for NES, SNES, N64, Game Boy family, Genesis and DS, by title for disc systems. Game lists cached a week, progress five minutes |
+| Tests | 73 unit tests (fingerprints, parsing, title matching, stats, theme upgrade, parity). Screenshot tests render the top screen in light and dark and the bottom-screen pages |
 
 ## 0. Device assumptions (to verify on hardware)
 

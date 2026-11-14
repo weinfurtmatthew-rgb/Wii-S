@@ -49,5 +49,18 @@ object HomeModel {
         return if (base.isEmpty()) emptyList() else List(4) { base[it % base.size] }
     }
 
+    /**
+     * The game whose art fills each system's XMB icon: the one played last that has art, else any
+     * with art (A to Z), else the first game. All games uses the Jump back in game.
+     */
+    fun systemSamples(games: List<Game>, lastPlayed: (Game) -> Long, hasArt: (Game) -> Boolean, hero: Game?): Map<String, Game> {
+        val out = games.groupBy { it.systemId }.mapValues { (_, list) ->
+            val sorted = list.sortedWith(compareByDescending<Game> { lastPlayed(it) }.then(byTitle))
+            sorted.firstOrNull(hasArt) ?: sorted.first()
+        }.toMutableMap()
+        (hero ?: games.minWithOrNull(byTitle))?.let { out[ALL] = it }
+        return out
+    }
+
     private val byTitle = compareBy<Game>({ it.title.lowercase() }, { it.uri })
 }

@@ -187,12 +187,17 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 .c-tab { position: absolute; left: 0; top: 0; z-index: 4; display: flex; align-items: center; justify-content: center; }
 .xmb-ring { position: absolute; inset: 0; pointer-events: none; z-index: 3; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
 .m-header { position: relative; }
-.m-nameplate { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 10px; padding: 6px 20px; max-width: 420px; white-space: nowrap; }
-.m-nameplate .np-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; line-height: 1.3; }
-.m-nameplate .np-sub { flex: none; line-height: 1.3; }
+.m-nameplate { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 10px; padding: 5px 20px; max-width: 420px; white-space: nowrap; }
+.m-nameplate .np-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; line-height: 1.2; }
+.m-nameplate .np-sub { flex: none; line-height: 1.2; }
 .dock-hints { justify-self: end; }
 .dock-hints .m-hints { padding-top: 0; gap: 14px; }
 .look { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
+.page-tabs { display: inline-flex; gap: 2px; padding: 3px; flex: none; }
+.page-tab { border: 0; border-radius: 99px; padding: 6px 12px; cursor: pointer; line-height: 1.2; }
+.page-dots { display: flex; gap: 6px; justify-content: center; flex: none; }
+.page-dots button { height: 8px; border: 0; border-radius: 99px; padding: 0; cursor: pointer; }
+.ach-list { display: flex; flex-direction: column; gap: 6px; overflow: hidden; }
 @media (prefers-reduced-motion: reduce) { .m-track, .m-scroll, .m-vgrid-inner, .meter i { transition: none; } }
 </style>
 
@@ -226,6 +231,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
     <div class="toggles">
       <label><input type="checkbox" id="previewSound" checked> Play sounds in the preview</label>
       <label><input type="checkbox" id="previewMotion" checked> Animate the preview</label>
+      <label><input type="checkbox" id="previewDark"> Dark mode</label>
     </div>
   </section>
 
@@ -251,7 +257,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script type="application/json" id="proposal">{"schema":3,"name":"Draft 3","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.5,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#D9D4E6","accent":"#C2C2C2","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#999999","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.82,"blur":24,"border":"#FFFFFF","borderOpacity":0.9,"borderWidth":1.5,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"bar","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"line","consoleIconSize":22,"systemRing":3},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"line","showCount":true,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"header"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
+<script type="application/json" id="proposal">{"schema":4,"name":"Draft 4","appearance":"system","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#FFFFFF","tile":"#F1F0F5","tileFocused":"#E4E2EC","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF"},"glass":{"fill":"#FFFFFF","opacity":1.0,"blur":24,"border":"#DCDAE5","borderOpacity":1.0,"borderWidth":1.0,"text":"#23212D","textMuted":"#625F72","radius":18},"dark":{"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#15141C","backgroundTop":"#1D1C26","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.14,"surface":"#22212C","tile":"#2A2935","tileFocused":"#35343F","text":"#ECEAF3","textMuted":"#A9A5B9","accent":"#ECEAF3","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#ECEAF3","tabActiveText":"#15141C","tabIdleText":"#B6B2C6","hintBadge":"#ECEAF3","hintBadgeText":"#15141C","messageBar":"#22212C"},"glass":{"fill":"#23222D","opacity":1.0,"blur":24,"border":"#383645","borderOpacity":1.0,"borderWidth":1.0,"text":"#ECEAF3","textMuted":"#A9A5B9","radius":18},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#ECEAF3","colorB":"#ECEAF3","colorX":"#ECEAF3","colorY":"#ECEAF3","colorOther":"#ECEAF3"},"shadowColor":"#000000"},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":3,"focusRingGap":1,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":24,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0.0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.08,"focusGrowMax":8,"pressScale":0.94,"stiffness":400.0,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true,"showStats":true,"showAchievements":true,"pageStyle":"tabs"},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880.0,988.0],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0.0,"lowpass":7000.0,"noise":0.0,"volume":0.32},"select":{"wave":"triangle","notes":[659.0,988.0],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0.0,"lowpass":8000.0,"noise":0.0,"volume":0.5},"back":{"wave":"triangle","notes":[740.0,494.0],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0.0,"lowpass":6000.0,"noise":0.0,"volume":0.45},"tab":{"wave":"square","notes":[523.0,784.0],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0.0,"lowpass":3200.0,"noise":0.0,"volume":0.28},"launch":{"wave":"triangle","notes":[523.0,659.0,784.0,1047.0],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0.0,"lowpass":9000.0,"noise":0.0,"volume":0.55},"error":{"wave":"square","notes":[233.0,196.0],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0.0,"lowpass":2200.0,"noise":0.0,"volume":0.35},"bump":{"wave":"sine","notes":[150.0],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6.0,"lowpass":2000.0,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
 <script>
 "use strict";
 // ======================================================================================
@@ -426,6 +432,7 @@ const GROUPS = [
   ]},
   { id: "motion", title: "Motion", desc: "The preview uses the launcher's own spring maths, so tiles here move like they will on the Thor.", items: [
     R("motion.focusScale", "Focus scale", 1, 1.25, 0.01, "×"),
+    R("motion.focusGrowMax", "Most a tile grows on each side", 2, 24, 1, "dp", "Big cards grow by this much at most, so the Jump back in card never reaches the title pill."),
     R("motion.pressScale", "Press-in scale", 0.8, 1, 0.01, "×"),
     R("motion.stiffness", "Spring stiffness", 50, 1500, 10, "", "Low is soft and slow, high is snappy."),
     R("motion.damping", "Spring damping", 0.2, 1, 0.01, "", "Below 1 overshoots (bouncy); 1 settles without overshoot."),
@@ -474,6 +481,9 @@ const GROUPS = [
     T("companion.dock", "App dock"),
     R("companion.dockApps", "Apps in the dock", 3, 7, 1, "", "On the Thor you choose which apps."),
     T("companion.showDrawer", "App-drawer button"),
+    T("companion.showStats", "Stats page", "Swipe left on the bottom screen: time played, sessions, this week."),
+    T("companion.showAchievements", "RetroAchievements page", "The game's achievements, or everything earned on that console."),
+    S("companion.pageStyle", "Page switcher", [["tabs", "Labels at the top"], ["dots", "Dots at the bottom"]]),
   ]},
   { id: "sounds", title: "Sounds", desc: "Synthesised from these settings, identically here and on the Thor. On the device you can still replace any sound with your own file (System → Sounds).", items: [
     T("sounds.enabled", "Interface sounds"),
@@ -487,8 +497,8 @@ const GROUPS = [
 ];
 const ALL_ITEMS = GROUPS.flatMap((g) => g.items.map((it) => ({ ...it, group: g.id })));
 
-// Whole-look variations to compare (applied over the proposal). Files: design/themes/look-*.json
-const LOOKS = {"Draft 3 (proposal)": {}, "A · Draft 3, calmer": {"name": "Look A: Draft 3, calmer", "colors": {"artDim": 0.62, "textMuted": "#ECEAF2", "accent": "#FFFFFF"}, "glass": {"opacity": 0.94, "borderOpacity": 0.55, "borderWidth": 1}, "type": {"wordmarkSize": 28, "wordmarkWeight": 700, "tabSize": 16, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 14, "labelWeight": 500, "clockSize": 17, "clockWeight": 500, "displayFont": "Lexend", "bodyFont": "Lexend"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 4}, "systemTile": {"style": "xmb", "showCount": false}}, "B · Light (Cocoon + iiSU)": {"name": "Look B: light (Cocoon + iiSU)", "colors": {"backgroundStyle": "dots", "background": "#E9E8F0", "backgroundTop": "#F6F6F9", "glowStrength": 0.2, "text": "#23212D", "textMuted": "#5A5769", "accent": "#23212D", "tabActiveFill": "#23212D", "tabActiveText": "#FFFFFF", "tabIdleText": "#4E4B5E", "hintBadge": "#23212D", "hintBadgeText": "#FFFFFF", "focusRing": "#3FD39A", "focusGlow": "#3FD39A", "focusGlowStrength": 0.55, "messageBar": "#FFFFFF"}, "glass": {"fill": "#FFFFFF", "opacity": 1, "border": "#DCDAE5", "borderOpacity": 1, "borderWidth": 1, "text": "#23212D", "textMuted": "#625F72", "radius": 18}, "shape": {"tileRadius": 18, "focusRingWidth": 4, "focusRingGap": 2, "shadowColor": "#4A4766"}, "type": {"wordmarkSize": 26, "wordmarkWeight": 700, "tabSize": 15, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 13, "labelWeight": 500, "clockSize": 16, "clockWeight": 500, "displayFont": "Poppins", "bodyFont": "Poppins"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 5}, "systemTile": {"style": "xmb", "showCount": false, "tint": 0.6}, "motion": {"focusScale": 1.07, "stiffness": 520, "damping": 0.9, "focusLift": 0, "idleBob": false}, "nav": {"captionPlace": "nameplate"}, "hints": {"colorA": "#23212D", "colorB": "#23212D", "colorX": "#23212D", "colorY": "#23212D", "colorOther": "#23212D"}, "hero": {"showSystem": false}}, "C · Light over your art": {"name": "Look C: light over your art", "colors": {"backgroundStyle": "artLight", "background": "#E9E8F0", "backgroundTop": "#F6F6F9", "glowStrength": 0.2, "text": "#23212D", "textMuted": "#5A5769", "accent": "#23212D", "tabActiveFill": "#23212D", "tabActiveText": "#FFFFFF", "tabIdleText": "#4E4B5E", "hintBadge": "#23212D", "hintBadgeText": "#FFFFFF", "focusRing": "#3FD39A", "focusGlow": "#3FD39A", "focusGlowStrength": 0.55, "messageBar": "#FFFFFF", "artBlur": 40, "artDim": 0.74}, "glass": {"fill": "#FFFFFF", "opacity": 0.9, "border": "#DCDAE5", "borderOpacity": 1, "borderWidth": 1, "text": "#23212D", "textMuted": "#625F72", "radius": 18}, "shape": {"tileRadius": 18, "focusRingWidth": 4, "focusRingGap": 2, "shadowColor": "#4A4766"}, "type": {"wordmarkSize": 26, "wordmarkWeight": 700, "tabSize": 15, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 13, "labelWeight": 500, "clockSize": 16, "clockWeight": 500, "displayFont": "Outfit", "bodyFont": "Outfit"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 5}, "systemTile": {"style": "xmb", "showCount": false, "tint": 0.6}, "motion": {"focusScale": 1.07, "stiffness": 520, "damping": 0.9, "focusLift": 0, "idleBob": false}, "nav": {"captionPlace": "nameplate"}, "hints": {"colorA": "#23212D", "colorB": "#23212D", "colorX": "#23212D", "colorY": "#23212D", "colorOther": "#23212D"}, "hero": {"showSystem": false}}};
+// Whole looks to compare, as full themes (Draft 4 is the proposal itself). Files: design/themes/
+const LOOKS = {"Draft 4 (proposal)":{},"Draft 3":{"schema":3,"name":"Draft 3","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.5,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#D9D4E6","accent":"#C2C2C2","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#999999","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.82,"blur":24,"border":"#FFFFFF","borderOpacity":0.9,"borderWidth":1.5,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"bar","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"line","consoleIconSize":22,"systemRing":3},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"line","showCount":true,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"header"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}},"A · Draft 3, calmer":{"schema":3,"name":"Look A: Draft 3, calmer","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.62,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#ECEAF2","accent":"#FFFFFF","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#999999","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.94,"blur":24,"border":"#FFFFFF","borderOpacity":0.55,"borderWidth":1,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Lexend","bodyFont":"Lexend","wordmarkSize":28,"wordmarkWeight":700,"tabSize":16,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":14,"labelWeight":500,"clockSize":17,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":4},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"xmb","showCount":false,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"header"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}},"B · Light (Cocoon + iiSU)":{"schema":3,"name":"Look B: light (Cocoon + iiSU)","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.55,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF"},"glass":{"fill":"#FFFFFF","opacity":1,"blur":24,"border":"#DCDAE5","borderOpacity":1,"borderWidth":1,"text":"#23212D","textMuted":"#625F72","radius":18},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":4,"focusRingGap":2,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.07,"pressScale":0.94,"stiffness":520,"damping":0.9,"focusLift":0,"idleBob":false,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}},"C · Light over your art":{"schema":3,"name":"Look C: light over your art","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"artLight","artBlur":40,"artDim":0.74,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.55,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF"},"glass":{"fill":"#FFFFFF","opacity":0.9,"blur":24,"border":"#DCDAE5","borderOpacity":1,"borderWidth":1,"text":"#23212D","textMuted":"#625F72","radius":18},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":4,"focusRingGap":2,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Outfit","bodyFont":"Outfit","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.07,"pressScale":0.94,"stiffness":520,"damping":0.9,"focusLift":0,"idleBob":false,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}};
 const SOUND_PRESETS = {
   "Pop (proposal)": clone(PROPOSAL.sounds.events),
   "Chiptune": {
@@ -543,6 +553,14 @@ function setPath(obj, path, value) {
 const valueKey = (path) => JSON.stringify(getPath(theme, path));
 const isApproved = (path) => approved[path] !== undefined && approved[path] === valueKey(path);
 const isChanged = (path) => JSON.stringify(getPath(PROPOSAL, path)) !== valueKey(path);
+// Themes from before schema 4 have one palette: it is their dark palette too (same rule as the launcher).
+function upgraded(t) {
+  if ((t.schema || 4) >= 4) return t;
+  const r = clone(t);
+  r.schema = 4; r.appearance = "light";
+  r.dark = { colors: clone(t.colors), glass: clone(t.glass), hints: clone(t.hints), shadowColor: t.shape.shadowColor };
+  return r;
+}
 function deepMerge(base, over) {
   if (Array.isArray(base) || typeof base !== "object" || base === null) return over === undefined ? base : over;
   const out = { ...base };
@@ -756,7 +774,7 @@ async function save() {
 }
 function applyLoaded(d) {
   if (!d || !d.theme) return;
-  theme = deepMerge(clone(PROPOSAL), d.theme);
+  theme = upgraded(deepMerge(clone(PROPOSAL), d.theme));
   approved = d.approved || {}; notes = d.notes || {};
   buildGroups(); ensureFonts(); refreshStatus(); scheduleRender();
 }
@@ -924,10 +942,111 @@ function vars() {
   return `--t-text:${css(t.colors.text)};--t-accent:${css(t.colors.accent)};--t-display:${fontStack(t.type.displayFont)};--t-body:${fontStack(t.type.bodyFont)};--t-tabms:${t.motion.tabTransitionMs}ms;`;
 }
 
+// ---------- bottom screen pages: details, stats, RetroAchievements (sample numbers) ----------
+const ACH = [["First Steps", "Finish the opening chapter", 5], ["Night Flight", "Make a delivery after dark", 10], ["Full Satchel", "Carry ten parcels at once", 10],
+  ["No Detours", "Finish a route without stopping", 25], ["Early Bird", "Deliver before sunrise", 5], ["Collector", "Find every stamp in one town", 10],
+  ["Rain or Shine", "Deliver in a storm", 25], ["Long Haul", "Fly 1,000 km in total", 50], ["Perfect Week", "Seven days without a late parcel", 10],
+  ["Postmaster", "Reach the top rank", 25], ["Secret Path", "Discover the hidden valley", 10], ["Completionist", "Unlock everything else", 50]];
+function seeded(key, n) { let h = hash(key); const out = []; for (let i = 0; i < n; i++) { h = Math.imul(h ^ (h >>> 15), 2246822507) >>> 0; h = Math.imul(h ^ (h >>> 13), 3266489909) >>> 0; out.push(((h ^ (h >>> 16)) >>> 0) / 4294967296); } return out; }
+function fmtMin(m) { return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`; }
+function companionSubject() {
+  if (mock.nowPlaying) return { kind: "game", game: mock.nowPlaying };
+  if (mock.focusSystem) return { kind: "system", id: mock.focusSystem };
+  if (mock.focusGame) return { kind: "game", game: mock.focusGame };
+  return null;
+}
+function companionPages() {
+  const c = theme.companion;
+  return [["details", "Details"], ...(c.showStats ? [["stats", "Stats"]] : []), ...(c.showAchievements ? [["achievements", "Achievements"]] : [])];
+}
+function pageTabsHtml(pages, cur) {
+  const t = theme;
+  return `<div class="page-tabs" style="${glassCss("border-radius:99px;")}">${pages.map(([, label], i) => `<button type="button" class="page-tab" data-page="${i}" style="background:${i === cur ? css(t.colors.tabActiveFill) : "transparent"};color:${css(i === cur ? t.colors.tabActiveText : t.glass.textMuted)};font-family:${fontStack(t.type.bodyFont)};font-weight:600;font-size:${t.type.labelSize}px">${esc(label)}</button>`).join("")}</div>`;
+}
+function pageDotsHtml(pages, cur) {
+  return `<div class="page-dots">${pages.map(([, label], i) => `<button type="button" data-page="${i}" aria-label="${esc(label)}" style="background:${css(theme.colors.text)};opacity:${i === cur ? 0.85 : 0.25};width:${i === cur ? 18 : 8}px"></button>`).join("")}</div>`;
+}
+function cardCss(extra = "") { return glassCss(`border-radius:${Math.max(10, theme.glass.radius - 4)}px;${extra}`); }
+function bigNumberHtml(value, caption) {
+  const t = theme;
+  return `<div><div style="font-family:${fontStack(t.type.displayFont)};font-weight:700;font-size:30px;line-height:1.1;color:${css(t.colors.text)}">${esc(value)}</div><div style="${labelStyle()}margin-top:2px">${esc(caption)}</div></div>`;
+}
+function factCardHtml(k, v) {
+  const t = theme;
+  return `<div style="${cardCss("padding:9px 12px;")}display:flex;flex-direction:column;gap:1px;min-width:0"><span style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};white-space:nowrap">${esc(k)}</span><span style="font-family:${fontStack(t.type.displayFont)};font-weight:600;font-size:16px;color:${css(t.glass.text)};white-space:nowrap">${esc(String(v))}</span></div>`;
+}
+function weekChartHtml(key, color) {
+  const t = theme, mins = seeded(`${key}week`, 7).map((v, i) => (i === 4 ? 35 + Math.round(v * 50) : v < 0.25 ? 0 : Math.round(10 + v * 80))), max = Math.max(30, ...mins), total = mins.reduce((a, b) => a + b, 0);
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], today = 4;
+  return `<div style="${cardCss("padding:11px 14px;")}display:flex;flex-direction:column;gap:8px">
+    <div style="display:flex;align-items:baseline;gap:8px"><span style="font-family:${fontStack(t.type.displayFont)};font-weight:600;font-size:15px;color:${css(t.glass.text)}">This week</span><span style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)}">${fmtMin(total)}</span></div>
+    <div style="display:flex;align-items:flex-end;gap:10px;height:84px">${mins.map((m, i) => `<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%"><div style="width:100%;max-width:24px;height:${Math.max(3, Math.round((m / max) * 64))}px;border-radius:6px;background:${i === today ? css(color) : `rgba(${rgb(t.glass.text)},0.16)`}"></div><span style="font-size:11px;color:${css(t.glass.textMuted)}">${days[i]}</span></div>`).join("")}</div></div>`;
+}
+function systemGames(id) { return id === "all" ? allGames() : (libById(id)?.games || []).map((gm) => mkGame(id, gm)); }
+function statsPageHtml(sub) {
+  if (sub.kind === "game") {
+    const g = sub.game;
+    if (g.ratio == null) return emptyPageHtml("Not played yet", "Time played, sessions and this week's chart appear after the first session.");
+    const r = seeded(g.key, 3), first = g.key === lastPlayed().key, total = first ? 192 : 40 + Math.round(r[0] * 400), sessions = first ? 9 : 2 + Math.round(r[1] * 14);
+    return `<div style="display:flex;flex-direction:column;gap:12px;height:100%">${bigNumberHtml(fmtMin(total), "played in total")}
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${factCardHtml("Sessions", sessions)}${factCardHtml("Average", fmtMin(Math.round(total / sessions)))}${factCardHtml("Longest", fmtMin(Math.round((total / sessions) * 2.4)))}${factCardHtml("First played", "2 Oct")}</div>
+      ${weekChartHtml(g.key, sysColor(g.sys))}</div>`;
+  }
+  const t = theme, games = systemGames(sub.id), withArt = games.filter((g) => g.ratio != null), name = sub.id === "all" ? "All games" : SYSTEMS[sub.id];
+  const top = withArt.slice(0, 3).map((g, i) => [g, [192, 95, 41][i]]), total = top.reduce((a, [, m]) => a + m, 0) + 38;
+  const rows = top.map(([g, m]) => `<div style="display:flex;align-items:center;gap:10px;min-width:0"><div style="width:34px;height:34px;border-radius:8px;overflow:hidden;flex:none;display:flex">${coverHtml(g.title, g.sys, g.ratio, 34, 34, "cover")}</div><span style="flex:1;min-width:0;font-weight:600;font-size:14px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.title)}</span><span style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};white-space:nowrap">${fmtMin(m)}</span></div>`).join("");
+  return `<div style="display:flex;flex-direction:column;gap:12px;height:100%">${bigNumberHtml(fmtMin(total), `played on ${name} · ${Math.min(games.length, top.length + 1)} of ${games.length} games played`)}
+    <div style="${cardCss("padding:11px 14px;")}display:flex;flex-direction:column;gap:9px"><span style="font-family:${fontStack(t.type.displayFont)};font-weight:600;font-size:15px;color:${css(t.glass.text)}">Most played</span>${rows}</div>
+    ${weekChartHtml(sub.id, sysColor(sub.id === "all" ? lastPlayed().sys : sub.id))}</div>`;
+}
+function achievementBadgeHtml(color, earned, i) {
+  const glyphs = ["M12 4l2.5 5 5.5.8-4 3.9.9 5.5L12 16.6 7.1 19.2 8 13.7 4 9.8l5.5-.8z", "M5 12h14M12 5v14", "M6 18 18 6M8 6h10v10", "M12 3v18M3 12h18M6 6l12 12M18 6 6 18"];
+  return earned
+    ? `<div style="width:36px;height:36px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.25)}, ${mix(color, "#000000", 0.25)})"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${glyphs[i % glyphs.length]}"/></svg></div>`
+    : `<div style="width:36px;height:36px;border-radius:9px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(${rgb(theme.glass.text)},0.1)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="${css(theme.glass.textMuted)}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></div>`;
+}
+function progressBarHtml(frac, color) {
+  return `<div style="height:6px;border-radius:99px;background:rgba(${rgb(theme.glass.text)},0.12);overflow:hidden"><div style="width:${Math.round(frac * 100)}%;height:100%;border-radius:99px;background:${css(color)}"></div></div>`;
+}
+function achievementsPageHtml(sub) {
+  const t = theme;
+  if (sub.kind === "game") {
+    const g = sub.game, color = sysColor(g.sys), r = seeded(`${g.key}ach`, ACH.length);
+    const list = ACH.map(([name, desc, pts], i) => ({ name, desc, pts, i, earned: r[i] < 0.42 })).sort((a, b) => Number(b.earned) - Number(a.earned));
+    const got = list.filter((a) => a.earned), pts = list.reduce((a, b) => a + b.pts, 0), gotPts = got.reduce((a, b) => a + b.pts, 0);
+    const rows = list.slice(0, 6).map((a) => `<div style="${cardCss("padding:7px 10px;")}display:flex;align-items:center;gap:10px;min-width:0;opacity:${a.earned ? 1 : 0.62}">${achievementBadgeHtml(color, a.earned, a.i)}<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:14px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.name)}</div><div style="font-size:12px;color:${css(t.glass.textMuted)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.desc)}</div></div><span style="font-weight:600;font-size:12px;color:${css(t.glass.textMuted)};white-space:nowrap">${a.pts} pts</span></div>`).join("");
+    return `<div style="display:flex;flex-direction:column;gap:10px;height:100%">
+      <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-family:${fontStack(t.type.displayFont)};font-weight:700;font-size:22px;color:${css(t.colors.text)}">${got.length} of ${list.length}</span><span style="${labelStyle()}">unlocked · ${gotPts} of ${pts} points</span></div>${progressBarHtml(got.length / list.length, color)}</div>
+      <div class="ach-list">${rows}</div></div>`;
+  }
+  const games = systemGames(sub.id).filter((g) => g.ratio != null).slice(0, 5), name = sub.id === "all" ? "all your systems" : SYSTEMS[sub.id];
+  const progress = games.map((g) => { const r = seeded(`${g.key}ach`, ACH.length); return [g, r.filter((v) => v < 0.42).length]; });
+  const got = progress.reduce((a, [, n]) => a + n, 0), max = progress.length * ACH.length;
+  const rows = progress.map(([g, n]) => `<div style="${cardCss("padding:7px 10px;")}display:flex;align-items:center;gap:10px;min-width:0"><div style="width:34px;height:34px;border-radius:8px;overflow:hidden;flex:none;display:flex">${coverHtml(g.title, g.sys, g.ratio, 34, 34, "cover")}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:5px"><div style="display:flex;gap:8px;align-items:baseline"><span style="flex:1;min-width:0;font-weight:600;font-size:14px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(g.title)}</span><span style="font-size:12px;color:${css(t.glass.textMuted)};white-space:nowrap">${n} of ${ACH.length}</span></div>${progressBarHtml(n / ACH.length, sysColor(g.sys))}</div></div>`).join("");
+  return `<div style="display:flex;flex-direction:column;gap:10px;height:100%">
+    <div style="display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap"><span style="font-family:${fontStack(t.type.displayFont)};font-weight:700;font-size:22px;color:${css(t.colors.text)}">${got} of ${max}</span><span style="${labelStyle()}">unlocked on ${esc(name)}</span></div>${progressBarHtml(max ? got / max : 0, sysColor(sub.id === "all" ? lastPlayed().sys : sub.id))}</div>
+    <div class="ach-list">${rows}</div></div>`;
+}
+function emptyPageHtml(title, text) {
+  const t = theme;
+  return `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;padding:0 30px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:600;font-size:18px;color:${css(t.colors.text)}">${esc(title)}</div><div style="${labelStyle()}">${esc(text)}</div></div>`;
+}
+function systemDetailsHtml(id) {
+  const t = theme, color = sysColor(id === "all" ? lastPlayed().sys : id), games = systemGames(id), name = id === "all" ? "All games" : SYSTEMS[id];
+  const dark = lum(t.glass.fill) < 0.3, grad = dark ? [mix(color, "#ffffff", 0.45), mix(color, "#ffffff", 0.08)] : [mix(color, "#ffffff", 0.15), mix(color, "#000000", 0.2)];
+  const fact = (k, v) => `<div style="display:flex;gap:10px;align-items:baseline"><span style="${labelStyle()}width:96px">${k}</span><span style="font-weight:500;font-size:15px;color:${css(t.colors.text)}">${esc(String(v))}</span></div>`;
+  return `<div style="display:flex;gap:20px;height:100%">
+    <div style="flex:none;width:200px;height:100%;${glassCss(`border-radius:${t.shape.cardRadius}px;`)}display:flex;align-items:center;justify-content:center;background-image:linear-gradient(135deg, rgba(${rgb(color)},0.18), rgba(${rgb(color)},0.05))">${consoleGlyph(id, 120, null, 1.9, grad)}</div>
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px;min-width:0"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:${Math.round(t.type.wordmarkSize * 0.9)}px;color:${css(t.colors.text)};line-height:1.15">${esc(name)}</div>
+      ${fact("Games", games.length)}${fact("Played", Math.max(1, games.filter((g) => g.ratio != null).length - 1))}${id !== "all" ? fact("Emulator", EMULATOR[id] || "RetroArch") : ""}</div></div>`;
+}
 function renderBottom() {
   if (theme.companion.layout === "artDock") return renderDockBottom();
   const t = theme, c = t.companion;
   const focused = mock.focusGame;
+  const sub = companionSubject(), pages = sub ? companionPages() : [["details", "Details"]];
+  if (!(mock.bottomPage < pages.length)) mock.bottomPage = 0;
+  const page = pages[mock.bottomPage][0];
   let main = "";
   const heading = `font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:${Math.round(t.type.wordmarkSize * 0.9)}px;color:${css(t.colors.text)};line-height:1.15`;
   const fact = (k, v) => `<div style="display:flex;gap:10px;align-items:baseline"><span style="${labelStyle()}width:110px">${k}</span><span style="font-weight:500;font-size:15px">${v}</span></div>`;
@@ -945,16 +1064,22 @@ function renderBottom() {
     if (c.layout === "minimal") main = `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center"><div style="${heading}">${esc(focused.title)}</div>${badgeHtml(focused.sys)}</div>`;
     else if (c.layout === "info") main = `<div style="background:${css(t.colors.surface)};border-radius:${t.shape.cardRadius}px;padding:20px;display:flex;flex-direction:column;gap:6px"><div style="${heading}">${esc(focused.title)}</div>${facts(focused)}</div>`;
     else main = `<div style="display:flex;gap:20px;height:100%">${coverPanel(focused)}<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px;min-width:0">${badgeHtml(focused.sys)}<div style="${heading}">${esc(focused.title)}</div>${facts(focused)}</div></div>`;
+  } else if (mock.focusSystem) {
+    main = systemDetailsHtml(mock.focusSystem);
   } else if (mock.focusApp) {
     main = `<div style="display:flex;gap:16px;align-items:center"><div style="width:72px;height:72px;border-radius:20px;background:${mock.focusApp[1]}"></div><div style="${heading}">${esc(mock.focusApp[0])}</div></div>`;
   } else {
     main = `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-family:${fontStack(t.type.displayFont)};font-size:${t.type.wordmarkSize}px;font-weight:${t.type.wordmarkWeight};color:${css(t.colors.accent)}">${esc(t.header.wordmark)}</div><div style="${labelStyle()}">Highlight a game on the top screen to see it here.</div></div>`;
   }
+  const body = page === "stats" ? statsPageHtml(sub) : page === "achievements" ? achievementsPageHtml(sub) : main;
+  const switcher = sub && pages.length > 1;
+  const clock = c.showClock ? `<span style="margin-left:auto;font-family:${fontStack(t.type.bodyFont)};font-size:${t.type.clockSize}px;font-weight:${t.type.clockWeight};color:${css(t.colors.text)}">${esc(clockText())}</span>` : "";
+  const topRow = (switcher && c.pageStyle === "tabs") || c.showClock ? `<div style="display:flex;align-items:center;gap:12px;flex:none;min-height:32px">${switcher && c.pageStyle === "tabs" ? pageTabsHtml(pages, mock.bottomPage) : ""}${clock}</div>` : "";
   $("#bottomScreen").innerHTML = `<div class="mock" style="${vars()}"><div class="bg-layer" style="${backgroundCss(true)}"></div>
-    <div class="content" style="padding:20px;gap:14px">
-      ${c.showClock ? `<div style="text-align:right;font-family:${fontStack(t.type.bodyFont)};font-size:${t.type.clockSize}px;font-weight:${t.type.clockWeight}">${esc(clockText())}</div>` : ""}
-      <div style="flex:1;min-height:0">${main}</div>
-      ${c.showHints && focused && !mock.nowPlaying ? hintsHtml([["A", "Play"], ["Y", "Emulator"]]) : ""}</div></div>`;
+    <div class="content" style="padding:18px 20px 16px;gap:14px">${topRow}
+      <div style="flex:1;min-height:0">${body}</div>
+      ${switcher && c.pageStyle === "dots" ? pageDotsHtml(pages, mock.bottomPage) : ""}
+      ${c.showHints && focused && !mock.nowPlaying && page === "details" ? hintsHtml([["A", "Play"], ["Y", "Emulator"]]) : ""}</div></div>`;
 }
 
 // ======================================================================================
@@ -1036,6 +1161,18 @@ function tabIcon(id, size, color) {
   if (id === "apps") return lineSvg(`<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>`, size, color);
   return lineSvg(`<path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2" fill="${color}"/><circle cx="15" cy="12" r="2" fill="${color}"/><circle cx="10" cy="17" r="2" fill="${color}"/>`, size, color);
 }
+// Dark mode: the same colour controls again, stored under "dark". Layout, type and motion are shared.
+(() => {
+  const at = GROUPS.findIndex((g) => g.id === "glass") + 1;
+  const pick = (gid, keys) => keys.map((k) => { const it = GROUPS.find((g) => g.id === gid).items.find((i) => i.path === `${gid}.${k}`); return { ...it, path: `dark.${gid}.${k}` }; });
+  GROUPS.splice(at, 0, { id: "dark", title: "Dark mode", desc: "The palette used in dark mode. Preview it with the Dark mode switch under the screens. Sizes, type and motion are shared with the light palette.", items: [
+    S("appearance", "On the Thor", [["system", "Follow Android's dark theme"], ["light", "Always light"], ["dark", "Always dark"]], "You can still change it on the device in System → Theme."),
+    ...GROUPS.find((g) => g.id === "colors").items.map((it) => ({ ...it, path: `dark.${it.path}` })),
+    ...pick("glass", ["fill", "opacity", "border", "borderOpacity", "text", "textMuted"]),
+    ...pick("hints", ["colorA", "colorB", "colorX", "colorY", "colorOther"]),
+    C("dark.shadowColor", "Shadow colour"),
+  ]});
+})();
 const DOCK = [["Browser", "#3FB4E8", "globe"], ["Video", "#E5484D", "play"], ["Store", "#3DBA74", "bag"], ["Music", "#9A6BFF", "note"], ["Files", "#F2A33A", "folder"], ["Chat", "#5865F2", "bubble"], ["Camera", "#2FB3A3", "camera"]];
 function dockGlyph(kind, size) {
   const w = "#FFFFFF";
@@ -1113,7 +1250,7 @@ function xmbTileHtml(s, idx, w, h) {
   // The middle of the cover only (zoomed in past titles and logos), desaturated and faint.
   const art = sample ? `<div style="position:absolute;inset:0;display:flex;opacity:${(0.16 + 0.2 * tint).toFixed(2)};filter:grayscale(1) blur(0.6px);transform:scale(2.2);transform-origin:50% 58%">${coverHtml(sample.title, sample.sys, sample.ratio, w, h, "cover")}</div>` : "";
   const wash = `<div style="position:absolute;inset:0;background:linear-gradient(135deg, rgba(${rgb(color)},${(0.26 * tint).toFixed(3)}), rgba(${rgb(color)},${(0.08 * tint).toFixed(3)}))"></div>`;
-  const glyph = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2">${consoleGlyph(s.id, Math.round(Math.min(w, h) * 0.56), null, 2.1, [mix(color, "#ffffff", 0.15), mix(color, "#000000", 0.2)])}</div>`;
+  const glyph = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2">${consoleGlyph(s.id, Math.round(Math.min(w, h) * 0.56), null, 2.1, lum(t.glass.fill) < 0.3 ? [mix(color, "#ffffff", 0.45), mix(color, "#ffffff", 0.08)] : [mix(color, "#ffffff", 0.15), mix(color, "#000000", 0.2)])}</div>`;
   const edge = `<div class="xmb-ring" style="padding:2px;border-radius:${rad}px;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.35)}, ${mix(color, "#000000", 0.1)})"></div>`;
   return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner: art + wash + glyph + edge, elevated: true, ring: true, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
 }
@@ -1124,7 +1261,7 @@ function navDockHtml(next) {
     const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
     const showLabel = nav.labels === "all" || (nav.labels === "active" && active);
     const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:${showLabel ? "8px 14px" : "8px 10px"};font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${tabIcon(id, 18, css(color))}${showLabel ? esc(label) : ""}</div>`;
-    return focusableHtml({ w: 0, h: 0, rad: 99, idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : "#1A1E1B27" });
+    return focusableHtml({ w: 0, h: 0, rad: 99, idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : `#1F${String(t.colors.text).replace("#", "").slice(-6)}` });
   }).join("");
   const apps = DOCK.slice(0, Math.max(0, nav.apps)).map(([name, col, gl]) => focusableHtml({ w: 40, h: 40, rad: 99, idx: next(), data: `data-app="${esc(name)}"`, inner: dockGlyph(gl, 20), elevated: false, ring: false, fill: col, fillFocused: col }));
   const divider = apps.length ? `<span style="width:1px;height:28px;background:rgba(${rgb(t.glass.text)},0.18);margin:0 4px;flex:none"></span>` : "";
@@ -1135,7 +1272,7 @@ function heroHeaderHtml(next) {
   const tabs = t.nav.style === "dock" ? "" : [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
     const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
     const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:7px 14px;font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${h.tabIcons ? tabIcon(id, 16, css(color)) : ""}${esc(label)}</div>`;
-    return focusableHtml({ w: 0, h: 0, rad: Math.min(t.shape.tabRadius, 40), idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : "#1A1E1B27" });
+    return focusableHtml({ w: 0, h: 0, rad: Math.min(t.shape.tabRadius, 40), idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : `#1F${String(t.colors.text).replace("#", "").slice(-6)}` });
   }).join("");
   const lb = (s) => `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">${s}</span>`;
   const textColor = css(t.glass.text);
@@ -1410,7 +1547,8 @@ function step(now) {
 }
 function paint(el, p, press, bob) {
   const m = theme.motion, sh = theme.shape, pc = Math.max(0, Math.min(1, p));
-  const scale = (1 + (m.focusScale - 1) * p) * (1 - (1 - m.pressScale) * press);
+  const longest = Math.max(el.offsetWidth, el.offsetHeight), cap = longest > 0 ? 1 + (2 * Math.max(0, m.focusGrowMax ?? 8)) / longest : m.focusScale;
+  const scale = (1 + (Math.min(m.focusScale, cap) - 1) * p) * (1 - (1 - m.pressScale) * press);
   el.style.transform = `translateY(${-m.focusLift * p + m.idleBobAmplitude * bob}px) scale(${scale})`;
   el.style.zIndex = pc > 0.01 ? 3 : 1;
   const ring = el.querySelector(":scope > .tile-ring"); if (ring) ring.style.opacity = pc;
@@ -1532,21 +1670,51 @@ document.addEventListener("click", (e) => {
   if (b.id === "applyPreset") { const preset = SOUND_PRESETS[$("#soundPreset").value]; theme.sounds.events = clone(preset); for (const ev of SOUND_EVENTS) syncControl(`sounds.events.${ev}`); scheduleRender(); refreshStatus(); markDirty(); playSound("select", true); toast("Applied to all seven sounds"); return; }
   if (b.id === "exportJson") { exportTheme(); return; }
   if (b.id === "copyJson") { copyTheme(); return; }
-  if (b.id === "loadJson") { try { const t = JSON.parse($("#jsonBox").value); theme = deepMerge(clone(PROPOSAL), t); buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); toast("Loaded"); } catch (err) { toast("That isn't valid JSON. Check for a missing comma or quote."); } return; }
+  if (b.id === "loadJson") { try { const t = JSON.parse($("#jsonBox").value); theme = upgraded(deepMerge(clone(PROPOSAL), t)); buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); toast("Loaded"); } catch (err) { toast("That isn't valid JSON. Check for a missing comma or quote."); } return; }
   if (b.id === "resetAll") { $("#resetConfirm").hidden = false; return; }
   if (b.id === "resetNo") { $("#resetConfirm").hidden = true; return; }
   if (b.id === "resetYes") { theme = clone(PROPOSAL); approved = {}; notes = {}; $("#resetConfirm").hidden = true; buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); toast("Back to the proposal"); return; }
 });
+// Light/dark preview. Drawing code reads `theme`; while it draws, `theme` holds the palette for the
+// mode being previewed, then goes back to the stored theme that the controls edit and save.
+// Bottom screen: tap a page tab or dot, or swipe sideways, as on the Thor's touch screen.
+mock.bottomPage = 0;
+(() => {
+  const el = document.getElementById("bottomScreen"); let x0 = null;
+  const go = (i) => { const n = companionSubject() ? companionPages().length : 1; const next = Math.max(0, Math.min(n - 1, i)); if (next !== mock.bottomPage) { mock.bottomPage = next; playSound("tab"); renderBottom(); } };
+  el.addEventListener("click", (e) => { const b = e.target.closest("[data-page]"); if (b) go(Number(b.dataset.page)); });
+  el.addEventListener("pointerdown", (e) => { x0 = e.clientX; });
+  el.addEventListener("pointerup", (e) => { if (x0 == null) return; const dx = e.clientX - x0; x0 = null; if (Math.abs(dx) > 40) go(mock.bottomPage + (dx < 0 ? 1 : -1)); });
+})();
+let viewDepth = 0, storedTheme = null;
+function previewIsDark() { const el = document.getElementById("previewDark"); return !!(el && el.checked); }
+function resolvedTheme(t) {
+  if (!previewIsDark() || !t.dark) return t;
+  const r = clone(t), d = t.dark;
+  if (d.colors) r.colors = clone(d.colors);
+  for (const k of ["fill", "opacity", "border", "borderOpacity", "text", "textMuted"]) if (d.glass && d.glass[k] !== undefined) r.glass[k] = d.glass[k];
+  for (const k of ["colorA", "colorB", "colorX", "colorY", "colorOther"]) if (d.hints && d.hints[k] !== undefined) r.hints[k] = d.hints[k];
+  if (d.shadowColor) r.shape.shadowColor = d.shadowColor;
+  return r;
+}
+function inView(fn) {
+  return function (...args) {
+    if (viewDepth++ === 0) { storedTheme = theme; theme = resolvedTheme(storedTheme); }
+    try { return fn.apply(this, args); } finally { if (--viewDepth === 0) { theme = storedTheme; storedTheme = null; } }
+  };
+}
+renderAll = inView(renderAll); renderBottom = inView(renderBottom); updateHeroChrome = inView(updateHeroChrome); step = inView(step);
 let preLook = null;
 function fillLooks() {
   const sel = $("#lookSelect"); if (!sel) return;
   sel.innerHTML = `<option value="">Choose…</option>${Object.keys(LOOKS).map((k) => `<option>${esc(k)}</option>`).join("")}${preLook ? `<option value="__mine">Back to my values</option>` : ""}`;
 }
 document.addEventListener("change", (e) => {
+  if (e.target && e.target.id === "previewDark") { renderAll(); return; }
   if (!e.target || e.target.id !== "lookSelect" || !e.target.value) return;
   const v = e.target.value;
   if (v === "__mine") { if (preLook) theme = clone(preLook); preLook = null; }
-  else { if (!preLook) preLook = clone(theme); theme = deepMerge(clone(PROPOSAL), clone(LOOKS[v])); }
+  else { if (!preLook) preLook = clone(theme); theme = upgraded(deepMerge(clone(PROPOSAL), clone(LOOKS[v]))); }
   buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); fillLooks();
   toast(v === "__mine" ? "Back to your values" : `Showing ${v}. "Back to my values" in the same menu restores yours.`);
 });
@@ -1581,7 +1749,7 @@ async function copyTheme(note) {
 // Start
 // ======================================================================================
 (function start() {
-  try { const local = JSON.parse(localStorage.getItem("wiis-workbench") || "null"); if (local && local.theme) { theme = deepMerge(clone(PROPOSAL), local.theme); approved = local.approved || {}; notes = local.notes || {}; } } catch (e) { /* no local copy */ }
+  try { const local = JSON.parse(localStorage.getItem("wiis-workbench") || "null"); if (local && local.theme) { theme = upgraded(deepMerge(clone(PROPOSAL), local.theme)); approved = local.approved || {}; notes = local.notes || {}; } } catch (e) { /* no local copy */ }
   buildGroups(); ensureFonts(); refreshStatus(); fillLooks(); renderAll();
   setSave("Connecting…");
   const timer = setTimeout(() => { if (!db) setSave("Saved in this browser only"); }, 10000);

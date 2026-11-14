@@ -24,6 +24,20 @@ import app.wiis.launcher.ui.rememberArt
 import app.wiis.system.AppEntry
 import kotlin.math.hypot
 import kotlin.math.roundToInt
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import app.wiis.emulator.ra.RaResult
+import app.wiis.launcher.stats.GameStats
+import app.wiis.launcher.stats.Stats
+import app.wiis.launcher.stats.SystemStats
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -143,43 +157,114 @@ private fun CompanionScreen() {
         return
     }
 
+    val subject: CompanionSubject? = when {
+        session != null -> CompanionSubject.OfGame(session!!.game, session)
+        else -> when (val f = focus) {
+            is Focus.OnGame -> CompanionSubject.OfGame(f.game, null)
+            is Focus.OnSystem -> CompanionSubject.OfSystem(f.id, f.name, f.count)
+            else -> null
+        }
+    }
+    val pages = remember(tokens.showStats, tokens.showAchievements) {
+        listOfNotNull(CompanionPage.Details, CompanionPage.Stats.takeIf { tokens.showStats }, CompanionPage.Achievements.takeIf { tokens.showAchievements })
+    }
+    // One pager for every game and system, so the page you're on stays put while focus moves.
+    val pagerState = rememberPagerState { pages.size }
+
     Box(
         Modifier
             .fillMaxSize()
-            .wiisBackground(style, solidOverride = if (tokens.background == "color") style.companionBackground else null),
+            .wiisBackground(style, solidOverride = if (tokens.background == "color") style.companionBackground else null)
+            .safeDrawingPadding(),
     ) {
-        Column(
-            Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            if (tokens.showClock) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ClockText() }
-            Box(Modifier.fillMaxWidth().weight(1f)) {
-                val s = session
-                when {
-                    s != null -> NowPlaying(s, style)
-                    else -> when (val f = focus) {
-                        is Focus.OnGame -> GameDetails(f.game, style)
+        if (subject != null) {
+            CompanionPager(pages, pagerState, tokens.showClock) { page ->
+                when (page) {
+                    CompanionPage.Details -> Box(Modifier.fillMaxSize()) { DetailsFor(subject, style) }
+                    CompanionPage.Stats -> StatsFor(subject, style)
+                    CompanionPage.Achievements -> AchievementsFor(subject, style, visible = pages.getOrNull(pagerState.currentPage) == CompanionPage.Achievements)
+                }
+            }
+        } else {
+            Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                if (tokens.showClock) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ClockText() }
+                Box(Modifier.fillMaxWidth().weight(1f)) {
+                    when (val f = focus) {
                         is Focus.OnApp -> Row(verticalAlignment = Alignment.CenterVertically) {
                             AppIcon(f.app, size = 72)
                             Spacer(Modifier.width(16.dp))
                             Text(f.app.label, style = style.heading)
                         }
-                        // A highlighted system has no cover to show here (same as the workbench).
-                        Focus.None, is Focus.OnSystem -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        else -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(style.spec.header.wordmark, style = style.wordmark)
                             Text("Highlight a game on the top screen to see it here.", style = style.label)
                         }
                     }
                 }
             }
-            if (tokens.showHints && session == null && focus is Focus.OnGame) {
-                HintBar(listOf("A" to "Play", "Y" to "Emulator"))
-            }
         }
     }
+}
+
+@Composable
+private fun DetailsFor(subject: CompanionSubject, style: WiisStyle) {
+    val graph = LocalContext.current.graph
+    when (subject) {
+        is CompanionSubject.OfGame -> if (subject.session != null) NowPlaying(subject.session, style) else GameDetails(subject.game, style)
+        is CompanionSubject.OfSystem -> {
+            val games = remember(subject.id) { graph.currentGames().filter { subject.id == "all" || it.systemId == subject.id } }
+            val played = games.count { graph.playtime.lastPlayed(it.uri) > 0 }
+            val emulator = graph.launcher.choicesFor(subject.id).firstOrNull()?.let { graph.registry.emulator(it.emulator)?.name }
+            SystemDetailsPage(subject.id, subject.name, games.size, played, if (subject.id == "all") null else emulator ?: "None set up")
+        }
+    }
+}
+
+@Composable
+private fun StatsFor(subject: CompanionSubject, style: WiisStyle) {
+    val graph = LocalContext.current.graph
+    when (subject) {
+        is CompanionSubject.OfGame -> {
+            val game = subject.game
+            val stats by produceState<GameStats?>(null, game.uri) {
+                value = withContext(Dispatchers.IO) {
+                    Stats.game(game.uri, graph.sessions.all(), graph.playtime.totalMillis(game.uri), graph.playtime.lastPlayed(game.uri), System.currentTimeMillis())
+                }
+            }
+            stats?.let { GameStatsPage(it, style.systemColor(game.systemId)) }
+        }
+        is CompanionSubject.OfSystem -> {
+            val stats by produceState<SystemStats?>(null, subject.id) {
+                value = withContext(Dispatchers.IO) {
+                    Stats.system(subject.id, graph.currentGames(), graph.sessions.all(), graph.playtime::totalMillis, System.currentTimeMillis())
+                }
+            }
+            val color = if (subject.id == "all") style.accent else style.systemColor(subject.id)
+            stats?.let { SystemStatsPage(it, if (subject.id == "all") "all systems" else subject.name, color) }
+        }
+    }
+}
+
+/** Loads only while the page is showing, after focus has settled, so moving fast doesn't call the API for every tile. */
+@Composable
+private fun AchievementsFor(subject: CompanionSubject, style: WiisStyle, visible: Boolean) {
+    val graph = LocalContext.current.graph
+    var retry by remember { mutableIntStateOf(0) }
+    var result by remember(subject) { mutableStateOf<RaResult?>(null) }
+    LaunchedEffect(subject, visible, retry) {
+        if (!visible) return@LaunchedEffect
+        delay(350)
+        result = null
+        result = when (subject) {
+            is CompanionSubject.OfGame -> graph.ra.forGame(subject.game)
+            is CompanionSubject.OfSystem -> graph.ra.forSystem(subject.id)
+        }
+    }
+    val color = when (subject) {
+        is CompanionSubject.OfGame -> style.systemColor(subject.game.systemId)
+        is CompanionSubject.OfSystem -> if (subject.id == "all") style.accent else style.systemColor(subject.id)
+    }
+    AchievementsPage(result, color, onSetUp = { graph.shared.requestSystemPage("ra") }, onRetry = { retry++ })
 }
 
 @Composable
@@ -239,13 +324,6 @@ private fun Facts(game: Game, style: WiisStyle) {
     }
 }
 
-@Composable
-private fun Fact(label: String, value: String, style: WiisStyle) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Text(label, style = style.label, modifier = Modifier.width(110.dp))
-        Text(value, style = style.body)
-    }
-}
 
 @Composable
 private fun NowPlaying(s: Session, style: WiisStyle) {

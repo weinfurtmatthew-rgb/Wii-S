@@ -66,6 +66,8 @@ data class SystemDef(
     val emulators: List<EmulatorChoice>,
     /** Collection name on the libretro thumbnail server, e.g. "Nintendo - Nintendo DS". */
     val libretroPlaylist: String? = null,
+    /** RetroAchievements console id; null where RetroAchievements has no sets for this system. */
+    val raConsoleId: Int? = null,
 )
 
 @Serializable

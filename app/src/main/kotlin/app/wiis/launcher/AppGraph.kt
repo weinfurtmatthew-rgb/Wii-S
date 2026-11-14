@@ -16,11 +16,15 @@ import app.wiis.emulator.SystemDetector
 import app.wiis.emulator.art.ArtRepository
 import app.wiis.emulator.art.LibretroThumbnails
 import app.wiis.emulator.art.LocalArtFolder
+import app.wiis.emulator.ra.RaCredentials
+import app.wiis.emulator.ra.RaRepository
 import app.wiis.launcher.home.AppRef
 import app.wiis.launcher.home.DockApps
 import app.wiis.launcher.sound.SoundEngine
+import app.wiis.launcher.stats.SessionLog
 import app.wiis.launcher.theme.FontRepository
 import app.wiis.launcher.theme.ThemeRepository
+import app.wiis.launcher.ui.RemoteImages
 import app.wiis.system.AppEntry
 import app.wiis.system.AppRepository
 import app.wiis.system.DisplayProbe
@@ -96,6 +100,38 @@ class AppGraph(val context: Application) {
                 sounds.apply(spec.sounds)
             }
         }
+    }
+
+    // ---- Play sessions, RetroAchievements, web images ----
+
+    val sessions by lazy { SessionLog(File(context.filesDir, "sessions.tsv")) }
+    val remoteImages by lazy { RemoteImages(File(context.cacheDir, "remote")) }
+    val ra by lazy { RaRepository(context.contentResolver, registry, File(context.filesDir, "ra"), { raCredentials }) }
+
+    /** Kept apart from other settings so it never leaves the device (see res/xml/data_extraction_rules.xml). */
+    private val secrets by lazy { context.getSharedPreferences("wiis_secrets", Context.MODE_PRIVATE) }
+
+    var raCredentials: RaCredentials?
+        get() {
+            val user = secrets.getString("ra_user", null)
+            val key = secrets.getString("ra_key", null)
+            return if (user.isNullOrBlank() || key.isNullOrBlank()) null else RaCredentials(user.trim(), key.trim())
+        }
+        set(value) {
+            secrets.edit {
+                if (value == null) { remove("ra_user"); remove("ra_key") } else { putString("ra_user", value.user.trim()); putString("ra_key", value.key.trim()) }
+            }
+            ra.clearProgress()
+        }
+
+    // ---- Appearance (device-level): "theme" (as the theme says), "system", "light" or "dark" ----
+
+    private val _appearance = MutableStateFlow(prefs.getString("appearance", "theme") ?: "theme")
+    val appearance: StateFlow<String> = _appearance.asStateFlow()
+
+    fun setAppearance(value: String) {
+        prefs.edit { putString("appearance", value) }
+        _appearance.value = value
     }
 
     // ---- Box art settings (device-level, not part of the theme) ----
@@ -184,6 +220,11 @@ class SharedState {
     private val _hero = MutableStateFlow<Game?>(null)
     val hero: StateFlow<Game?> = _hero.asStateFlow()
     fun setHero(game: Game?) { _hero.value = game }
+
+    /** The bottom screen asks the top screen to open a System page ("ra": RetroAchievements). */
+    private val _openSystemPage = MutableSharedFlow<String>(extraBufferCapacity = 1)
+    val openSystemPage: SharedFlow<String> = _openSystemPage.asSharedFlow()
+    fun requestSystemPage(page: String) { _openSystemPage.tryEmit(page) }
 
     /** The bottom screen's app-drawer button asks the top screen to show Apps. */
     private val _openApps = MutableSharedFlow<Unit>(extraBufferCapacity = 1)

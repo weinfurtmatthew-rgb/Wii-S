@@ -69,6 +69,8 @@ fun WiisTile(
     clickSound: UiEvent? = UiEvent.Select,
     ring: Boolean = true,
     elevated: Boolean = true,
+    /** Corner radius of the focus ring's tile; the theme's tile radius when null. */
+    ringRadius: androidx.compose.ui.unit.Dp? = null,
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     val style = LocalWiis.current
@@ -110,14 +112,18 @@ fun WiisTile(
 
     val ringWidth = spec.shape.focusRingWidth.dp
     val ringGap = spec.shape.focusRingGap.dp
-    val radius = spec.shape.tileRadius.dp
+    val radius = ringRadius ?: spec.shape.tileRadius.dp
     val baseFill = fill ?: style.tile
     val focusFill = fillFocused ?: style.tileFocused
 
     Box(
         modifier
             .graphicsLayer {
-                val scale = (1f + (motion.focusScale - 1f) * focusProgress) * (1f - (1f - motion.pressScale) * pressProgress)
+                // A big card grows by at most focusGrowMax dp per side; small tiles grow by focusScale.
+                val longest = maxOf(size.width, size.height)
+                val growCap = if (longest > 0f) 1f + 2f * motion.focusGrowMax.coerceAtLeast(0).dp.toPx() / longest else motion.focusScale
+                val focusScale = minOf(motion.focusScale, growCap)
+                val scale = (1f + (focusScale - 1f) * focusProgress) * (1f - (1f - motion.pressScale) * pressProgress)
                 scaleX = scale
                 scaleY = scale
                 translationY = (-motion.focusLift * focusProgress + motion.idleBobAmplitude * bob).dp.toPx()

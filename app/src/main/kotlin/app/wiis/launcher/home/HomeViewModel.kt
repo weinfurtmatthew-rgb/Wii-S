@@ -16,6 +16,7 @@ import app.wiis.emulator.RomScanner
 import app.wiis.launcher.AppGraph
 import app.wiis.launcher.Focus
 import app.wiis.launcher.Session
+import app.wiis.launcher.stats.Played
 import app.wiis.system.AppEntry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -81,11 +82,15 @@ data class HomeUiState(
     val recent: List<Game> = emptyList(),
     val systems: List<SystemEntry> = emptyList(),
     val allPreview: List<String> = emptyList(),
+    /** Per system id ("all" included): the game whose art fills its XMB icon. */
+    val systemSamples: Map<String, Game> = emptyMap(),
     val view: HomeView = HomeView.Home,
     val viewGames: List<Game> = emptyList(),
     val heroFocus: HeroFocus? = null,
     val dock: List<AppEntry> = emptyList(),
     val dockPicker: DockPicker? = null,
+    /** A System page to open once (from the bottom screen), e.g. "ra". */
+    val systemPage: String? = null,
 )
 
 /** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
@@ -126,6 +131,12 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             }
         }
         viewModelScope.launch { graph.shared.openApps.collect { selectSection(Section.Apps) } }
+        viewModelScope.launch {
+            graph.shared.openSystemPage.collect { page ->
+                selectSection(Section.System)
+                local.update { it.copy(systemPage = page) }
+            }
+        }
     }
 
     // ---- Navigation -------------------------------------------------------------------------
@@ -174,6 +185,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     fun heroFocusConsumed() = local.update { it.copy(heroFocus = null) }
+    fun systemPageShown() = local.update { it.copy(systemPage = null) }
 
     /** Y on a dock app: choose another app for that spot. */
     fun openDockPicker(slot: Int) = local.update { it.copy(dockPicker = DockPicker(slot, graph.apps.apps.value)) }
@@ -208,6 +220,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             recent = recent,
             systems = systems,
             allPreview = HomeModel.allTilePreview(hero, recent, systems),
+            systemSamples = HomeModel.systemSamples(games, { graph.playtime.lastPlayed(it.uri) }, graph.art::hasArt, hero),
             view = if (stillThere) view else HomeView.Home,
             viewGames = if (stillThere && view is HomeView.InSystem) HomeModel.gamesFor(view.systemId, games) else emptyList(),
         )
@@ -333,7 +346,9 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     fun onReturnedHome() {
         val ended = graph.shared.endSession()
         if (ended != null) {
-            graph.playtime.record(ended.game.uri, ended.startedAtMillis, System.currentTimeMillis())
+            val now = System.currentTimeMillis()
+            graph.playtime.record(ended.game.uri, ended.startedAtMillis, now)
+            runCatching { graph.sessions.add(Played(ended.game.uri, ended.game.systemId, ended.startedAtMillis, now)) }
             val shelves = buildShelves()
             val shelfId = if (shelves.any { it.id == RECENT_ID }) RECENT_ID else ended.game.systemId
             lastFocused = shelfId to ended.game.uri

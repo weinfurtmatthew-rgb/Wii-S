@@ -159,7 +159,7 @@ private fun SectionContent(state: HomeUiState, vm: HomeViewModel, onPickFolder: 
         when (section) {
             Section.Games -> GamesPane(state, vm, onPickFolder)
             Section.Apps -> AppsPane(state.apps, vm)
-            Section.System -> SystemScreen(onPickRomFolder = onPickFolder)
+            Section.System -> SystemScreen(onPickRomFolder = onPickFolder, requestedPage = state.systemPage, onPageShown = vm::systemPageShown)
         }
     }
 }

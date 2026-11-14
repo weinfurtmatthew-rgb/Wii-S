@@ -5,12 +5,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -62,6 +64,8 @@ class WiisStyle(val spec: ThemeSpec, val fonts: WiisFonts) {
     val glassText = g.text.toColorOr(Color(0xFF1E1B27))
     val glassTextMuted = g.textMuted.toColorOr(glassText.copy(alpha = 0.7f))
     val glassShape = RoundedCornerShape(g.radius.dp)
+    /** True when the glass is dark (dark mode): drawings on it are lightened to stay readable. */
+    val glassIsDark = glassFill.luminance() < 0.3f
 
     fun systemColor(systemId: String): Color = spec.systemColor(systemId)
 
@@ -114,17 +118,32 @@ fun WiisTheme(
 ) {
     val style = remember(spec, fonts) { WiisStyle(spec, fonts) }
     val scheme = remember(style) {
-        darkColorScheme(
-            primary = style.focusRing,
-            onPrimary = style.background,
-            secondary = style.accent,
-            background = style.background,
-            onBackground = style.text,
-            surface = style.surface,
-            onSurface = style.text,
-            surfaceContainerHigh = style.surface,
-            onSurfaceVariant = style.textMuted,
-        )
+        // Material pieces (dialogs, text fields) follow the palette's lightness.
+        if (style.background.luminance() > 0.5f) {
+            lightColorScheme(
+                primary = style.text,
+                onPrimary = style.background,
+                secondary = style.accent,
+                background = style.background,
+                onBackground = style.text,
+                surface = style.surface,
+                onSurface = style.text,
+                surfaceContainerHigh = style.surface,
+                onSurfaceVariant = style.textMuted,
+            )
+        } else {
+            darkColorScheme(
+                primary = style.text,
+                onPrimary = style.background,
+                secondary = style.accent,
+                background = style.background,
+                onBackground = style.text,
+                surface = style.surface,
+                onSurface = style.text,
+                surfaceContainerHigh = style.surface,
+                onSurfaceVariant = style.textMuted,
+            )
+        }
     }
     val typography = remember(style) {
         Typography(

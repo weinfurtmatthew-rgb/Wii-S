@@ -76,3 +76,25 @@ Three whole looks to compare with Draft 3, in the workbench under **Try a look**
 
 New setting values (workbench only until you choose; the launcher draws them once a look is picked): `tile.consoleIcon: "tab"`, `systemTile.style: "xmb"`, `nav.captionPlace: "nameplate"`, `colors.backgroundStyle: "dots"` and `"artLight"`. Don't import a look file on the Thor before then: 0.3.0 would draw a light look's text on its dark fallback background.
 
+### Draft 4 (2026-11-14): your choices from the look review
+
+| Detail | Value | Status |
+|---|---|---|
+| Direction | Look B (light, Cocoon + iiSU), with a light **and** a dark mode | **Your answer** |
+| Corner tab on game cards (iiSU) | Yes, top left, console drawn in white | **Your answer** |
+| XMB system icons | Yes; no count or name on the tile, the nameplate names it | **Your answer** |
+| Nameplate at the top, hints beside the dock | Yes | **Your answer** |
+| Focus motion | Grow and bounce, as in Draft 3 (stiffness 400, damping 0.55, lift 4, idle bob) | **Your answer** |
+| Focus ring | Refined instead of removed: 3 dp mint, 1 dp gap, no glow | Proposed (you said remove or refine) |
+| Ring can't reach the title pill | Big cards grow by at most 8 dp a side (new setting `motion.focusGrowMax`); header gap 18 dp; compact title pill | Proposed |
+| Typeface | Poppins | **Your answer** |
+| Accent on light | Ink #23212D | **Your answer** |
+| Dark palette | Background #15141C → #1D1C26, surfaces #23222D, text #ECEAF3 / #A9A5B9, light active tab and hint badges, mint ring kept | Proposed |
+| Light or dark | Follows Android's dark theme (setting `appearance`); System → Theme → Appearance on the Thor overrides | Proposed |
+| Bottom screen pages | Details, Stats, RetroAchievements, swiped by touch, labels at the top (`companion.pageStyle`, or dots) | **Your request**; page designs proposed |
+| Stats page | Total time, sessions, average, longest, first played, this week Monday to Sunday with today in the console colour; for a console: total, games played, top three, this week | Proposed |
+| Achievements page | Unlocked count, points and a progress bar, then each achievement (earned first, locked dimmed with RetroAchievements' grey badge); for a console: every game with progress, most recent first | Proposed |
+| Draft 4 | All of the above, now the proposal in `default.json` (`design/themes/draft-4-2026-11-14.json`) | **Draft, open to change** |
+
+Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
+

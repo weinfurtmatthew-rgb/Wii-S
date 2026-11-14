@@ -272,7 +272,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Nintendo Entertainment System"
+      "libretroPlaylist": "Nintendo - Nintendo Entertainment System",
+      "raConsoleId": 7
     },
     {
       "id": "snes",
@@ -301,7 +302,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Super Nintendo Entertainment System"
+      "libretroPlaylist": "Nintendo - Super Nintendo Entertainment System",
+      "raConsoleId": 3
     },
     {
       "id": "n64",
@@ -325,7 +327,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Nintendo 64"
+      "libretroPlaylist": "Nintendo - Nintendo 64",
+      "raConsoleId": 2
     },
     {
       "id": "gb",
@@ -348,7 +351,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Game Boy"
+      "libretroPlaylist": "Nintendo - Game Boy",
+      "raConsoleId": 4
     },
     {
       "id": "gbc",
@@ -371,7 +375,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Game Boy Color"
+      "libretroPlaylist": "Nintendo - Game Boy Color",
+      "raConsoleId": 6
     },
     {
       "id": "gba",
@@ -394,7 +399,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Game Boy Advance"
+      "libretroPlaylist": "Nintendo - Game Boy Advance",
+      "raConsoleId": 5
     },
     {
       "id": "nds",
@@ -423,7 +429,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Nintendo - Nintendo DS"
+      "libretroPlaylist": "Nintendo - Nintendo DS",
+      "raConsoleId": 18
     },
     {
       "id": "n3ds",
@@ -449,7 +456,8 @@
           "emulator": "azahar"
         }
       ],
-      "libretroPlaylist": "Nintendo - Nintendo 3DS"
+      "libretroPlaylist": "Nintendo - Nintendo 3DS",
+      "raConsoleId": 62
     },
     {
       "id": "gc",
@@ -473,7 +481,8 @@
           "emulator": "dolphin"
         }
       ],
-      "libretroPlaylist": "Nintendo - GameCube"
+      "libretroPlaylist": "Nintendo - GameCube",
+      "raConsoleId": 16
     },
     {
       "id": "wii",
@@ -493,7 +502,8 @@
           "emulator": "dolphin"
         }
       ],
-      "libretroPlaylist": "Nintendo - Wii"
+      "libretroPlaylist": "Nintendo - Wii",
+      "raConsoleId": 19
     },
     {
       "id": "wiiu",
@@ -513,7 +523,8 @@
           "emulator": "cemu"
         }
       ],
-      "libretroPlaylist": "Nintendo - Wii U"
+      "libretroPlaylist": "Nintendo - Wii U",
+      "raConsoleId": 20
     },
     {
       "id": "switch",
@@ -565,7 +576,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Sega - Mega Drive - Genesis"
+      "libretroPlaylist": "Sega - Mega Drive - Genesis",
+      "raConsoleId": 1
     },
     {
       "id": "psx",
@@ -597,7 +609,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Sony - PlayStation"
+      "libretroPlaylist": "Sony - PlayStation",
+      "raConsoleId": 12
     },
     {
       "id": "ps2",
@@ -621,7 +634,8 @@
           "emulator": "nethersx2"
         }
       ],
-      "libretroPlaylist": "Sony - PlayStation 2"
+      "libretroPlaylist": "Sony - PlayStation 2",
+      "raConsoleId": 21
     },
     {
       "id": "psp",
@@ -648,7 +662,8 @@
           }
         }
       ],
-      "libretroPlaylist": "Sony - PlayStation Portable"
+      "libretroPlaylist": "Sony - PlayStation Portable",
+      "raConsoleId": 41
     },
     {
       "id": "xbox360",

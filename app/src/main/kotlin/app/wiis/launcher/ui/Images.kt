@@ -21,6 +21,9 @@ interface ImageSource {
 
     suspend fun icon(app: AppEntry): Bitmap?
 
+    /** A small image from the web (RetroAchievements badges and icons). */
+    suspend fun remote(url: String, sizePx: Int): Bitmap? = null
+
     object None : ImageSource {
         override val artUpdates: Flow<String> = emptyFlow()
         override suspend fun art(game: Game, sizePx: Int): Bitmap? = null
@@ -32,6 +35,7 @@ class GraphImageSource(private val graph: AppGraph) : ImageSource {
     override val artUpdates: Flow<String> get() = graph.art.updates
     override suspend fun art(game: Game, sizePx: Int): Bitmap? = graph.art.load(game, sizePx)
     override suspend fun icon(app: AppEntry): Bitmap? = graph.apps.icon(app)
+    override suspend fun remote(url: String, sizePx: Int): Bitmap? = graph.remoteImages.load(url, sizePx)
 }
 
 val LocalImageSource = staticCompositionLocalOf<ImageSource> { ImageSource.None }

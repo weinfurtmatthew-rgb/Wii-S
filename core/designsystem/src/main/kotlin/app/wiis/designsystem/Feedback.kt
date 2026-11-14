@@ -34,7 +34,8 @@ fun Modifier.wiisBackground(style: WiisStyle, solidOverride: Color? = null): Mod
     if (solidOverride != null) return background(solidOverride)
     return when (style.spec.colors.backgroundStyle) {
         "solid" -> background(style.background)
-        "gradient" -> background(Brush.verticalGradient(listOf(style.backgroundTop, style.background)))
+        "gradient", "artLight" -> background(Brush.verticalGradient(listOf(style.backgroundTop, style.background)))
+        "dots" -> background(Brush.verticalGradient(listOf(style.backgroundTop, style.background))).dotGrid(style.text)
         else -> background(Brush.verticalGradient(listOf(style.backgroundTop, style.background))).drawBehind {
             val strength = style.spec.colors.glowStrength.coerceIn(0f, 1f)
             if (strength <= 0f) return@drawBehind

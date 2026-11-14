@@ -3,7 +3,7 @@
 A dual-screen game launcher for the **AYN Thor**: Android 13, built with Kotlin and Jetpack Compose. Its look mixes retro warmth with modern polish.
 
 - **Plan:** [`docs/BLUEPRINT.md`](docs/BLUEPRINT.md) covers the architecture, roadmap and decision log.
-- **Current iteration:** 3, Draft 3 built into the launcher: Jump back in card, systems grid, recent row, navigation dock, frosted glass over the focused game's art. Every visual and sound detail is a theme token you approve in the Design Workbench ([`design/workbench.html`](design/workbench.html), process in [`docs/DESIGN.md`](docs/DESIGN.md)).
+- **Current iteration:** 4, Draft 4: a light look (from Cocoon and iiSU) with a dark mode, XMB system icons and corner tabs, and bottom-screen pages for details, play stats and RetroAchievements. Every visual and sound detail is a theme token you approve in the Design Workbench ([`design/workbench.html`](design/workbench.html), process in [`docs/DESIGN.md`](docs/DESIGN.md)).
 - **Box art sources:** [`docs/SCRAPING.md`](docs/SCRAPING.md). **Hardware spike:** [`docs/SPIKE.md`](docs/SPIKE.md).
 
 ## Download
@@ -17,7 +17,7 @@ JDK 17+ and an Android SDK with platform 36.
 
 ```sh
 ./gradlew assembleRelease          # app/build/outputs/apk/release/app-release.apk
-./gradlew testDebugUnitTest        # registry, detection, intents, theme, synth parity, art naming, home model, dock, blur
+./gradlew testDebugUnitTest        # registry, detection, intents, theme, synth parity, art naming, home model, dock, blur, stats, RetroAchievements
 ./gradlew :app:testDebugUnitTest -Pscreenshots -PwiisFonts=<folder of TTFs>   # renders the top screen to app/build/screenshots/
 ```
 

@@ -47,6 +47,6 @@ class ThemeRepository(private val context: Context) {
 
     private companion object {
         const val MAX_BYTES = 1_000_000
-        const val SUPPORTED_SCHEMA = 3
+        const val SUPPORTED_SCHEMA = 4
     }
 }

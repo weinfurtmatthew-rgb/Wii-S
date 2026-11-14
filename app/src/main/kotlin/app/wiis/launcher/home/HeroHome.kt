@@ -32,6 +32,17 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.ColorMatrix
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
+import app.wiis.designsystem.ConsoleGlyph
+import app.wiis.launcher.ui.DotsBackground
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -170,7 +181,7 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun rescan() = vm.rescan()
         }
     }
-    HeroHomeScreen(state, status, actions) { SystemScreen(onPickRomFolder = onPickFolder) }
+    HeroHomeScreen(state, status, actions) { SystemScreen(onPickRomFolder = onPickFolder, requestedPage = state.systemPage, onPageShown = vm::systemPageShown) }
 
     state.picker?.let { p -> EmulatorPickerDialog(p, onPick = { vm.launchGame(p.game, it) }, onDismiss = vm::dismissPicker) }
     state.dockPicker?.let { p -> DockPickerDialog(p, state.dock.getOrNull(p.slot), onPick = vm::chooseDockApp, onDismiss = vm::dismissDockPicker) }
@@ -229,7 +240,9 @@ fun HeroHomeScreen(
 
     val pad = spec.spacing.screenPadding
     val dockNav = spec.nav.style == "dock"
+    val nameplate = dockNav && spec.nav.captionPlace == "nameplate"
     val captionInHeader = dockNav && spec.nav.captionPlace == "header"
+    val info = captionFor(focused, state, style)
     val topPad = (pad * 0.6f).roundToInt()
 
     Box(
@@ -247,8 +260,11 @@ fun HeroHomeScreen(
                 }
             },
     ) {
-        if (spec.colors.backgroundStyle == "art") ArtBackground(background, Modifier.fillMaxSize())
-        else Box(Modifier.fillMaxSize().wiisBackground(style))
+        when (spec.colors.backgroundStyle) {
+            "art", "artLight" -> ArtBackground(background, Modifier.fillMaxSize())
+            "dots" -> DotsBackground(background, Modifier.fillMaxSize())
+            else -> Box(Modifier.fillMaxSize().wiisBackground(style))
+        }
 
         Column(
             Modifier
@@ -263,6 +279,7 @@ fun HeroHomeScreen(
                 actions = actions,
                 onFocused = onFocused,
                 caption = if (captionInHeader) ({ Caption(focused, state, inHeader = true) }) else null,
+                nameplate = if (nameplate) ({ Nameplate(info, focused, it) }) else null,
             )
             Spacer(Modifier.height((spec.spacing.headerGap * 0.75f).roundToInt().dp))
             HeroBody(state, actions, onFocused, systemContent, Modifier.weight(1f).fillMaxWidth())
@@ -273,16 +290,42 @@ fun HeroHomeScreen(
                     modifier = Modifier.padding(top = 10.dp).fillMaxWidth().glassBox(style).padding(14.dp),
                 )
             }
-            if (!captionInHeader) {
+            if (!captionInHeader && !nameplate) {
                 Box(Modifier.fillMaxWidth().heightIn(min = 26.dp).padding(top = 6.dp), contentAlignment = Alignment.CenterStart) {
                     Caption(focused, state, inHeader = false)
                 }
             }
-            if (dockNav) {
+            if (nameplate) {
+                DockRow(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                    NavDock(state, actions, onFocused)
+                    HintBar(info.hints, fill = false, gap = 14.dp)
+                }
+            } else if (dockNav) {
                 Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.Center) {
                     NavDock(state, actions, onFocused)
                 }
             }
+        }
+    }
+}
+
+/**
+ * The dock with the button hints to its right, laid out like the workbench's CSS grid
+ * (1fr auto 1fr): the dock is centred while the hints fit beside it; longer hints keep their full
+ * width and push the dock left rather than wrap.
+ */
+@Composable
+private fun DockRow(modifier: Modifier, content: @Composable () -> Unit) {
+    Layout(content, modifier) { measurables, constraints ->
+        val dock = measurables[0].measure(constraints.copy(minWidth = 0))
+        val hints = measurables.getOrNull(1)?.measure(Constraints())
+        val width = constraints.maxWidth
+        val right = maxOf(hints?.width ?: 0, (width - dock.width) / 2)
+        val left = (width - dock.width - right).coerceAtLeast(0)
+        val height = maxOf(dock.height, hints?.height ?: 0)
+        layout(width, height) {
+            dock.place(left, (height - dock.height) / 2)
+            hints?.place(width - hints.width, (height - hints.height) / 2)
         }
     }
 }
@@ -297,9 +340,23 @@ private fun HeroHeader(
     actions: HeroActions,
     onFocused: (Focused) -> Unit,
     caption: (@Composable () -> Unit)?,
+    nameplate: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val style = LocalWiis.current
     val header = style.spec.header
+    if (nameplate != null) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (header.showWordmark) {
+                    Text(header.wordmark, style = style.wordmark, maxLines = 1, softWrap = false, modifier = Modifier.lineBox(style.spec.type.wordmarkSize.sp))
+                }
+                Spacer(Modifier.weight(1f))
+                if (header.statusPill) StatusPill(status) else ClockText()
+            }
+            nameplate(Modifier)
+        }
+        return
+    }
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (header.showWordmark) {
             Text(header.wordmark, style = style.wordmark, maxLines = 1, softWrap = false, modifier = Modifier.lineBox(style.spec.type.wordmarkSize.sp))
@@ -356,7 +413,7 @@ private fun TabsPill(current: Section, actions: HeroActions, onFocused: (Focused
                 modifier = Modifier.onFocusChanged { if (it.isFocused) onFocused(Focused.Nav(s)) },
                 shape = RoundedCornerShape(min(style.spec.shape.tabRadius, 40).dp),
                 fill = if (active) style.tabActiveFill else Color.Transparent,
-                fillFocused = if (active) style.tabActiveFill else NAV_FOCUS_FILL,
+                fillFocused = if (active) style.tabActiveFill else navFocusFill(),
                 clickSound = UiEvent.Tab,
                 ring = false,
                 elevated = false,
@@ -374,6 +431,37 @@ private fun TabsPill(current: Section, actions: HeroActions, onFocused: (Focused
 // ---- Caption --------------------------------------------------------------------------------
 
 private data class CaptionInfo(val label: String, val title: String, val meta: String, val color: Color, val hints: List<Pair<String, String>>)
+
+/** Names the focused item in a pill at the top centre: title, then the system or game count. */
+@Composable
+private fun Nameplate(info: CaptionInfo, focused: Focused, modifier: Modifier) {
+    val style = LocalWiis.current
+    val ty = style.spec.type
+    val sub = when (focused) {
+        is Focused.Nav, is Focused.DockApp, is Focused.AppTile -> ""
+        else -> info.meta.ifEmpty { info.label }
+    }
+    val visible = style.spec.layout.focusCaption && info.title.isNotEmpty()
+    Row(
+        modifier
+            .alpha(if (visible) 1f else 0f)
+            .widthIn(max = 420.dp)
+            .glassBox(style, CircleShape)
+            .padding(horizontal = 20.dp, vertical = 5.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Text(
+            info.title,
+            style = TextStyle(fontFamily = style.fonts.display, fontWeight = FontWeight(ty.tabWeight.coerceIn(100, 900)), fontSize = ty.tileTitleSize.sp, color = style.glassText),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f, fill = false).alignByBaseline().lineBox((ty.tileTitleSize * 1.2f).sp),
+        )
+        if (sub.isNotEmpty()) {
+            Text(sub, style = style.label.copy(color = style.glassTextMuted), maxLines = 1, softWrap = false, modifier = Modifier.alignByBaseline())
+        }
+    }
+}
 
 @Composable
 private fun Caption(focused: Focused, state: HomeUiState, inHeader: Boolean) {
@@ -542,7 +630,7 @@ private fun HeroCard(
         onSecondary = { actions.openPicker(game) },
         clickSound = null, // the launch reports Launch or Error once the outcome is known
         shape = shape,
-        ring = false,
+        ringRadius = radius.dp,
         modifier = Modifier
             .size(width, height)
             .focusTarget(HomeViewModel.KEY_HERO, target, actions)
@@ -670,7 +758,7 @@ private fun SystemsGrid(
         ) {
             state.systems.chunked(cols).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
-                    row.forEach { entry -> SystemTile(entry, state.allPreview, cellW, cellH, state.heroFocus, actions, onFocused) }
+                    row.forEach { entry -> SystemTile(entry, state.allPreview, state.systemSamples[entry.id], cellW, cellH, state.heroFocus, actions, onFocused) }
                 }
             }
         }
@@ -681,6 +769,7 @@ private fun SystemsGrid(
 private fun SystemTile(
     entry: SystemEntry,
     allPreview: List<String>,
+    sample: Game?,
     w: Dp,
     h: Dp,
     target: HeroFocus?,
@@ -694,12 +783,16 @@ private fun SystemTile(
     val color = systemTint(entry.id, style)
     val shape = RoundedCornerShape(g.radius.dp)
     val tint = st.tint.coerceIn(0f, 1f)
+    if (st.style == "xmb") {
+        XmbTile(entry, sample, w, h, target, actions, onFocused)
+        return
+    }
     WiisTile(
         onClick = { actions.openSystem(entry.id) },
         shape = shape,
         fill = style.glassFill,
         fillFocused = style.glassFill,
-        ring = false,
+        ringRadius = g.radius.dp,
         modifier = Modifier
             .size(w, h)
             .focusTarget(HomeViewModel.sysKey(entry.id), target, actions)
@@ -740,6 +833,69 @@ private fun SystemTile(
                 modifier = Modifier.align(Alignment.BottomStart).padding(start = 12.dp, end = 10.dp, bottom = 9.dp),
             )
             if (g.borderWidth > 0f) Box(Modifier.matchParentSize().border(g.borderWidth.dp, style.glassBorder, shape))
+        }
+    }
+}
+
+/** Desaturate and lift contrast 1.25×, like the workbench's `grayscale(1) contrast(1.25)` for faded art. */
+private val FadedArt = ColorFilter.colorMatrix(
+    ColorMatrix(
+        floatArrayOf(
+            0.266f, 0.894f, 0.09f, 0f, -32f,
+            0.266f, 0.894f, 0.09f, 0f, -32f,
+            0.266f, 0.894f, 0.09f, 0f, -32f,
+            0f, 0f, 0f, 1f, 0f,
+        ),
+    ),
+)
+
+/**
+ * XMB icon (as iiSU calls them): the system's own art, zoomed into its middle (past titles and
+ * logos), desaturated and faint, a wash of the console colour, one bold drawing with a gradient,
+ * and a gradient edge. No text: the nameplate names the focused system.
+ */
+@Composable
+private fun XmbTile(entry: SystemEntry, sample: Game?, w: Dp, h: Dp, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit) {
+    val style = LocalWiis.current
+    val g = style.spec.glass
+    val color = systemTint(entry.id, style)
+    val shape = RoundedCornerShape(g.radius.dp)
+    val tint = style.spec.systemTile.tint.coerceIn(0f, 1f)
+    val px = with(LocalDensity.current) { maxOf(w, h).roundToPx() }
+    val glyphColors = if (style.glassIsDark) listOf(mix(color, Color.White, 0.45f), mix(color, Color.White, 0.08f))
+    else listOf(mix(color, Color.White, 0.15f), mix(color, Color.Black, 0.2f))
+    WiisTile(
+        onClick = { actions.openSystem(entry.id) },
+        shape = shape,
+        fill = style.glassFill,
+        fillFocused = style.glassFill,
+        ringRadius = g.radius.dp,
+        modifier = Modifier
+            .size(w, h)
+            .focusTarget(HomeViewModel.sysKey(entry.id), target, actions)
+            .onFocusChanged { if (it.isFocused) onFocused(Focused.System(entry)) },
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            rememberArt(sample, px)?.let { art ->
+                Image(
+                    art.asImageBitmap(),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    colorFilter = FadedArt,
+                    modifier = Modifier.matchParentSize().graphicsLayer {
+                        scaleX = 2.2f
+                        scaleY = 2.2f
+                        transformOrigin = TransformOrigin(0.5f, 0.58f)
+                        alpha = 0.16f + 0.2f * tint
+                    },
+                )
+            }
+            Box(Modifier.matchParentSize().drawBehind { drawRect(cssLinearGradient(135f, size, listOf(color.copy(alpha = 0.26f * tint), color.copy(alpha = 0.08f * tint)))) })
+            ConsoleGlyph(
+                entry.id, (minOf(w.value, h.value) * 0.56f).roundToInt().dp, color,
+                Modifier.align(Alignment.Center), strokeUnits = 2.1f, brush = Brush.linearGradient(glyphColors),
+            )
+            Box(Modifier.matchParentSize().border(2.dp, Brush.linearGradient(listOf(mix(color, Color.White, 0.35f), mix(color, Color.Black, 0.1f))), shape))
         }
     }
 }
@@ -824,7 +980,7 @@ private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, acti
         onSecondary = { actions.openPicker(game) },
         clickSound = null,
         shape = shape,
-        ring = false,
+        ringRadius = radius.dp,
         modifier = Modifier
             .size(size.dp)
             .focusTarget(key, target, actions)
@@ -887,6 +1043,16 @@ private fun BoxScope.ConsoleMark(systemId: String) {
     when (tile.consoleIcon) {
         "none" -> Unit
         "badge" -> SystemBadge(systemId, style, color, Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 6.dp))
+        // iiSU-style: the frame's top-left corner grows into a tab holding the console in white.
+        "tab" -> {
+            val box = tile.consoleIconSize + 10
+            Box(
+                Modifier.align(Alignment.TopStart).size(box.dp).background(color, RoundedCornerShape(bottomEnd = (box * 0.42f).dp)),
+                contentAlignment = Alignment.Center,
+            ) {
+                ConsoleGlyph(systemId, (box * 0.64f).roundToInt().dp, Color.White, strokeUnits = 2.4f)
+            }
+        }
         else -> Box(
             Modifier
                 .align(Alignment.TopEnd)
@@ -990,7 +1156,7 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
                 shape = shape,
                 fill = style.glassFill,
                 fillFocused = style.glassFill,
-                ring = false,
+                ringRadius = spec.glass.radius.dp,
                 modifier = Modifier
                     .size(136.dp, 120.dp)
                     .then(if (app == apps.first()) Modifier.focusRequester(first) else Modifier)
@@ -1019,8 +1185,9 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
 
 // ---- Navigation dock ------------------------------------------------------------------------
 
-/** #1E1B27 at 10%: the workbench's fill for a focused, inactive navigation button. */
-private val NAV_FOCUS_FILL = Color(0x1A1E1B27)
+/** The text colour at 12%: fill of a focused, inactive navigation button (light and dark). */
+@Composable
+private fun navFocusFill(): Color = LocalWiis.current.text.copy(alpha = 0.12f)
 
 @Composable
 private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
@@ -1066,7 +1233,7 @@ private fun NavButton(section: Section, active: Boolean, target: HeroFocus?, act
         onClick = { actions.selectSection(section) },
         shape = CircleShape,
         fill = if (active) style.tabActiveFill else Color.Transparent,
-        fillFocused = if (active) style.tabActiveFill else NAV_FOCUS_FILL,
+        fillFocused = if (active) style.tabActiveFill else navFocusFill(),
         clickSound = UiEvent.Tab,
         ring = false,
         elevated = false,

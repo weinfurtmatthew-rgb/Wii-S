@@ -18,8 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -33,6 +36,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.core.net.toUri
+import app.wiis.emulator.ra.RaCredentials
+import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -51,7 +58,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private enum class Page(val label: String) { Theme("Theme"), Sounds("Sounds"), Art("Box art"), Report("Report") }
+private enum class Page(val label: String) { Theme("Theme"), Sounds("Sounds"), Art("Box art"), Achievements("RetroAchievements"), Report("Report") }
 
 private val EVENT_LABELS = mapOf(
     "move" to "Move",
@@ -65,11 +72,15 @@ private val EVENT_LABELS = mapOf(
 
 /** Settings and diagnostics. Everything here is operable with the controller. */
 @Composable
-fun SystemScreen(onPickRomFolder: () -> Unit) {
+fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onPageShown: () -> Unit = {}) {
     val style = LocalWiis.current
     var page by rememberSaveable { mutableStateOf(Page.Theme) }
     val first = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
+    LaunchedEffect(requestedPage) {
+        if (requestedPage == "ra") page = Page.Achievements
+        if (requestedPage != null) onPageShown()
+    }
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(start = 8.dp, top = 6.dp)) {
@@ -94,6 +105,7 @@ fun SystemScreen(onPickRomFolder: () -> Unit) {
                 Page.Theme -> ThemePage(style)
                 Page.Sounds -> SoundsPage(style)
                 Page.Art -> ArtPage(style)
+                Page.Achievements -> AchievementsPage(style)
                 Page.Report -> ReportPage(style, onPickRomFolder)
             }
         }
@@ -138,6 +150,68 @@ private fun ThemePage(style: WiisStyle) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ActionTile("Import theme file…", onClick = { pick.launch(arrayOf("application/json", "text/plain", "application/octet-stream")) }, emphasized = true)
             if (graph.themes.isImported) ActionTile("Use built-in theme", onClick = { graph.themes.reset(); message = "Back to the built-in theme." })
+        }
+        message?.let { Text(it, style = style.body) }
+    }
+    val appearance by graph.appearance.collectAsStateWithLifecycle()
+    Section("Appearance", style) {
+        Note("Light or dark on both screens. \"As the theme says\" uses the theme's own setting (${appearanceLabel(spec.appearance)}).", style)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            listOf("theme" to "As the theme says", "system" to "Follow Android", "light" to "Light", "dark" to "Dark").forEach { (value, label) ->
+                ActionTile(label, onClick = { graph.setAppearance(value) }, emphasized = appearance == value)
+            }
+        }
+    }
+}
+
+private fun appearanceLabel(value: String) = when (value) {
+    "light" -> "always light"
+    "dark" -> "always dark"
+    else -> "follow Android"
+}
+
+/** Username and Web API key for RetroAchievements, tested before they're used. */
+@Composable
+private fun AchievementsPage(style: WiisStyle) {
+    val context = LocalContext.current
+    val graph = context.graph
+    val saved = remember { graph.raCredentials }
+    var user by rememberSaveable { mutableStateOf(saved?.user.orEmpty()) }
+    var key by rememberSaveable { mutableStateOf(saved?.key.orEmpty()) }
+    var message by remember { mutableStateOf(if (saved != null) "Connected as ${saved.user}." else null) }
+    var busy by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = style.text, unfocusedTextColor = style.text,
+        focusedBorderColor = style.text, unfocusedBorderColor = style.textMuted,
+        focusedLabelColor = style.text, unfocusedLabelColor = style.textMuted, cursorColor = style.text,
+    )
+    Section("RetroAchievements", style) {
+        Note("With your account connected, the bottom screen shows the highlighted game's achievements, or everything you've unlocked on a system. Swipe to the Achievements page.", style)
+        Note("Find your Web API key on retroachievements.org under Settings → Keys. It stays on this device and is only sent to retroachievements.org.", style)
+        OutlinedTextField(user, { user = it }, label = { Text("Username") }, singleLine = true, textStyle = style.body, colors = fieldColors, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(
+            key, { key = it }, label = { Text("Web API key") }, singleLine = true, textStyle = style.body, colors = fieldColors,
+            visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ActionTile(if (busy) "Checking…" else "Save and test", emphasized = true, onClick = {
+                if (busy) return@ActionTile
+                val creds = RaCredentials(user.trim(), key.trim())
+                if (creds.user.isEmpty() || creds.key.isEmpty()) { message = "Enter both the username and the Web API key."; return@ActionTile }
+                busy = true
+                scope.launch {
+                    message = graph.ra.test(creds).fold(
+                        onSuccess = { profile -> graph.raCredentials = creds; "Connected as ${profile.user.ifEmpty { creds.user }} · ${profile.totalPoints} points." },
+                        onFailure = { "Couldn't connect: ${it.message}. Check the username and key, and the Wi-Fi." },
+                    )
+                    busy = false
+                }
+            })
+            ActionTile("Open RetroAchievements settings", onClick = {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://retroachievements.org/settings".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            })
+            if (graph.raCredentials != null) ActionTile("Disconnect", onClick = { graph.raCredentials = null; user = ""; key = ""; message = "Disconnected." })
         }
         message?.let { Text(it, style = style.body) }
     }

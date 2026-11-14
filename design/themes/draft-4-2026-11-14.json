@@ -1,0 +1,369 @@
+{
+  "schema": 4,
+  "name": "Draft 4",
+  "appearance": "system",
+  "layout": {
+    "games": "hero",
+    "showRecent": true,
+    "recentCount": 12,
+    "systemOrder": "alphabetical",
+    "scrollAnchor": "center",
+    "heroWidth": 360,
+    "systemColumns": 3,
+    "systemRows": 2,
+    "systemTileHeight": 96,
+    "recentTileSize": 96,
+    "gridTileSize": 132,
+    "focusCaption": true
+  },
+  "colors": {
+    "backgroundStyle": "dots",
+    "artBlur": 36,
+    "artDim": 0.5,
+    "background": "#E9E8F0",
+    "backgroundTop": "#F6F6F9",
+    "glowA": "#1A0A52",
+    "glowB": "#3FA7F5",
+    "glowStrength": 0.2,
+    "surface": "#FFFFFF",
+    "tile": "#F1F0F5",
+    "tileFocused": "#E4E2EC",
+    "text": "#23212D",
+    "textMuted": "#5A5769",
+    "accent": "#23212D",
+    "focusRing": "#3FD39A",
+    "focusGlow": "#3FD39A",
+    "focusGlowStrength": 0.0,
+    "tabActiveFill": "#23212D",
+    "tabActiveText": "#FFFFFF",
+    "tabIdleText": "#4E4B5E",
+    "hintBadge": "#23212D",
+    "hintBadgeText": "#FFFFFF",
+    "messageBar": "#FFFFFF"
+  },
+  "glass": {
+    "fill": "#FFFFFF",
+    "opacity": 1.0,
+    "blur": 24,
+    "border": "#DCDAE5",
+    "borderOpacity": 1.0,
+    "borderWidth": 1.0,
+    "text": "#23212D",
+    "textMuted": "#625F72",
+    "radius": 18
+  },
+  "dark": {
+    "colors": {
+      "backgroundStyle": "dots",
+      "artBlur": 36,
+      "artDim": 0.5,
+      "background": "#15141C",
+      "backgroundTop": "#1D1C26",
+      "glowA": "#1A0A52",
+      "glowB": "#3FA7F5",
+      "glowStrength": 0.14,
+      "surface": "#22212C",
+      "tile": "#2A2935",
+      "tileFocused": "#35343F",
+      "text": "#ECEAF3",
+      "textMuted": "#A9A5B9",
+      "accent": "#ECEAF3",
+      "focusRing": "#3FD39A",
+      "focusGlow": "#3FD39A",
+      "focusGlowStrength": 0.0,
+      "tabActiveFill": "#ECEAF3",
+      "tabActiveText": "#15141C",
+      "tabIdleText": "#B6B2C6",
+      "hintBadge": "#ECEAF3",
+      "hintBadgeText": "#15141C",
+      "messageBar": "#22212C"
+    },
+    "glass": {
+      "fill": "#23222D",
+      "opacity": 1.0,
+      "blur": 24,
+      "border": "#383645",
+      "borderOpacity": 1.0,
+      "borderWidth": 1.0,
+      "text": "#ECEAF3",
+      "textMuted": "#A9A5B9",
+      "radius": 18
+    },
+    "hints": {
+      "show": true,
+      "align": "end",
+      "badgeShape": "circle",
+      "colorA": "#ECEAF3",
+      "colorB": "#ECEAF3",
+      "colorX": "#ECEAF3",
+      "colorY": "#ECEAF3",
+      "colorOther": "#ECEAF3"
+    },
+    "shadowColor": "#000000"
+  },
+  "systemColors": {
+    "recent": "#008CB4",
+    "nes": "#E4483C",
+    "snes": "#8C6CF0",
+    "n64": "#2FB86B",
+    "gb": "#9CB83A",
+    "gbc": "#C653D9",
+    "gba": "#5B6CFF",
+    "nds": "#3FA7F5",
+    "n3ds": "#EC4A63",
+    "gc": "#7C5CFF",
+    "wii": "#56C6F2",
+    "wiiu": "#22A6C8",
+    "switch": "#FF4B57",
+    "genesis": "#2F6FE4",
+    "psx": "#B4B8C6",
+    "ps2": "#3D5BD9",
+    "psp": "#7C8796",
+    "xbox360": "#7BC043",
+    "steam": "#5B8DEF"
+  },
+  "shape": {
+    "tileWidth": 196,
+    "tileHeight": 196,
+    "tileRadius": 18,
+    "tileBorderWidth": 0,
+    "tileBorderColor": "#3A3552",
+    "focusRingWidth": 3,
+    "focusRingGap": 1,
+    "shadow": "soft",
+    "shadowColor": "#4A4766",
+    "shadowOffset": 6,
+    "systemStrip": "none",
+    "systemStripSize": 6,
+    "tabStyle": "pill",
+    "tabRadius": 999,
+    "cardRadius": 24,
+    "dialogRadius": 28,
+    "badgeRadius": 999
+  },
+  "spacing": {
+    "screenPadding": 28,
+    "headerGap": 24,
+    "shelfGap": 22,
+    "tileGap": 18,
+    "shelfTitleGap": 10
+  },
+  "type": {
+    "displayFont": "Poppins",
+    "bodyFont": "Poppins",
+    "wordmarkSize": 26,
+    "wordmarkWeight": 700,
+    "tabSize": 15,
+    "tabWeight": 600,
+    "shelfTitleSize": 15,
+    "shelfTitleWeight": 600,
+    "shelfTitleCase": "title",
+    "shelfTitleTracking": 0.0,
+    "tileTitleSize": 17,
+    "tileTitleWeight": 600,
+    "labelSize": 13,
+    "labelWeight": 500,
+    "clockSize": 16,
+    "clockWeight": 500
+  },
+  "shelf": {
+    "titleColor": "muted",
+    "marker": "none",
+    "showCount": true
+  },
+  "tile": {
+    "artStyle": "full",
+    "artFit": "cover",
+    "titleVisibility": "never",
+    "systemBadge": "never",
+    "showFileType": false,
+    "placeholder": "system",
+    "consoleIcon": "tab",
+    "consoleIconSize": 18,
+    "systemRing": 5
+  },
+  "hero": {
+    "prompt": "Jump back in",
+    "showPlaytime": true,
+    "showSystem": false
+  },
+  "systemTile": {
+    "style": "xmb",
+    "showCount": false,
+    "tint": 0.6
+  },
+  "motion": {
+    "focusScale": 1.08,
+    "focusGrowMax": 8,
+    "pressScale": 0.94,
+    "stiffness": 400.0,
+    "damping": 0.55,
+    "focusLift": 4,
+    "idleBob": true,
+    "idleBobAmplitude": 2,
+    "idleBobPeriodMs": 1800,
+    "tabTransition": "slide",
+    "tabTransitionMs": 220,
+    "reduceMotion": false
+  },
+  "header": {
+    "showWordmark": true,
+    "wordmark": "Wii-S",
+    "clock24h": false,
+    "showDate": false,
+    "tabGames": "Home",
+    "tabApps": "Apps",
+    "tabSystem": "System",
+    "statusPill": true,
+    "tabIcons": true
+  },
+  "nav": {
+    "style": "dock",
+    "apps": 5,
+    "labels": "active",
+    "captionPlace": "nameplate"
+  },
+  "hints": {
+    "show": true,
+    "align": "end",
+    "badgeShape": "circle",
+    "colorA": "#23212D",
+    "colorB": "#23212D",
+    "colorX": "#23212D",
+    "colorY": "#23212D",
+    "colorOther": "#23212D"
+  },
+  "companion": {
+    "layout": "art",
+    "background": "inherit",
+    "backgroundColor": "#15141E",
+    "showPlaytime": true,
+    "showLastPlayed": true,
+    "showEmulator": true,
+    "showClock": true,
+    "showHints": false,
+    "dock": true,
+    "dockApps": 5,
+    "showDrawer": true,
+    "showStats": true,
+    "showAchievements": true,
+    "pageStyle": "tabs"
+  },
+  "sounds": {
+    "enabled": true,
+    "volume": 0.7,
+    "events": {
+      "move": {
+        "wave": "sine",
+        "notes": [
+          880.0,
+          988.0
+        ],
+        "noteMs": 18,
+        "attackMs": 2,
+        "decayMs": 45,
+        "sweep": 0.0,
+        "lowpass": 7000.0,
+        "noise": 0.0,
+        "volume": 0.32
+      },
+      "select": {
+        "wave": "triangle",
+        "notes": [
+          659.0,
+          988.0
+        ],
+        "noteMs": 45,
+        "attackMs": 2,
+        "decayMs": 90,
+        "sweep": 0.0,
+        "lowpass": 8000.0,
+        "noise": 0.0,
+        "volume": 0.5
+      },
+      "back": {
+        "wave": "triangle",
+        "notes": [
+          740.0,
+          494.0
+        ],
+        "noteMs": 45,
+        "attackMs": 2,
+        "decayMs": 80,
+        "sweep": 0.0,
+        "lowpass": 6000.0,
+        "noise": 0.0,
+        "volume": 0.45
+      },
+      "tab": {
+        "wave": "square",
+        "notes": [
+          523.0,
+          784.0
+        ],
+        "noteMs": 30,
+        "attackMs": 1,
+        "decayMs": 60,
+        "sweep": 0.0,
+        "lowpass": 3200.0,
+        "noise": 0.0,
+        "volume": 0.28
+      },
+      "launch": {
+        "wave": "triangle",
+        "notes": [
+          523.0,
+          659.0,
+          784.0,
+          1047.0
+        ],
+        "noteMs": 70,
+        "attackMs": 3,
+        "decayMs": 220,
+        "sweep": 0.0,
+        "lowpass": 9000.0,
+        "noise": 0.0,
+        "volume": 0.55
+      },
+      "error": {
+        "wave": "square",
+        "notes": [
+          233.0,
+          196.0
+        ],
+        "noteMs": 90,
+        "attackMs": 2,
+        "decayMs": 120,
+        "sweep": 0.0,
+        "lowpass": 2200.0,
+        "noise": 0.0,
+        "volume": 0.35
+      },
+      "bump": {
+        "wave": "sine",
+        "notes": [
+          150.0
+        ],
+        "noteMs": 20,
+        "attackMs": 1,
+        "decayMs": 50,
+        "sweep": -6.0,
+        "lowpass": 2000.0,
+        "noise": 0.15,
+        "volume": 0.5
+      }
+    }
+  },
+  "haptics": {
+    "enabled": true,
+    "events": {
+      "move": "light",
+      "select": "medium",
+      "back": "light",
+      "tab": "light",
+      "launch": "heavy",
+      "error": "heavy",
+      "bump": "light"
+    }
+  }
+}
