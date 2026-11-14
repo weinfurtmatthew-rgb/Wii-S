@@ -86,7 +86,7 @@ New setting values (workbench only until you choose; the launcher draws them onc
 | Nameplate at the top, hints beside the dock | Yes | **Your answer** |
 | Focus motion | Grow and bounce, as in Draft 3 (stiffness 400, damping 0.55, lift 4, idle bob) | **Your answer** |
 | Focus ring | Refined instead of removed: 3 dp mint, 1 dp gap, no glow | Proposed (you said remove or refine) |
-| Ring can't reach the title pill | Big cards grow by at most 8 dp a side (new setting `motion.focusGrowMax`); header gap 18 dp; compact title pill | Proposed |
+| Ring can't reach the title pill | Big cards grow by at most 8 dp a side (new setting `motion.focusGrowMax`); gap below the header 24 dp (was 16); compact title pill | Proposed |
 | Typeface | Poppins | **Your answer** |
 | Accent on light | Ink #23212D | **Your answer** |
 | Dark palette | Background #15141C → #1D1C26, surfaces #23222D, text #ECEAF3 / #A9A5B9, light active tab and hint badges, mint ring kept | Proposed |
