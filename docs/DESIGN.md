@@ -45,3 +45,21 @@ These are fixed for now. Each can become a token if you want control over it:
 | 2026-11-14 | Navigation | The dock becomes the top screen's navigation, along the bottom: Home, Apps, System (L1/R1) + app shortcuts; tabs leave the header | **Your answer** (direction) |
 | 2026-11-14 | Caption placement | In the header between wordmark and status pill (alternative: just above the dock) | Proposed |
 | 2026-11-14 | Draft 3 (`design/themes/draft-3-2026-11-14.json`, now the proposal in `default.json`) | Draft 2 + your six edits + the navigation dock | **Draft, open to change.** Not approved |
+| 2026-11-14 | Draft 3 built into the launcher (0.3.0-i3) | Every value from `default.json` (= Draft 3). Screenshot tests compare the device rendering with the workbench | **Built as a draft.** Still not approved |
+
+### Proposed, not in the workbench (0.3.0-i3)
+
+Building Draft 3 on the device needed a few details the workbench doesn't show. Each is my proposal and yours to change:
+
+| Detail | What 0.3.0 does | Status |
+|---|---|---|
+| Jump back in before anything has been played | Shows the first game A to Z, with the same "Jump back in" prompt; the recent row stays hidden | Proposed |
+| Order inside a system | Games A to Z (All games: every game A to Z) | Proposed |
+| All games tile squares | Colours of the systems you played last, then your biggest systems not shown yet | Proposed |
+| Dock apps | Default: your browser, then video, Play Store, music, files, chat apps if installed, then other apps A to Z (emulators left out). **Y on a dock app** opens a picker to change that spot; the caption shows "Y Change" | Proposed |
+| Bottom screen when a system is highlighted | "Large cover + details" shows the idle message, as the workbench does. Alternative: show the system's console drawing and game count | Proposed; your call |
+| Background change between games | Instant, as in the workbench. A short fade is possible | Proposed |
+| Game counts | "1 game" / "6 games" | Proposed |
+| System screen | Keeps its dark panels from 0.2.0; the workbench sketches it frosted | Proposed |
+| Apps grid | A focused tile at the left edge isn't cut off (the workbench mock clips it) | Proposed |
+| Emulator and dock-app pickers | Dark dialogs as in 0.2.0 (not drawn in the workbench) | Proposed |

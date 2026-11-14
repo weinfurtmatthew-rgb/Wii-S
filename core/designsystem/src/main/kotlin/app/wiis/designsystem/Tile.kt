@@ -1,5 +1,6 @@
 package app.wiis.designsystem
 
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -26,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -194,7 +194,7 @@ fun WiisTile(
                 .matchParentSize()
                 .then(
                     if (elevated && spec.shape.shadow == "soft") {
-                        Modifier.shadow((3f + 9f * focusProgress.coerceIn(0f, 1f)).dp, tileShape, ambientColor = style.shadowColor, spotColor = style.shadowColor)
+                        Modifier.softShadow(tileShape, style.shadowColor) { focusProgress }
                     } else {
                         Modifier
                     },
@@ -207,4 +207,14 @@ fun WiisTile(
         )
         Box(Modifier.clip(tileShape)) { content(focused) }
     }
+}
+
+/**
+ * The workbench's tile shadow, `0 (e/2)dp (1.6e)dp` in [color] at half strength, where e grows
+ * from 3 to 12 with focus. Drawn only outside the tile's outline (like a CSS box-shadow), so it
+ * never darkens a see-through glass tile from underneath, which an elevation shadow would.
+ */
+fun Modifier.softShadow(shape: Shape, color: Color, progress: () -> Float): Modifier = drawBehind {
+    val e = 3f + 9f * progress().coerceIn(0f, 1f)
+    drawBoxShadow(shape, (e * 0.5f).dp.toPx(), (e * 1.6f).dp.toPx(), color.copy(alpha = color.alpha * 0.5f))
 }

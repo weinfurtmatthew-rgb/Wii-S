@@ -56,6 +56,13 @@ class WiisStyle(val spec: ThemeSpec, val fonts: WiisFonts) {
     val shadowColor = spec.shape.shadowColor.toColorOr(Color.Black)
     val companionBackground = spec.companion.backgroundColor.toColorOr(background)
 
+    private val g = spec.glass
+    val glassFill = g.fill.toColorOr(Color.White).copy(alpha = g.opacity.coerceIn(0f, 1f))
+    val glassBorder = g.border.toColorOr(Color.White).copy(alpha = g.borderOpacity.coerceIn(0f, 1f))
+    val glassText = g.text.toColorOr(Color(0xFF1E1B27))
+    val glassTextMuted = g.textMuted.toColorOr(glassText.copy(alpha = 0.7f))
+    val glassShape = RoundedCornerShape(g.radius.dp)
+
     fun systemColor(systemId: String): Color = spec.systemColor(systemId)
 
     fun hintColor(button: String): Color = when (button) {

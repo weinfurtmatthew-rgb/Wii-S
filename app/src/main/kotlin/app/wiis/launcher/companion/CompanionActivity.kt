@@ -7,6 +7,23 @@ import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.sp
+import app.wiis.designsystem.ConsoleIcon
+import app.wiis.designsystem.glassBox
+import app.wiis.designsystem.mix
+import app.wiis.launcher.ui.rememberArt
+import app.wiis.system.AppEntry
+import kotlin.math.hypot
+import kotlin.math.roundToInt
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -111,6 +128,21 @@ private fun CompanionScreen() {
     val focus by graph.shared.focus.collectAsStateWithLifecycle()
     val session by graph.shared.session.collectAsStateWithLifecycle()
 
+    if (tokens.layout == "artDock") {
+        val hero by graph.shared.hero.collectAsStateWithLifecycle()
+        val dock by graph.dock.collectAsStateWithLifecycle()
+        ArtDockScreen(
+            focus = focus,
+            session = session,
+            hero = hero,
+            dock = dock,
+            onApp = graph.apps::launch,
+            onDrawer = graph.shared::requestApps,
+            systemName = { id -> graph.registry.system(id)?.name ?: id },
+        )
+        return
+    }
+
     Box(
         Modifier
             .fillMaxSize()
@@ -135,7 +167,8 @@ private fun CompanionScreen() {
                             Spacer(Modifier.width(16.dp))
                             Text(f.app.label, style = style.heading)
                         }
-                        Focus.None -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
+                        // A highlighted system has no cover to show here (same as the workbench).
+                        Focus.None, is Focus.OnSystem -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(style.spec.header.wordmark, style = style.wordmark)
                             Text("Highlight a game on the top screen to see it here.", style = style.label)
                         }
@@ -229,3 +262,124 @@ private fun NowPlaying(s: Session, style: WiisStyle) {
         }
     }
 }
+
+/**
+ * Bottom-screen layout "artDock": the focused game's cover across the whole screen (or the
+ * highlighted system), a clock pill, and a glass dock of apps. Touch only: this window never
+ * takes controller focus.
+ */
+@Composable
+private fun ArtDockScreen(
+    focus: Focus,
+    session: Session?,
+    hero: Game?,
+    dock: List<AppEntry>,
+    onApp: (AppEntry) -> Unit,
+    onDrawer: () -> Unit,
+    systemName: (String) -> String,
+) {
+    val style = LocalWiis.current
+    val c = style.spec.companion
+    val type = style.spec.type
+    // As in the workbench: what's playing, else the highlighted system or game, else the last played.
+    val game: Game? = session?.game ?: (focus as? Focus.OnGame)?.game ?: if (focus is Focus.OnSystem) null else hero
+    val systemId = if (session == null) (focus as? Focus.OnSystem)?.id else null
+
+    Box(Modifier.fillMaxSize().background(style.background)) {
+        when {
+            systemId != null -> Pool(style.systemColorOrAccent(systemId)) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+                    ConsoleIcon(systemId, if (systemId == "all") 150.dp else 170.dp, Color.White.copy(alpha = 0.92f), strokeUnits = 1.2f)
+                    Text(
+                        if (systemId == "all") "All games" else systemName(systemId),
+                        style = TextStyle(fontFamily = style.fonts.display, fontWeight = FontWeight(type.wordmarkWeight.coerceIn(100, 900)), fontSize = 30.sp, color = Color.White),
+                    )
+                }
+            }
+            game != null -> {
+                val px = with(LocalDensity.current) { 538.dp.roundToPx() }
+                val art = rememberArt(game, px)
+                if (art != null) {
+                    Image(art.asImageBitmap(), contentDescription = game.title, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+                } else {
+                    Pool(style.systemColor(game.systemId)) {
+                        Text(
+                            game.title,
+                            style = TextStyle(fontFamily = style.fonts.display, fontWeight = FontWeight(type.wordmarkWeight.coerceIn(100, 900)), fontSize = 34.sp, color = Color.White, textAlign = TextAlign.Center),
+                            modifier = Modifier.padding(40.dp),
+                        )
+                    }
+                }
+            }
+        }
+        val pillText = style.clock.copy(fontSize = (type.clockSize * 0.8f).roundToInt().sp, color = style.glassText)
+        Box(Modifier.fillMaxSize().safeDrawingPadding()) {
+            if (session != null) {
+                Row(
+                    Modifier.align(Alignment.TopStart).padding(start = 14.dp, top = 12.dp).glassBox(style, CircleShape).padding(horizontal = 12.dp, vertical = 6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val bold = TextStyle(fontFamily = style.fonts.body, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                    Text("● NOW PLAYING", style = bold.copy(color = style.accent), maxLines = 1)
+                    Text(session.game.title, style = bold.copy(color = style.glassText), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            if (c.showClock) {
+                Box(Modifier.align(Alignment.TopEnd).padding(end = 14.dp, top = 12.dp).glassBox(style, CircleShape).padding(horizontal = 12.dp, vertical = 6.dp)) {
+                    ClockText(pillText)
+                }
+            }
+            if (c.showHints && game != null && session == null && systemId == null) {
+                HintBar(listOf("A" to "Play", "Y" to "Details"), Modifier.align(Alignment.BottomStart).padding(start = 14.dp, end = 14.dp, bottom = if (c.dock) 74.dp else 14.dp))
+            }
+            if (c.dock) {
+                Row(
+                    Modifier.align(Alignment.BottomCenter).padding(bottom = 14.dp).glassBox(style, CircleShape).padding(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (c.showDrawer) {
+                        Box(
+                            Modifier.size(40.dp).clip(CircleShape).background(style.glassText.copy(alpha = 0.08f)).clickable(onClick = onDrawer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            DrawerGlyph(20.dp, style.glassText)
+                        }
+                    }
+                    dock.take(c.dockApps.coerceAtLeast(0)).forEach { app ->
+                        Box(Modifier.size(40.dp).clip(CircleShape).clickable { onApp(app) }, contentAlignment = Alignment.Center) { AppIcon(app, 40) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A soft pool of [color] (CSS radial-gradient at 35% 30%) with [content] centred on it. */
+@Composable
+private fun Pool(color: Color, content: @Composable () -> Unit) {
+    Box(
+        Modifier.fillMaxSize().drawBehind {
+            drawRect(
+                Brush.radialGradient(
+                    listOf(mix(color, Color.White, 0.2f), mix(color, Color.Black, 0.5f)),
+                    center = Offset(size.width * 0.35f, size.height * 0.3f),
+                    radius = hypot(size.width * 0.65f, size.height * 0.7f),
+                ),
+            )
+        },
+        contentAlignment = Alignment.Center,
+    ) { content() }
+}
+
+/** Nine dots: the app-drawer button. */
+@Composable
+private fun DrawerGlyph(size: Dp, color: Color) {
+    Canvas(Modifier.size(size)) {
+        val u = this.size.minDimension / 24f
+        for (r in 0 until 3) for (col in 0 until 3) drawCircle(color, 1.6f * u, Offset((6 + col * 6) * u, (6 + r * 6) * u))
+    }
+}
+
+private fun WiisStyle.systemColorOrAccent(id: String): Color = if (id == "all") accent else systemColor(id)

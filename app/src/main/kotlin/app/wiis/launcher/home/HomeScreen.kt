@@ -41,7 +41,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -80,12 +79,23 @@ import app.wiis.system.AppEntry
 
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
+    val feedback = LocalUiFeedback.current
+    val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { vm.onFolderPicked(it) }
+    LaunchedEffect(vm) { vm.events.collect(feedback::emit) }
+    if (LocalWiis.current.spec.layout.games == "hero") {
+        HeroHomeRoute(vm, onPickFolder = { pickFolder.launch(null) })
+    } else {
+        ClassicHome(vm, onPickFolder = { pickFolder.launch(null) })
+    }
+}
+
+/** The shelves and grid layouts (Draft 1), still selectable with `layout.games`. */
+@Composable
+private fun ClassicHome(vm: HomeViewModel, onPickFolder: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     val style = LocalWiis.current
     val feedback = LocalUiFeedback.current
-    val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { vm.onFolderPicked(it) }
 
-    LaunchedEffect(vm) { vm.events.collect(feedback::emit) }
     BackHandler(enabled = state.section != Section.Games) {
         feedback.emit(UiEvent.Back)
         vm.selectSection(Section.Games)
@@ -112,32 +122,13 @@ fun HomeScreen(vm: HomeViewModel) {
         ) {
             Header(state.section, onSelect = vm::selectSection)
             Spacer(Modifier.height(style.spec.spacing.headerGap.dp))
-            SectionContent(state, vm, onPickFolder = { pickFolder.launch(null) }, modifier = Modifier.weight(1f))
+            SectionContent(state, vm, onPickFolder = onPickFolder, modifier = Modifier.weight(1f))
             state.message?.let { MessageBar(it, Modifier.padding(top = 10.dp)) }
             HintBar(hintsFor(state.section), Modifier.padding(top = 10.dp))
         }
     }
 
-    state.picker?.let { picker ->
-        AlertDialog(
-            onDismissRequest = vm::dismissPicker,
-            containerColor = style.surface,
-            shape = style.dialogShape,
-            title = { Text("Play ${picker.game.title} with…", style = style.heading.copy(fontSize = style.tileTitle.fontSize * 1.2f)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                    picker.options.forEach { opt ->
-                        ActionTile(
-                            label = if (opt.installed) opt.name else "${opt.name} (not installed)",
-                            onClick = { vm.launchGame(picker.game, opt.choice) },
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                    }
-                }
-            },
-            confirmButton = { ActionTile("Cancel", onClick = vm::dismissPicker) },
-        )
-    }
+    state.picker?.let { picker -> EmulatorPickerDialog(picker, onPick = { vm.launchGame(picker.game, it) }, onDismiss = vm::dismissPicker) }
 }
 
 private fun hintsFor(section: Section): List<Pair<String, String>> = when (section) {
@@ -432,14 +423,14 @@ private fun AppsPane(apps: List<AppEntry>, vm: HomeViewModel) {
 }
 
 @Composable
-private fun CenterText(text: String) {
+internal fun CenterText(text: String) {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Text(text, style = LocalWiis.current.body)
     }
 }
 
 @Composable
-private fun CenterAction(text: String, action: String, onClick: () -> Unit) {
+internal fun CenterAction(text: String, action: String, onClick: () -> Unit) {
     val requester = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { requester.requestFocus() } }
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally) {

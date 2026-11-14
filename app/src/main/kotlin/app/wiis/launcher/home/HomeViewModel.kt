@@ -53,6 +53,20 @@ data class FocusTarget(val shelfId: String, val gameUri: String, val token: Long
 data class EmulatorOption(val choice: EmulatorChoice, val name: String, val installed: Boolean)
 data class EmulatorPicker(val game: Game, val options: List<EmulatorOption>)
 
+/** Hero layout: the home page, or one system's games after A on its tile. */
+sealed interface HomeView {
+    data object Home : HomeView
+    data class InSystem(val systemId: String) : HomeView
+}
+
+/**
+ * Hero layout: the element that should take focus. Keys: "hero", "sys:<id>", "recent:<uri>",
+ * "grid:<uri>", "nav:<section>", "dock:<slot>". [token] changes on every request.
+ */
+data class HeroFocus(val key: String, val token: Long)
+
+data class DockPicker(val slot: Int, val options: List<AppEntry>)
+
 data class HomeUiState(
     val section: Section = Section.Games,
     val apps: List<AppEntry> = emptyList(),
@@ -61,6 +75,17 @@ data class HomeUiState(
     val focusTarget: FocusTarget? = null,
     val picker: EmulatorPicker? = null,
     val message: String? = null,
+    // Hero layout
+    val hero: Game? = null,
+    val heroPlayedMillis: Long = 0,
+    val recent: List<Game> = emptyList(),
+    val systems: List<SystemEntry> = emptyList(),
+    val allPreview: List<String> = emptyList(),
+    val view: HomeView = HomeView.Home,
+    val viewGames: List<Game> = emptyList(),
+    val heroFocus: HeroFocus? = null,
+    val dock: List<AppEntry> = emptyList(),
+    val dockPicker: DockPicker? = null,
 )
 
 /** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
@@ -81,7 +106,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     val events: SharedFlow<UiEvent> = _events.asSharedFlow()
 
     val state: StateFlow<HomeUiState> =
-        combine(local, graph.apps.apps) { s, apps -> s.copy(apps = apps) }
+        combine(local, graph.apps.apps, graph.dock) { s, apps, dock -> s.copy(apps = apps, dock = dock) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), local.value)
 
     init {
@@ -97,9 +122,10 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         viewModelScope.launch {
             graph.themes.spec.map { it.layout }.distinctUntilChanged().collect { tokens ->
                 layout = tokens
-                if (games.isNotEmpty()) local.update { it.copy(shelves = buildShelves()) }
+                if (games.isNotEmpty()) local.update { buildHome(it.copy(shelves = buildShelves())) }
             }
         }
+        viewModelScope.launch { graph.shared.openApps.collect { selectSection(Section.Apps) } }
     }
 
     // ---- Navigation -------------------------------------------------------------------------
@@ -107,7 +133,9 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     fun selectSection(section: Section) = local.update { s ->
         if (s.section == section) return@update s
         val target = if (section == Section.Games) restoreTarget(s.shelves) else null
-        s.copy(section = section, focusTarget = target ?: s.focusTarget)
+        // Hero layout, as in the workbench: a section always opens on its first item (Home: the card).
+        val heroTarget = if (section == Section.Games) homeFocus(s) else null
+        s.copy(section = section, focusTarget = target ?: s.focusTarget, view = HomeView.Home, viewGames = emptyList(), heroFocus = heroTarget)
     }
 
     fun cycleSection(delta: Int) {
@@ -125,7 +153,65 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     fun focusApp(app: AppEntry) = graph.shared.setFocus(Focus.OnApp(app))
+    fun focusSystem(entry: SystemEntry) = graph.shared.setFocus(Focus.OnSystem(entry.id, entry.name, entry.count))
     fun focusConsumed() = local.update { it.copy(focusTarget = null) }
+
+    // ---- Hero layout --------------------------------------------------------------------------
+
+    /** A on a system tile: its games, A to Z, with focus on the first. B comes back to the tile. */
+    fun openSystem(id: String) {
+        val list = HomeModel.gamesFor(id, games)
+        local.update { s ->
+            s.copy(view = HomeView.InSystem(id), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(gridKey(it), token()) })
+        }
+    }
+
+    /** B inside a system: back to the home page, focus on that system's tile. False if not inside one. */
+    fun closeSystem(): Boolean {
+        val view = local.value.view as? HomeView.InSystem ?: return false
+        local.update { it.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(sysKey(view.systemId), token())) }
+        return true
+    }
+
+    fun heroFocusConsumed() = local.update { it.copy(heroFocus = null) }
+
+    /** Y on a dock app: choose another app for that spot. */
+    fun openDockPicker(slot: Int) = local.update { it.copy(dockPicker = DockPicker(slot, graph.apps.apps.value)) }
+
+    fun chooseDockApp(app: AppEntry) {
+        val picker = local.value.dockPicker ?: return
+        graph.setDockApp(picker.slot, app)
+        local.update { it.copy(dockPicker = null, heroFocus = HeroFocus(dockKey(picker.slot), token())) }
+    }
+
+    fun dismissDockPicker() {
+        val picker = local.value.dockPicker ?: return
+        local.update { it.copy(dockPicker = null, heroFocus = HeroFocus(dockKey(picker.slot), token())) }
+    }
+
+    private fun homeFocus(s: HomeUiState): HeroFocus? = when {
+        s.hero != null -> HeroFocus(KEY_HERO, token())
+        s.recent.isNotEmpty() -> HeroFocus(recentKey(s.recent.first()), token())
+        s.systems.isNotEmpty() -> HeroFocus(sysKey(s.systems.first().id), token())
+        else -> null
+    }
+
+    private fun buildHome(s: HomeUiState): HomeUiState {
+        val (hero, recent) = HomeModel.heroAndRecent(games, { graph.playtime.lastPlayed(it.uri) }, layout.recentCount, layout.showRecent)
+        val systems = HomeModel.systems(games, systemNames, systemOrder, layout.systemOrder)
+        graph.shared.setHero(hero)
+        val view = s.view
+        val stillThere = view !is HomeView.InSystem || systems.any { it.id == view.systemId }
+        return s.copy(
+            hero = hero,
+            heroPlayedMillis = hero?.let { graph.playtime.totalMillis(it.uri) } ?: 0L,
+            recent = recent,
+            systems = systems,
+            allPreview = HomeModel.allTilePreview(hero, recent, systems),
+            view = if (stillThere) view else HomeView.Home,
+            viewGames = if (stillThere && view is HomeView.InSystem) HomeModel.gamesFor(view.systemId, games) else emptyList(),
+        )
+    }
 
     fun launchApp(app: AppEntry) = graph.apps.launch(app)
 
@@ -187,7 +273,10 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     private fun setGames(list: List<Game>, focusFirst: Boolean) {
         games = list
         val shelves = buildShelves()
-        local.update { s -> s.copy(shelves = shelves, focusTarget = if (focusFirst) restoreTarget(shelves) else s.focusTarget) }
+        local.update { s ->
+            val home = buildHome(s.copy(shelves = shelves, focusTarget = if (focusFirst) restoreTarget(shelves) else s.focusTarget))
+            if (focusFirst && home.section == Section.Games && home.view == HomeView.Home) home.copy(heroFocus = homeFocus(home)) else home
+        }
         graph.art.refreshSummary(list)
         graph.art.prefetch(list)
     }
@@ -249,11 +338,16 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             val shelfId = if (shelves.any { it.id == RECENT_ID }) RECENT_ID else ended.game.systemId
             lastFocused = shelfId to ended.game.uri
             local.update {
-                it.copy(
-                    section = Section.Games,
-                    shelves = shelves,
-                    focusTarget = FocusTarget(shelfId, ended.game.uri, SystemClock.uptimeMillis()),
+                val home = buildHome(
+                    it.copy(
+                        section = Section.Games,
+                        shelves = shelves,
+                        focusTarget = FocusTarget(shelfId, ended.game.uri, SystemClock.uptimeMillis()),
+                    ),
                 )
+                // Hero layout: the game just played is now the Jump back in card; inside a system, stay on its tile.
+                val inSystem = home.view is HomeView.InSystem && home.viewGames.any { g -> g.uri == ended.game.uri }
+                home.copy(heroFocus = HeroFocus(if (inSystem) gridKey(ended.game) else KEY_HERO, token()))
             }
         }
         if (lastScanAt != 0L && SystemClock.elapsedRealtime() - lastScanAt > STALE_SCAN_MS) rescan(silent = true)
@@ -270,9 +364,18 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private fun rootUri(): Uri? = graph.prefs.getString(KEY_ROOT, null)?.let(Uri::parse)
 
+    private fun token() = SystemClock.uptimeMillis()
+
     companion object {
         const val KEY_ROOT = "rom_root"
         const val RECENT_ID = "recent"
         private const val STALE_SCAN_MS = 10 * 60_000L
+
+        const val KEY_HERO = "hero"
+        fun sysKey(id: String) = "sys:$id"
+        fun recentKey(game: Game) = "recent:${game.uri}"
+        fun gridKey(game: Game) = "grid:${game.uri}"
+        fun navKey(section: Section) = "nav:${section.name}"
+        fun dockKey(slot: Int) = "dock:$slot"
     }
 }

@@ -14,8 +14,8 @@ android {
         applicationId = "app.wiis.launcher"
         minSdk = WiisSdk.MIN
         targetSdk = WiisSdk.TARGET
-        versionCode = 5
-        versionName = "0.2.0-i2"
+        versionCode = 6
+        versionName = "0.3.0-i3"
     }
 
     signingConfigs {
@@ -50,6 +50,29 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { test ->
+                // Screenshot tests render real screens with Robolectric. They are slow and download an
+                // Android image, so they only run on request:
+                //   ./gradlew :app:testDebugUnitTest -Pscreenshots [-ProbolectricRepo=<maven mirror>] [-PwiisFonts=<dir of TTFs>]
+                if (!project.hasProperty("screenshots")) {
+                    test.exclude("**/screenshots/**")
+                } else {
+                    test.maxHeapSize = "2g"
+                    test.systemProperty("roborazzi.test.record", "true")
+                    test.systemProperty("wiis.screenshots.dir", layout.buildDirectory.dir("screenshots").get().asFile.path)
+                    project.findProperty("robolectricRepo")?.let {
+                        test.systemProperty("robolectric.dependency.repo.url", it)
+                        test.systemProperty("robolectric.dependency.repo.id", "mirror")
+                    }
+                    project.findProperty("wiisFonts")?.let { test.systemProperty("wiis.fonts", it) }
+                }
+            }
+        }
+    }
 }
 
 kotlin {
@@ -68,4 +91,13 @@ dependencies {
     implementation(libs.jankstats)
     implementation(libs.kotlinx.coroutines.android)
     testImplementation(libs.junit)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.androidx.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.roborazzi)
+    testImplementation(libs.roborazzi.compose)
+    // Host activity for Compose tests; debug builds only.
+    debugImplementation(platform(libs.compose.bom))
+    debugImplementation(libs.compose.ui.test.manifest)
 }

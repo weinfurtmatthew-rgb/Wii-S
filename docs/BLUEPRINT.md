@@ -20,6 +20,7 @@
 | D10 | Box art | Start now with no-account sources (your art folder, libretro thumbnails). Other services researched in `docs/SCRAPING.md`; which to add is the owner's call |
 | D11 | Sounds | Interface sounds on, synthesised from the theme; the owner can replace any sound with their own file on the device |
 | D12 | Look and layout (Draft 2) | From the owner's inspiration pictures: frosted light glass over the focused game's art; Jump back in + systems grid + recent row; art + app dock on the bottom screen; full-art tiles in a console-colour ring with a console line drawing; focus by grow and bounce. Values open until approved (`docs/DESIGN.md`) |
+| D13 | Iteration 3 scope | Build Draft 3 into the launcher (0.3.0): hero home, navigation dock, art background and glass, system view, bottom screen following systems |
 
 **Stack simplifications (efficiency):**
 - **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.
@@ -64,6 +65,20 @@
 | Stack note | The Compose UI renders from theme tokens; `WiisTile` implements focus scale, lift, spring, bob, ring, glow, soft/hard shadow and press-in |
 
 Next: the owner reviews and approves in the workbench, then I bake approved values into `default.json`. Choosing scraping services (see `docs/SCRAPING.md`) adds the next art sources.
+
+## Iteration 3: Draft 3 in the launcher (0.3.0-i3)
+
+| Piece | State in 0.3.0-i3 |
+|---|---|
+| Hero home (`layout.games: "hero"`) | Jump back in card, systems grid (A opens a system's games, B returns), recent row, caption in the header, status pill with live battery, Wi-Fi and clock. Shelves and grid layouts remain selectable |
+| Navigation dock | Along the bottom of the top screen: L1, Home / Apps / System, R1, then app shortcuts. Y on an app changes it; the choice is a device setting |
+| Art background | The focused game's art, blurred once per game at low resolution (`ui/Backdrop.kt`, Gaussian via three box blurs) and drawn scaled up, so it costs a plain image per frame. Systems show a pool of their colour |
+| Frosted glass | Translucent fill plus edge over the already blurred background; no per-panel backdrop blur |
+| Fidelity to the workbench | Colour mixing in sRGB like the workbench, CSS-style gradients, shadows and single-line boxes. Screenshot tests put the device rendering within about 1 dp of the workbench |
+| Bottom screen | Follows highlighted systems; the "artDock" layout (art + app dock) is implemented for themes that choose it |
+| Screenshot tests | Robolectric + Roborazzi render the real screens at 833 × 468 dp. Opt-in: `./gradlew :app:testDebugUnitTest -Pscreenshots` (CI skips them) |
+
+Open design questions from this iteration are in `docs/DESIGN.md` (marked "Proposed, not in the workbench").
 
 ## 0. Device assumptions (to verify on hardware)
 
