@@ -40,3 +40,4 @@ These are fixed for now. Each can become a token if you want control over it:
 | 2026-11-14 | Focus | Grow and bounce only; no focus ring, no glow | **Your answer** (direction) |
 | 2026-11-14 | Console marks | Original line drawings of console shapes (no makers' logos) | **Your answer** (direction) |
 | 2026-11-14 | Draft 2 (`design/themes/draft-2-2026-11-14.json`, now the proposal in `default.json`) | Implements the answers above, keeps Draft 1's three changes; every other value is my proposal | **Draft, open to change.** Not approved |
+| 2026-11-14 | Your edits to Draft 2 (`design/themes/draft-2-your-edits-2026-11-14.json`) | Systems A to Z; grey accent `#C2C2C2`; grey active tab `#999999`; Recently played `#008CB4`; glow colour `#1A0A52` (shows on the bottom screen in this layout); bottom screen "Large cover + details" | **Draft, open to change.** Not approved. Note: white tab text on `#999999` is 2.9:1 |

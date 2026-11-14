@@ -211,6 +211,10 @@ svg text { font-family: var(--mono); }
         <li><b>Kept from Draft 1:</b> centred rows, a bar before labels, and a sine-wave move sound.</li>
       </ol>
     </div>
+    <div class="answers" id="editsPanel" hidden data-uncommentable>
+      <h2>Your edits since Draft 2</h2>
+      <ol id="editsList"></ol>
+    </div>
     <div class="howto" data-uncommentable>
       <p id="howtoText">To ask for a tweak, press <b>Tweak</b> next to any item and write what you want, or reply in chat with its number (for example "4.2 more see-through"). I make the change in the <a href="https://claude.ai/artifact/VPcG1tqcsKakm9WAkhXM5s" target="_blank" rel="noopener">Design Workbench</a>, and nothing becomes final until you approve it there.</p>
     </div>
@@ -221,11 +225,11 @@ svg text { font-family: var(--mono); }
   <main id="main">
     <section id="s1" data-comment-target>
       <div class="sec-head"><span class="sec-num">1</span><h2>At a glance</h2></div>
-      <p class="summary">Both Thor screens when you open the launcher. <b>Jump back in</b> is focused, so the bottom screen shows that game's art with your app dock.</p>
+      <p class="summary" id="glanceSummary">Both Thor screens when you open the launcher. <b>Jump back in</b> is focused, so the bottom screen shows that game.</p>
       <div class="stage">
         <div class="screens">
           <div><div class="stage-cap"><span>TOP SCREEN · 1920×1080 · 833×468 dp</span><span>Home</span></div><div class="screen-box" data-w="833" data-h="468"><div class="scaler" id="shotATop"></div></div></div>
-          <div style="max-width:538px"><div class="stage-cap"><span>BOTTOM SCREEN · 1240×1080 · 538×468 dp</span><span>art + app dock</span></div><div class="screen-box" data-w="538" data-h="468"><div class="scaler" id="shotABottom"></div></div></div>
+          <div style="max-width:538px"><div class="stage-cap"><span>BOTTOM SCREEN · 1240×1080 · 538×468 dp</span><span id="glanceBottomCap"></span></div><div class="screen-box" data-w="538" data-h="468"><div class="scaler" id="shotABottom"></div></div></div>
         </div>
       </div>
       <p class="figure-note">Covers, game titles and app icons are invented placeholders. Real box art and your own apps appear on the device.</p>
@@ -411,8 +415,7 @@ function noteName(f) { const m = 69 + 12 * Math.log2(f / 440); const r = Math.ro
 function soundLength(s) { return s.notes.length * s.noteMs + s.decayMs; }
 
 // ---------------- Value rendering ----------------
-function valueHtml(it) {
-  const v = getPath(DRAFT, it.p);
+function valueHtml(it, v = getPath(DRAFT, it.p)) {
   switch (it.t) {
     case "color": return `<span class="sw" style="background:${css(v)}"></span><span class="code">${esc(v)}</span>`;
     case "num": return it.cap && v >= it.cap ? `Fully round <span class="code">(${v})</span>` : `${esc(v)}${it.u ? " " + esc(it.u) : ""}`;
@@ -580,14 +583,14 @@ const SPEC = {
   },
   header: () => stage(`<div class="scroll-x" style="padding:6px 0">${SNAPS.parts.header}</div>`, `<span>HEADER · wordmark, tabs with L1/R1, status pill</span>`, true),
   hints: () => stage(`<div class="caption-specimen">${SNAPS.parts.caption}</div>`, `<span>BUTTON HINTS · on the right of the caption line</span>`, true),
-  companion: () => `<p class="summary">The bottom screen follows focus: a game shows its art; a system shows its console drawing. The dock stays put.</p>` +
-    stage(`<div class="screens"><div style="max-width:538px">${screenBox("shotBBottom", 538, 468)}</div><div style="max-width:538px">${screenBox("shotCBottom", 538, 468)}</div></div>`, `<span>BOTTOM SCREEN · system focused, then a game inside it</span>`),
+  companion: () => `<p class="summary">The bottom screen follows focus${T.companion.layout === "artDock" ? ": a game shows its art; a system shows its console drawing. The dock stays put." : ", showing the focused game."}</p>` +
+    stage(`<div class="screens"><div style="max-width:538px">${screenBox("shotBBottom", 538, 468)}</div><div style="max-width:538px">${screenBox("shotCBottom", 538, 468)}</div></div>`, `<span>BOTTOM SCREEN · ${esc((LAYOUT_NAMES[T.companion.layout] || "").toLowerCase())} · system focused, then a game inside it</span>`),
   sounds: () => `<p class="summary">Seven short sounds made from these settings. The Thor plays the same samples. You can also swap any of them for your own file on the device (System → Sounds). <b>Play</b> buttons below use your speakers.</p>`,
   haptics: () => `<p class="summary">Vibration strength for each event. These can't be felt in a browser, only on the Thor.</p>`,
 };
 const SUMMARY = {
-  layout: "A big Jump back in card for your last game, a 3 × 2 grid of systems beside it, and recent games along the bottom with the focused one centred.",
-  colors: "The focused game's art, blurred and darkened by half, is the background. White text sits over it; the coral accent marks the active tab.",
+  layout: `A big Jump back in card for your last game, a ${T.layout.systemColumns} × ${T.layout.systemRows} grid of systems beside it (${{ registry: "console order", alphabetical: "A to Z", mostGames: "most games first" }[T.layout.systemOrder]}), and recent games along the bottom with the focused one ${{ center: "centred", start: "near the left", edge: "scrolled into view" }[T.layout.scrollAnchor]}.`,
+  colors: `The focused game's art, blurred and darkened by ${Math.round(T.colors.artDim * 100)}%, is the background${T.colors.backgroundStyle === "art" ? "" : " (switched off in this draft)"}. White text sits over it. The accent (${T.colors.accent}) colours the wordmark, the All games tile and Now playing; the active tab uses its own fill (${T.colors.tabActiveFill}).`,
   glass: "Light frosted glass: white at 82% over the art with a soft blur and a bright edge. Dark text on glass.",
   systems: "Each system's colour is used for its tile ring, the wash on its system tile, its console mark and its caption label.",
   shape: "Square art tiles with rounded corners, a thin console-colour ring, a console mark and a soft shadow. No focus ring.",
@@ -600,12 +603,38 @@ const SUMMARY = {
   motion: "Grow and bounce only: the focused tile scales up with a short overshoot, lifts slightly and bobs gently.",
   header: "Wordmark, then the three tabs in a glass pill between L1 and R1, then a status pill with Wi-Fi, battery and the clock.",
   hints: "Button hints sit at the right end of the caption line, as dark badges.",
-  companion: "The focused game's art fills the screen, with the clock top right and a glass dock of your apps along the bottom.",
+  companion: {
+    artDock: "The focused game's art fills the screen, with the clock top right and a glass dock of your apps along the bottom.",
+    art: "A large cover of the focused game beside its details: time played, last played and emulator. The background follows the top screen's style; the app dock only appears in the Art + app dock layout.",
+    info: "A details card for the focused game: time played, last played and emulator.",
+    minimal: "Only the focused game's title and system.",
+  }[T.companion.layout] || "",
   sounds: "The Pop set: soft triangle-wave blips that rise for select and fall for back. Move uses a sine wave (your change).",
   haptics: "Light ticks for movement, medium for select, heavy for starting a game or an error.",
 };
 
 // ---------------- Build ----------------
+function plainValue(it, v) {
+  switch (it.t) {
+    case "color": return v;
+    case "num": return it.cap && v >= it.cap ? "fully round" : `${v}${it.u ? " " + it.u : ""}`;
+    case "sel": return it.o[v] ?? v;
+    case "bool": return v ? "On" : "Off";
+    case "text": return `“${v}”`;
+    case "font": return v;
+    case "sound": return `${v.wave}, ${v.notes.join("/")} Hz`;
+  }
+  return JSON.stringify(v);
+}
+function buildEdits() {
+  if (!changedItems.length) return;
+  $("#editsPanel").hidden = false;
+  $("#editsList").innerHTML = changedItems.map((it) => {
+    const from = getPath(PROPOSAL, it.p), to = getPath(DRAFT, it.p);
+    const sw = (v) => it.t === "color" ? `<span class="sw" style="display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:-2px;background:${css(v)}"></span> ` : "";
+    return `<li><a href="#i${it.no.replace(".", "-")}">${it.no}</a> <b>${esc(it.l)}:</b> ${sw(from)}${esc(plainValue(it, from))} → ${sw(to)}<b>${esc(plainValue(it, to))}</b></li>`;
+  }).join("");
+}
 function buildChips() {
   $("#statusChips").innerHTML = `<span class="chip">Draft 2 · preliminary</span><span class="chip">0 of ${ALL.length} approved</span><span class="chip mine">${decidedItems.length} set by your answers and tweaks</span>${changedItems.length ? `<span class="chip mine">${changedItems.length} changed since Draft 2</span>` : ""}<span class="chip">Open to change</span>`;
 }
@@ -621,13 +650,15 @@ function buildSections() {
     ${itemsHtml(g)}
   </section>`).join("");
 }
+const LAYOUT_NAMES = { artDock: "Art + app dock", art: "Large cover + details", info: "Details card", minimal: "Title only" };
 function buildGlance() {
+  $("#glanceBottomCap").textContent = (LAYOUT_NAMES[T.companion.layout] || T.companion.layout).toLowerCase();
   const f = springFacts();
   $("#glanceFacts").innerHTML = [
     ["Art-led", "blurred game art behind frosted glass"],
     [`${T.layout.systemColumns} × ${T.layout.systemRows}`, "systems beside Jump back in"],
     [`${(f.overshoot * 100).toFixed(0)}% bounce`, "on focus, settles in " + f.settle + " ms"],
-    [`${T.companion.dockApps} apps`, "in the bottom-screen dock"],
+    T.companion.layout === "artDock" ? [`${T.companion.dockApps} apps`, "in the bottom-screen dock"] : [LAYOUT_NAMES[T.companion.layout] || T.companion.layout, "on the bottom screen"],
   ].map(([b, s]) => `<div class="fact"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
 }
 function place(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }
@@ -735,7 +766,7 @@ document.addEventListener("click", async (e) => {
   }
 });
 
-buildChips(); buildToc(); buildSections(); buildGlance(); placeSpecimens(); fitScreens();
+buildChips(); buildEdits(); buildToc(); buildSections(); buildGlance(); placeSpecimens(); fitScreens();
 new ResizeObserver(fitScreens).observe(document.body);
 initComments();
 </script>

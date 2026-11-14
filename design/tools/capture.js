@@ -41,20 +41,20 @@ const path = require("path");
       recentRest: q(".m-track [data-game]").outerHTML,
       header: q(".m-header").outerHTML,
       caption: document.getElementById("mCaption").innerHTML,
-      dock: document.querySelector("#bottomScreen .dock").outerHTML,
+      dock: document.querySelector("#bottomScreen .dock")?.outerHTML || "",
     };
   });
 
-  // B: Nintendo DS system tile focused.
-  await keys("ArrowRight", "ArrowDown");
+  // B: Nintendo DS system tile focused (found by data attribute, so system order doesn't matter).
+  await page.evaluate(() => { const i = focusables.findIndex((el) => el.dataset.system === "nds"); setFocus(i, false); });
   await settle();
   const b = await grab();
   const captionB = await page.evaluate(() => document.getElementById("mCaption").innerHTML);
 
   // C: inside Nintendo DS, third game focused.
-  await keys("Enter");
+  await page.evaluate(() => activate());
   await page.waitForTimeout(500);
-  await keys("ArrowRight", "ArrowRight");
+  await page.evaluate(() => { const i = focusables.findIndex((el) => el.dataset.game === "nds:Garden Days"); setFocus(i, false); });
   await settle();
   const c = await grab();
   const partsC = await page.evaluate(() => {
