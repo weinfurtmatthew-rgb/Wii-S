@@ -143,51 +143,10 @@ svg text { font-family: var(--mono); }
 .fixed-list li { margin: 4px 0; }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(18px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 9px 14px; border-radius: 10px; font-weight: 700; z-index: 20; }
 
-/* ---------- Launcher mock (captured from the Design Workbench) ---------- */
-.mock { position: relative; width: 100%; height: 100%; overflow: hidden; color: var(--t-text); font-family: var(--t-body); }
-.mock .bg-layer { position: absolute; inset: 0; }
-.mock .content { position: absolute; inset: 0; display: flex; flex-direction: column; }
-.m-header { display: flex; align-items: center; gap: 10px; flex: none; }
-.m-wordmark { font-family: var(--t-display); color: var(--t-accent); margin-right: 14px; white-space: nowrap; line-height: 1; }
-.m-tab { position: relative; padding: 8px 16px; font-family: var(--t-display); white-space: nowrap; display: flex; flex-direction: column; align-items: center; }
-.m-tab .ul { width: 28px; height: 3px; border-radius: 2px; margin-top: 4px; }
-.m-clock { margin-left: auto; white-space: nowrap; }
-.m-body { position: relative; flex: 1; min-height: 0; overflow: hidden; }
-.m-scroll { position: absolute; left: 0; right: 0; top: 0; }
-.m-shelf-title { display: flex; align-items: center; white-space: nowrap; }
-.m-row { overflow: visible; position: relative; }
-.m-track { display: flex; }
-.m-grid { display: flex; flex-wrap: wrap; }
-.focusable { position: relative; flex: none; }
-.tile-surface { position: absolute; inset: 0; overflow: hidden; }
-.tile-ring { position: absolute; pointer-events: none; opacity: 0; }
-.tile-glow { position: absolute; inset: 0; filter: blur(22px); opacity: 0; pointer-events: none; transform: scale(1.04, 1.06); }
-.tile-hard { position: absolute; inset: 0; }
-.tile-inner { position: absolute; inset: 0; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-.cover { position: relative; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
-.cover .band { flex: none; height: 13%; display: flex; align-items: center; padding: 0 6%; font: 800 9px/1 system-ui, sans-serif; letter-spacing: .08em; color: #fff; background: rgba(0,0,0,.35); }
-.cover .art-shapes { position: absolute; inset: 13% 0 0 0; }
-.cover .cover-title { position: absolute; left: 7%; right: 7%; bottom: 8%; font: 900 15px/1.05 system-ui, sans-serif; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.35); letter-spacing: -.01em; }
-.scrim { position: absolute; left: 0; right: 0; bottom: 0; padding: 22px 12px 12px; background: linear-gradient(transparent, rgba(0,0,0,.78)); color: #fff; }
-.badge { position: absolute; left: 10px; top: 10px; padding: 2px 8px; z-index: 2; }
-.strip { position: absolute; z-index: 2; }
-.m-hints { display: flex; gap: 18px; align-items: center; flex: none; padding-top: 10px; }
-.m-hint { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
-.m-hint i { font-style: normal; height: 22px; min-width: 22px; padding: 0 7px; display: inline-flex; align-items: center; justify-content: center; }
-.m-msg { margin-top: 10px; padding: 14px; flex: none; }
-.c-icon { position: absolute; top: 6px; right: 6px; z-index: 4; display: flex; align-items: center; justify-content: center; }
-.m-vgrid { position: relative; overflow: hidden; flex: none; }
-.m-vgrid-inner { position: relative; display: grid; }
-.m-caption { display: flex; align-items: center; gap: 14px; flex: none; min-height: 26px; padding-top: 6px; }
-.m-caption .cap-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; }
-.m-caption .m-hints { padding-top: 0; }
-.art-bg { position: absolute; }
-.dock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; display: flex; gap: 10px; align-items: center; padding: 8px 12px; z-index: 5; }
-.dock .app { width: 40px; height: 40px; border-radius: 99px; display: flex; align-items: center; justify-content: center; flex: none; }
+/* ---------- Launcher mock: styles copied from the Design Workbench at build time ---------- */
+/*__MOCK_CSS__*/
+/* Outline-only additions */
 .dock.static { position: static; transform: none; display: inline-flex; }
-.status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; white-space: nowrap; z-index: 5; }
-.tabs-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px; }
-.lb { font: 800 10px/1 system-ui, sans-serif; padding: 4px 6px; border-radius: 6px; flex: none; }
 .caption-specimen { display: flex; align-items: center; gap: 14px; min-height: 26px; }
 .caption-specimen .cap-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; }
 .caption-specimen .m-hints { padding-top: 0; }
