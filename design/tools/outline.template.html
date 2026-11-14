@@ -195,24 +195,25 @@ svg text { font-family: var(--mono); }
 
 <div class="page">
   <header class="masthead">
-    <span class="eyebrow">Wii-S launcher · AYN Thor · Draft 2 · 14 Nov 2026</span>
-    <h1>Design Outline <span>Draft 2</span></h1>
-    <p class="lede">Rebuilt from your inspiration pictures and answers: frosted light panels over the focused game's art, a "Jump back in" card with your systems beside it, and the game's art with your apps on the bottom screen. Everything is open to change. Nothing here is approved yet.</p>
+    <span class="eyebrow">Wii-S launcher · AYN Thor · Draft 3 · 14 Nov 2026</span>
+    <h1>Design Outline <span>Draft 3</span></h1>
+    <p class="lede">Your inspiration pictures, answers and edits so far: frosted light panels over the focused game's art, a "Jump back in" card with your systems beside it, a navigation dock along the bottom of the top screen, and a large cover with details on the bottom screen. Everything is open to change. Nothing here is approved yet.</p>
     <div class="chips" id="statusChips"></div>
     <div class="answers" data-uncommentable>
-      <h2>What your answers decided</h2>
+      <h2>What you've decided so far</h2>
       <ol>
         <li><b>Look:</b> light frosted-glass panels and tiles over the focused game's art, blurred and darkened.</li>
-        <li><b>Top screen:</b> a big "Jump back in" card for your last game, a grid of systems beside it, and recent games along the bottom.</li>
-        <li><b>Bottom screen:</b> the focused game's art, with a dock of your Android apps and an app-drawer button.</li>
+        <li><b>Top screen:</b> a big "Jump back in" card for your last game, a grid of systems beside it (A to Z), and recent games underneath.</li>
+        <li><b>Navigation:</b> a glass dock along the bottom of the top screen: Home, Apps and System between L1 and R1, then your app shortcuts.</li>
+        <li><b>Bottom screen:</b> a large cover of the focused game with time played, last played and emulator.</li>
         <li><b>Tiles:</b> full box art in a thin ring of the console's colour, with a small console drawing in the top-right corner.</li>
         <li><b>Focus:</b> the tile grows and bounces. No extra ring or glow.</li>
-        <li><b>Console marks:</b> original line drawings of each console's shape.</li>
+        <li><b>Colours:</b> a grey accent and a grey active tab (kept, though white text on it is only 2.9:1), a teal Recently played colour and a deep indigo glow.</li>
         <li><b>Kept from Draft 1:</b> centred rows, a bar before labels, and a sine-wave move sound.</li>
       </ol>
     </div>
     <div class="answers" id="editsPanel" hidden data-uncommentable>
-      <h2>Your edits since Draft 2</h2>
+      <h2>Your edits since Draft 3</h2>
       <ol id="editsList"></ol>
     </div>
     <div class="howto" data-uncommentable>
@@ -225,7 +226,7 @@ svg text { font-family: var(--mono); }
   <main id="main">
     <section id="s1" data-comment-target>
       <div class="sec-head"><span class="sec-num">1</span><h2>At a glance</h2></div>
-      <p class="summary" id="glanceSummary">Both Thor screens when you open the launcher. <b>Jump back in</b> is focused, so the bottom screen shows that game.</p>
+      <p class="summary" id="glanceSummary">Both Thor screens when you open the launcher. <b>Jump back in</b> is focused, so the caption in the header names it and the bottom screen shows its cover and details. The navigation dock runs along the bottom of the top screen.</p>
       <div class="stage">
         <div class="screens">
           <div><div class="stage-cap"><span>TOP SCREEN · 1920×1080 · 833×468 dp</span><span>Home</span></div><div class="screen-box" data-w="833" data-h="468"><div class="scaler" id="shotATop"></div></div></div>
@@ -243,7 +244,7 @@ svg text { font-family: var(--mono); }
         <li>Where things sit inside the Jump back in card: the glass bar along the bottom of the art</li>
         <li>System tile name size, and the four mini squares on the All games tile</li>
         <li>The caption line's height and spacing</li>
-        <li>Which apps are in the dock: the icons here are examples, and on the Thor you pick your own</li>
+        <li>Which apps are in the navigation dock: the icons here are examples, and on the Thor you pick your own</li>
         <li>Wi-Fi and battery in the status pill are shown as examples</li>
         <li>Title size in dialogs, such as the emulator picker</li>
       </ol>
@@ -284,9 +285,14 @@ const DECIDED = {
   "glass.fill": "Your answer: light frosted panels",
   "layout.games": "Your answer: Jump back in + grid",
   "layout.showRecent": "Your answer: systems + recent row",
-  "companion.layout": "Your answer: art + app dock",
-  "companion.dock": "Your answer: art + app dock",
-  "companion.showDrawer": "Your answer: art + app dock",
+  "companion.layout": "Your Draft 2 edit: large cover + details",
+  "nav.style": "Your answer: the dock is the navigation, along the bottom of the top screen",
+  "nav.apps": "Your answer: keep the dock's app shortcuts",
+  "layout.systemOrder": "Your Draft 2 edit",
+  "colors.glowA": "Your Draft 2 edit",
+  "colors.accent": "Your Draft 2 edit",
+  "colors.tabActiveFill": "Your choice: kept (white text on it is 2.9:1)",
+  "systemColors.recent": "Your Draft 2 edit",
   "tile.artFit": "Your answer: full art tiles",
   "tile.systemRing": "Your answer: a small ring in the console's colour",
   "tile.consoleIcon": "Your answer: line drawing of the console",
@@ -383,10 +389,13 @@ const GROUPS = [
     R("motion.focusLift", "Focus lift", "dp"), B("motion.idleBob", "Gentle bob on the focused tile"), R("motion.idleBobAmplitude", "Bob height", "dp"), R("motion.idleBobPeriodMs", "Bob cycle", "ms"),
     S("motion.tabTransition", "Tab change animation", { slide: "Slide", fade: "Fade", none: "None" }), R("motion.tabTransitionMs", "Tab change duration", "ms"), B("motion.reduceMotion", "Reduce motion"),
   ]},
-  { n: 14, id: "header", title: "Header", items: [
+  { n: 14, id: "header", title: "Header & navigation", items: [
     B("header.showWordmark", "Show the wordmark"), X("header.wordmark", "Wordmark text"), B("header.clock24h", "24-hour clock"), B("header.showDate", "Show the date"),
     X("header.tabGames", "Home tab label"), X("header.tabApps", "Apps tab label"), X("header.tabSystem", "System tab label"),
     B("header.statusPill", "Status pill: clock, Wi-Fi, battery"), B("header.tabIcons", "Icons in the tabs"),
+    S("nav.style", "Navigation", { dock: "Dock along the bottom", tabs: "Tabs in the header" }), R("nav.apps", "App shortcuts in the dock", "", "You choose which apps on the Thor"),
+    S("nav.labels", "Labels on the dock buttons", { active: "Only the active one", all: "All", none: "Icons only" }),
+    S("nav.captionPlace", "Caption naming the focused item", { header: "In the header", aboveDock: "Just above the dock" }),
   ]},
   { n: 15, id: "hints", title: "Controller hints", items: [
     B("hints.show", "Show button hints"), S("hints.align", "Position (row layouts)", { start: "Left", center: "Centre", end: "Right" }), S("hints.badgeShape", "Button badge shape", { circle: "Circle", rounded: "Rounded square", square: "Square" }),
@@ -581,8 +590,9 @@ const SPEC = {
       </div>
       <div style="margin-top:14px">${stage(`<div class="demo-row"><div id="demoTile" style="padding:30px"></div><div style="display:flex;flex-direction:column;gap:10px"><button class="play" type="button" id="demoFocus">Focus</button><button class="play" type="button" id="demoPress">Press</button><span class="demo-note" style="display:none;font-size:12px;color:var(--stage-muted)">Your device asks for reduced motion, so the demo jumps instead of springing.</span></div></div>`, `<span>LIVE DEMO · same spring maths as the launcher</span>`, true)}</div>`;
   },
-  header: () => stage(`<div class="scroll-x" style="padding:6px 0">${SNAPS.parts.header}</div>`, `<span>HEADER · wordmark, tabs with L1/R1, status pill</span>`, true),
-  hints: () => stage(`<div class="caption-specimen">${SNAPS.parts.caption}</div>`, `<span>BUTTON HINTS · on the right of the caption line</span>`, true),
+  header: () => stage(`<div class="scroll-x" style="padding:6px 0">${SNAPS.parts.header}</div>`, `<span>HEADER · wordmark, caption, status pill</span>`, true) +
+    (SNAPS.parts.navDock ? `<div style="height:14px"></div>` + stage(`<div class="scroll-x" style="padding:10px 0;display:flex;justify-content:center">${SNAPS.parts.navDock}</div>`, `<span>NAVIGATION DOCK · bottom of the top screen</span><span>L1/R1 switch · then your app shortcuts</span>`, true) : ""),
+  hints: () => stage(`<div class="caption-specimen">${SNAPS.parts.caption}</div>`, `<span>BUTTON HINTS · after the caption</span>`, true),
   companion: () => `<p class="summary">The bottom screen follows focus${T.companion.layout === "artDock" ? ": a game shows its art; a system shows its console drawing. The dock stays put." : ", showing the focused game."}</p>` +
     stage(`<div class="screens"><div style="max-width:538px">${screenBox("shotBBottom", 538, 468)}</div><div style="max-width:538px">${screenBox("shotCBottom", 538, 468)}</div></div>`, `<span>BOTTOM SCREEN · ${esc((LAYOUT_NAMES[T.companion.layout] || "").toLowerCase())} · system focused, then a game inside it</span>`),
   sounds: () => `<p class="summary">Seven short sounds made from these settings. The Thor plays the same samples. You can also swap any of them for your own file on the device (System → Sounds). <b>Play</b> buttons below use your speakers.</p>`,
@@ -601,8 +611,8 @@ const SUMMARY = {
   hero: "Your last game's art fills the card, with a glass bar showing the title, system and time played, and an A button to resume.",
   systemTile: "Frosted tiles washed with the console's colour, with its line drawing, name and game count. All games shows four mini covers.",
   motion: "Grow and bounce only: the focused tile scales up with a short overshoot, lifts slightly and bobs gently.",
-  header: "Wordmark, then the three tabs in a glass pill between L1 and R1, then a status pill with Wi-Fi, battery and the clock.",
-  hints: "Button hints sit at the right end of the caption line, as dark badges.",
+  header: T.nav.style === "dock" ? "The wordmark and the caption naming the focused item sit at the top, with a status pill on the right. Navigation moves to a glass dock along the bottom: Home, Apps and System between L1 and R1, then your app shortcuts." : "Wordmark, then the three tabs in a glass pill between L1 and R1, then a status pill with Wi-Fi, battery and the clock.",
+  hints: T.nav.style === "dock" && T.nav.captionPlace === "header" ? "Button hints follow the caption in the header, as dark badges." : "Button hints sit at the right end of the caption line, as dark badges.",
   companion: {
     artDock: "The focused game's art fills the screen, with the clock top right and a glass dock of your apps along the bottom.",
     art: "A large cover of the focused game beside its details: time played, last played and emulator. The background follows the top screen's style; the app dock only appears in the Art + app dock layout.",
@@ -636,7 +646,7 @@ function buildEdits() {
   }).join("");
 }
 function buildChips() {
-  $("#statusChips").innerHTML = `<span class="chip">Draft 2 · preliminary</span><span class="chip">0 of ${ALL.length} approved</span><span class="chip mine">${decidedItems.length} set by your answers and tweaks</span>${changedItems.length ? `<span class="chip mine">${changedItems.length} changed since Draft 2</span>` : ""}<span class="chip">Open to change</span>`;
+  $("#statusChips").innerHTML = `<span class="chip">Draft 3 · preliminary</span><span class="chip">0 of ${ALL.length} approved</span><span class="chip mine">${decidedItems.length} set by your answers and tweaks</span>${changedItems.length ? `<span class="chip mine">${changedItems.length} changed since Draft 3</span>` : ""}<span class="chip">Open to change</span>`;
 }
 function buildToc() {
   const items = [[1, "s1", "At a glance", false], ...GROUPS.map((g) => [g.n, `s${g.n}`, g.title, g.items.some((it) => DECIDED[it.p] || !same(it.p))]), [19, "s19", "Fixed for now", false]];
@@ -658,7 +668,7 @@ function buildGlance() {
     ["Art-led", "blurred game art behind frosted glass"],
     [`${T.layout.systemColumns} × ${T.layout.systemRows}`, "systems beside Jump back in"],
     [`${(f.overshoot * 100).toFixed(0)}% bounce`, "on focus, settles in " + f.settle + " ms"],
-    T.companion.layout === "artDock" ? [`${T.companion.dockApps} apps`, "in the bottom-screen dock"] : [LAYOUT_NAMES[T.companion.layout] || T.companion.layout, "on the bottom screen"],
+    T.nav.style === "dock" ? [`${T.nav.apps} apps`, "in the navigation dock"] : [LAYOUT_NAMES[T.companion.layout] || T.companion.layout, "on the bottom screen"],
   ].map(([b, s]) => `<div class="fact"><b>${esc(b)}</b><span>${esc(s)}</span></div>`).join("");
 }
 function place(id, html) { const el = document.getElementById(id); if (el) el.innerHTML = html; }

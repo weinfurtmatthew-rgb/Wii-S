@@ -42,6 +42,7 @@ const path = require("path");
       header: q(".m-header").outerHTML,
       caption: document.getElementById("mCaption").innerHTML,
       dock: document.querySelector("#bottomScreen .dock")?.outerHTML || "",
+      navDock: document.querySelector("#topScreen .nav-dock")?.outerHTML || "",
     };
   });
 

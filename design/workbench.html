@@ -182,6 +182,8 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; white-space: nowrap; z-index: 5; }
 .tabs-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px; }
 .lb { font: 800 10px/1 system-ui, sans-serif; padding: 4px 6px; border-radius: 6px; flex: none; }
+.nav-dock { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; flex: none; }
+.m-caption.in-header { flex: 1; min-width: 0; padding-top: 0; margin: 0 14px; }
 @media (prefers-reduced-motion: reduce) { .m-track, .m-scroll, .m-vgrid-inner, .meter i { transition: none; } }
 </style>
 
@@ -239,7 +241,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script type="application/json" id="proposal">{"schema":2,"name":"Draft 2","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"registry","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.5,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#FF6B4A","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#D9D4E6","accent":"#FF6B4A","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#FF6B4A","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.82,"blur":24,"border":"#FFFFFF","borderOpacity":0.9,"borderWidth":1.5,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#FFD24A","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"bar","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"line","consoleIconSize":22,"systemRing":3},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"line","showCount":true,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"artDock","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
+<script type="application/json" id="proposal">{"schema":3,"name":"Draft 3","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.5,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#D9D4E6","accent":"#C2C2C2","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#999999","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.82,"blur":24,"border":"#FFFFFF","borderOpacity":0.9,"borderWidth":1.5,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"bar","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"line","consoleIconSize":22,"systemRing":3},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"line","showCount":true,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"header"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
 <script>
 "use strict";
 // ======================================================================================
@@ -425,7 +427,7 @@ const GROUPS = [
     R("motion.tabTransitionMs", "Tab change duration", 0, 600, 10, "ms"),
     T("motion.reduceMotion", "Reduce motion", "No bounce, no bob, quick fades."),
   ]},
-  { id: "header", title: "Header", items: [
+  { id: "header", title: "Header & navigation", items: [
     T("header.showWordmark", "Show the wordmark"),
     X("header.wordmark", "Wordmark text"),
     T("header.clock24h", "24-hour clock"),
@@ -435,6 +437,10 @@ const GROUPS = [
     X("header.tabSystem", "System tab label"),
     T("header.statusPill", "Status pill: clock, Wi-Fi, battery"),
     T("header.tabIcons", "Icons in the tabs"),
+    S("nav.style", "Navigation", [["dock", "Dock along the bottom"], ["tabs", "Tabs in the header"]]),
+    R("nav.apps", "App shortcuts in the dock", 0, 7, 1, "", "On the Thor you choose which apps."),
+    S("nav.labels", "Labels on the dock buttons", [["active", "Only the active one"], ["all", "All"], ["none", "Icons only"]]),
+    S("nav.captionPlace", "Caption naming the focused item", [["header", "In the header"], ["aboveDock", "Just above the dock"]]),
   ]},
   { id: "hints", title: "Controller hints", items: [
     T("hints.show", "Show the hint bar"),
@@ -1062,9 +1068,22 @@ function systemTileHtml(s, idx, w, h) {
   const inner = `<div style="position:absolute;inset:0;background:${wash}"></div>${visual ? `<div style="position:absolute;left:12px;top:10px;z-index:3">${visual}</div>` : ""}${count}${nameEl}${edgeOverlay(rad)}`;
   return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner, elevated: true, ring: false, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
 }
+function navDockHtml(next) {
+  const t = theme, nav = t.nav, h = t.header;
+  const lb = (s) => `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">${s}</span>`;
+  const items = [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
+    const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
+    const showLabel = nav.labels === "all" || (nav.labels === "active" && active);
+    const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:${showLabel ? "8px 14px" : "8px 10px"};font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${tabIcon(id, 18, css(color))}${showLabel ? esc(label) : ""}</div>`;
+    return focusableHtml({ w: 0, h: 0, rad: 99, idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : "#1A1E1B27" });
+  }).join("");
+  const apps = DOCK.slice(0, Math.max(0, nav.apps)).map(([name, col, gl]) => focusableHtml({ w: 40, h: 40, rad: 99, idx: next(), data: `data-app="${esc(name)}"`, inner: dockGlyph(gl, 20), elevated: false, ring: false, fill: col, fillFocused: col }));
+  const divider = apps.length ? `<span style="width:1px;height:28px;background:rgba(${rgb(t.glass.text)},0.18);margin:0 4px;flex:none"></span>` : "";
+  return `<div class="nav-dock" style="${glassCss("border-radius:99px;")}">${lb("L1")}${items}${lb("R1")}${divider}${apps.join("")}</div>`;
+}
 function heroHeaderHtml(next) {
   const t = theme, h = t.header;
-  const tabs = [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
+  const tabs = t.nav.style === "dock" ? "" : [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
     const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
     const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:7px 14px;font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${h.tabIcons ? tabIcon(id, 16, css(color)) : ""}${esc(label)}</div>`;
     return focusableHtml({ w: 0, h: 0, rad: Math.min(t.shape.tabRadius, 40), idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : "#1A1E1B27" });
@@ -1074,7 +1093,12 @@ function heroHeaderHtml(next) {
   const status = h.statusPill
     ? `<span class="status-pill" style="${glassCss("border-radius:99px;")}font-family:${fontStack(t.type.bodyFont)};font-size:${Math.round(t.type.clockSize * 0.8)}px;font-weight:${t.type.clockWeight}">${WIFI(textColor)}${BATTERY(textColor)}<span>76%</span><span class="m-clock-text">${esc(clockText())}</span></span>`
     : `<span class="m-clock" style="font-family:${fontStack(t.type.bodyFont)};font-size:${t.type.clockSize}px;font-weight:${t.type.clockWeight};color:${css(t.colors.text)}">${esc(clockText())}</span>`;
-  return `<div class="m-header">${h.showWordmark ? `<span class="m-wordmark" style="font-size:${t.type.wordmarkSize}px;font-weight:${t.type.wordmarkWeight}">${esc(h.wordmark)}</span>` : ""}
+  const wordmark = h.showWordmark ? `<span class="m-wordmark" style="font-size:${t.type.wordmarkSize}px;font-weight:${t.type.wordmarkWeight}">${esc(h.wordmark)}</span>` : "";
+  if (t.nav.style === "dock") {
+    const caption = t.nav.captionPlace === "header" ? `<div class="m-caption in-header" id="mCaption"></div>` : `<span style="flex:1"></span>`;
+    return `<div class="m-header">${wordmark}${caption}<span style="margin-left:auto">${status}</span></div>`;
+  }
+  return `<div class="m-header">${wordmark}
     <div class="tabs-pill" style="${glassCss("border-radius:99px;")}">${lb("L1")}${tabs}${lb("R1")}</div><span style="margin-left:auto">${status}</span></div>`;
 }
 function artBgHtml(sub, w, h) {
@@ -1102,15 +1126,16 @@ function captionHtml() {
   if (el.dataset.hero) { const g = findGame(el.dataset.hero); label = "Last played"; title = g.title; meta = SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", t.hero.prompt], ["Y", "Emulator"]]; }
   else if (el.dataset.system) { const s = systemsList().find((x) => x.id === el.dataset.system); label = "System"; title = s.id === "all" ? "All games" : SYSTEMS[s.id]; meta = `${s.count} games`; color = sysColor(s.id); hints = [["A", "Open"]]; }
   else if (el.dataset.game) { const g = findGame(el.dataset.game); const inside = mock.view !== "home"; label = inside ? SYSTEMS[g.sys] : "Recent"; title = g.title; meta = inside ? "" : SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"]]; if (inside) hints.push(["B", "Back"]); }
-  else if (el.dataset.tab) { label = "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
-  else if (el.dataset.app) { label = "App"; title = el.dataset.app; hints = [["A", "Open"], ["B", "Home"]]; }
+  else if (el.dataset.tab) { label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
+  else if (el.dataset.app) { label = "App"; title = el.dataset.app; hints = [["A", "Open"]]; }
   else { hints = [["A", "Select"], ["B", "Home"]]; }
   const sh = t.shelf, ty = t.type;
   const labelColor = sh.titleColor === "system" ? color : sh.titleColor === "text" ? t.colors.text : t.colors.textMuted;
   const marker = sh.marker === "dot" ? `<span style="width:9px;height:9px;border-radius:99px;background:${css(color)};flex:none"></span>` : sh.marker === "bar" ? `<span style="width:4px;height:16px;border-radius:2px;background:${css(color)};flex:none"></span>` : "";
   const labelText = ty.shelfTitleCase === "upper" ? label.toUpperCase() : ty.shelfTitleCase === "lower" ? label.toLowerCase() : label;
-  const left = t.layout.focusCaption && (label || title) ? `<div class="cap-text">${marker}<span style="font-family:${fontStack(ty.displayFont)};font-size:${ty.shelfTitleSize}px;font-weight:${ty.shelfTitleWeight};letter-spacing:${ty.shelfTitleTracking}px;color:${css(labelColor)}">${esc(labelText)}</span>
-      <span style="font-family:${fontStack(ty.bodyFont)};font-weight:${ty.tileTitleWeight};font-size:${ty.tileTitleSize}px;color:${css(t.colors.text)};overflow:hidden;text-overflow:ellipsis">${esc(title)}</span>${meta ? `<span style="${labelStyle()}">${esc(meta)}</span>` : ""}</div>` : `<div class="cap-text"></div>`;
+  const inHeader = t.nav.style === "dock" && t.nav.captionPlace === "header";
+  const left = t.layout.focusCaption && (label || title) ? `<div class="cap-text">${marker}<span style="flex:none;font-family:${fontStack(ty.displayFont)};font-size:${ty.shelfTitleSize}px;font-weight:${ty.shelfTitleWeight};letter-spacing:${ty.shelfTitleTracking}px;color:${css(labelColor)}">${esc(labelText)}</span>
+      <span style="min-width:0;flex:0 1 auto;font-family:${fontStack(ty.bodyFont)};font-weight:${ty.tileTitleWeight};font-size:${ty.tileTitleSize}px;color:${css(t.colors.text)};overflow:hidden;text-overflow:ellipsis">${esc(title)}</span>${meta && !inHeader ? `<span style="${labelStyle()}">${esc(meta)}</span>` : ""}</div>` : `<div class="cap-text"></div>`;
   return left + hintsHtml(hints);
 }
 function updateHeroChrome() {
@@ -1165,8 +1190,13 @@ function renderHeroTop() {
   const msg = mock.message ? `<div class="m-msg" style="${glassCss()}">${esc(mock.message)}</div>` : "";
   const anim = mock.animate ? (t.motion.reduceMotion || t.motion.tabTransition === "none" ? "" : t.motion.tabTransition === "fade" ? "anim-fade" : mock.lastDir > 0 ? "anim-slide-fwd" : "anim-slide-back") : "";
   mock.animate = false;
-  $("#topScreen").innerHTML = `<div class="mock" style="${vars()}">${bgLayer}<div class="content" style="padding:${Math.round(pad * 0.6)}px ${pad}px">${header}<div style="height:${Math.round(t.spacing.headerGap * 0.75)}px;flex:none"></div>
-    <div class="m-body ${anim}" style="${visible ? "overflow:visible" : ""}">${body}</div>${msg}<div class="m-caption" id="mCaption"></div></div></div>`;
+  const dockNav = t.nav.style === "dock";
+  const captionRow = dockNav && t.nav.captionPlace === "header" ? "" : `<div class="m-caption" id="mCaption"></div>`;
+  const dockRow = dockNav ? `<div style="display:flex;justify-content:center;flex:none;padding-top:10px">${navDockHtml(next)}</div>` : "";
+  const top = Math.round(pad * 0.6), bottom = dockNav ? 10 : top;
+  const clip = dockNav && t.nav.captionPlace === "aboveDock" ? "overflow:hidden" : visible ? "overflow:visible" : "";
+  $("#topScreen").innerHTML = `<div class="mock" style="${vars()}">${bgLayer}<div class="content" style="padding:${top}px ${pad}px ${bottom}px">${header}<div style="height:${Math.round(t.spacing.headerGap * 0.75)}px;flex:none"></div>
+    <div class="m-body ${anim}" style="${clip}">${body}</div>${msg}${captionRow}${dockRow}</div></div>`;
 }
 function renderDockBottom() {
   const t = theme, c = t.companion, sub = currentSubject();
@@ -1351,6 +1381,7 @@ function activate() {
     return;
   }
   playSound("select");
+  if (el.dataset.app && !APPS.some((a) => a[0] === el.dataset.app)) { mock.message = `Opens ${el.dataset.app} (on the Thor: the app you put in this spot)`; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 1800); }
 }
 function switchSection(id, sound = true) {
   if (mock.section === id) return;

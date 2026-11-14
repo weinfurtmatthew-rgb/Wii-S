@@ -17,8 +17,8 @@ import kotlinx.serialization.json.Json
 @Immutable
 @Serializable
 data class ThemeSpec(
-    val schema: Int = 2,
-    val name: String = "Draft 2",
+    val schema: Int = 3,
+    val name: String = "Draft 3",
     val layout: LayoutTokens = LayoutTokens(),
     val colors: ColorTokens = ColorTokens(),
     val glass: GlassTokens = GlassTokens(),
@@ -32,6 +32,7 @@ data class ThemeSpec(
     val systemTile: SystemTileTokens = SystemTileTokens(),
     val motion: MotionTokens = MotionTokens(),
     val header: HeaderTokens = HeaderTokens(),
+    val nav: NavTokens = NavTokens(),
     val hints: HintTokens = HintTokens(),
     val companion: CompanionTokens = CompanionTokens(),
     val sounds: SoundTokens = SoundTokens(),
@@ -57,7 +58,7 @@ data class LayoutTokens(
     val showRecent: Boolean = true,
     val recentCount: Int = 12,
     /** "registry" (fixed console order), "alphabetical", "mostGames". */
-    val systemOrder: String = "registry",
+    val systemOrder: String = "alphabetical",
     /** Where a row scrolls the focused tile: "edge" (minimal), "start", "center". */
     val scrollAnchor: String = "center",
     /** Hero layout: width of the Jump back in card, in dp. */
@@ -88,7 +89,7 @@ data class ColorTokens(
     val artDim: Float = 0.5f,
     val background: String = "#15141E",
     val backgroundTop: String = "#1D1A2C",
-    val glowA: String = "#FF6B4A",
+    val glowA: String = "#1A0A52",
     val glowB: String = "#3FA7F5",
     val glowStrength: Float = 0.16f,
     val surface: String = "#221F33",
@@ -96,11 +97,11 @@ data class ColorTokens(
     val tileFocused: String = "#353052",
     val text: String = "#FFFFFF",
     val textMuted: String = "#D9D4E6",
-    val accent: String = "#FF6B4A",
+    val accent: String = "#C2C2C2",
     val focusRing: String = "#FFD24A",
     val focusGlow: String = "#FFD24A",
     val focusGlowStrength: Float = 0f,
-    val tabActiveFill: String = "#FF6B4A",
+    val tabActiveFill: String = "#999999",
     val tabActiveText: String = "#FFFFFF",
     val tabIdleText: String = "#3B3549",
     val hintBadge: String = "#1E1B27",
@@ -126,7 +127,7 @@ data class GlassTokens(
 )
 
 val DEFAULT_SYSTEM_COLORS: Map<String, String> = linkedMapOf(
-    "recent" to "#FFD24A",
+    "recent" to "#008CB4",
     "nes" to "#E4483C",
     "snes" to "#8C6CF0",
     "n64" to "#2FB86B",
@@ -282,6 +283,19 @@ data class HeaderTokens(
     val tabIcons: Boolean = true,
 )
 
+/** Top-screen navigation: a glass dock along the bottom (with app shortcuts) or tabs in the header. */
+@Immutable @Serializable
+data class NavTokens(
+    /** "dock" (along the bottom of the top screen) or "tabs" (in the header). */
+    val style: String = "dock",
+    /** App shortcuts after the Home / Apps / System buttons in the dock. */
+    val apps: Int = 5,
+    /** Labels on the navigation buttons: "active", "all" or "none" (icons only). */
+    val labels: String = "active",
+    /** With the dock: the caption naming the focused item sits in the "header" or "aboveDock". */
+    val captionPlace: String = "header",
+)
+
 @Immutable @Serializable
 data class HintTokens(
     val show: Boolean = true,
@@ -302,7 +316,7 @@ data class CompanionTokens(
      * Bottom screen: "artDock" (focused art full screen + app dock), "art" (large cover + details),
      * "info" (details card) or "minimal" (title only).
      */
-    val layout: String = "artDock",
+    val layout: String = "art",
     /** "inherit" (same background as the top screen) or "color". */
     val background: String = "inherit",
     val backgroundColor: String = "#15141E",

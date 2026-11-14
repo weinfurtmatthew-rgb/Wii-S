@@ -1,11 +1,11 @@
 {
-  "schema": 2,
-  "name": "Draft 2",
+  "schema": 3,
+  "name": "Draft 3",
   "layout": {
     "games": "hero",
     "showRecent": true,
     "recentCount": 12,
-    "systemOrder": "registry",
+    "systemOrder": "alphabetical",
     "scrollAnchor": "center",
     "heroWidth": 360,
     "systemColumns": 3,
@@ -21,7 +21,7 @@
     "artDim": 0.5,
     "background": "#15141E",
     "backgroundTop": "#1D1A2C",
-    "glowA": "#FF6B4A",
+    "glowA": "#1A0A52",
     "glowB": "#3FA7F5",
     "glowStrength": 0.16,
     "surface": "#221F33",
@@ -29,11 +29,11 @@
     "tileFocused": "#353052",
     "text": "#FFFFFF",
     "textMuted": "#D9D4E6",
-    "accent": "#FF6B4A",
+    "accent": "#C2C2C2",
     "focusRing": "#FFD24A",
     "focusGlow": "#FFD24A",
     "focusGlowStrength": 0,
-    "tabActiveFill": "#FF6B4A",
+    "tabActiveFill": "#999999",
     "tabActiveText": "#FFFFFF",
     "tabIdleText": "#3B3549",
     "hintBadge": "#1E1B27",
@@ -52,7 +52,7 @@
     "radius": 22
   },
   "systemColors": {
-    "recent": "#FFD24A",
+    "recent": "#008CB4",
     "nes": "#E4483C",
     "snes": "#8C6CF0",
     "n64": "#2FB86B",
@@ -166,6 +166,12 @@
     "statusPill": true,
     "tabIcons": true
   },
+  "nav": {
+    "style": "dock",
+    "apps": 5,
+    "labels": "active",
+    "captionPlace": "header"
+  },
   "hints": {
     "show": true,
     "align": "end",
@@ -177,7 +183,7 @@
     "colorOther": "#1E1B27"
   },
   "companion": {
-    "layout": "artDock",
+    "layout": "art",
     "background": "inherit",
     "backgroundColor": "#15141E",
     "showPlaytime": true,
