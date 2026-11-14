@@ -184,6 +184,15 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 .lb { font: 800 10px/1 system-ui, sans-serif; padding: 4px 6px; border-radius: 6px; flex: none; }
 .nav-dock { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; flex: none; }
 .m-caption.in-header { flex: 1; min-width: 0; padding-top: 0; margin: 0 14px; }
+.c-tab { position: absolute; left: 0; top: 0; z-index: 4; display: flex; align-items: center; justify-content: center; }
+.xmb-ring { position: absolute; inset: 0; pointer-events: none; z-index: 3; -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
+.m-header { position: relative; }
+.m-nameplate { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: baseline; gap: 10px; padding: 6px 20px; max-width: 420px; white-space: nowrap; }
+.m-nameplate .np-title { overflow: hidden; text-overflow: ellipsis; min-width: 0; line-height: 1.3; }
+.m-nameplate .np-sub { flex: none; line-height: 1.3; }
+.dock-hints { justify-self: end; }
+.dock-hints .m-hints { padding-top: 0; gap: 14px; }
+.look { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 @media (prefers-reduced-motion: reduce) { .m-track, .m-scroll, .m-vgrid-inner, .meter i { transition: none; } }
 </style>
 
@@ -192,6 +201,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
   <div class="progress" aria-live="polite"><div class="meter" aria-hidden="true"><i id="meterFill"></i></div><b id="progressText">0 of 0 approved</b></div>
   <span class="save" id="saveStatus">Connecting…</span>
   <div class="bar-actions">
+    <label class="look">Try a look <select id="lookSelect"><option value="">Choose…</option></select></label>
     <button class="btn" id="copyJson" type="button">Copy theme JSON</button>
     <button class="btn primary" id="exportJson" type="button">Export theme.json</button>
   </div>
@@ -307,7 +317,7 @@ const GROUPS = [
     T("layout.focusCaption", "Caption naming the focused item", "Along the bottom of the top screen."),
   ]},
   { id: "colors", title: "Colours", desc: "The launcher's palette. Background style and glow apply to both screens unless the bottom screen has its own colour.", items: [
-    S("colors.backgroundStyle", "Background style", [["art", "Focused game's art"], ["solid", "Solid"], ["gradient", "Gradient"], ["glow", "Gradient + glow"]]),
+    S("colors.backgroundStyle", "Background style", [["art", "Focused game's art"], ["artLight", "Focused game's art, washed light"], ["dots", "Light with dot grid + colour glow"], ["solid", "Solid"], ["gradient", "Gradient"], ["glow", "Gradient + glow"]]),
     R("colors.artBlur", "Art background blur", 0, 80, 1, "dp"),
     R("colors.artDim", "Art background darkening", 0, 0.9, 0.01, ""),
     C("colors.background", "Background", "Bottom of the gradient, or the solid colour."),
@@ -400,7 +410,7 @@ const GROUPS = [
     S("tile.systemBadge", "System badge on tiles", [["always", "Always"], ["recent", "Only in Recently played"], ["never", "Never"]]),
     T("tile.showFileType", "File type on title-only tiles"),
     S("tile.placeholder", "Tile without art", [["system", "System-colour panel"], ["plain", "Plain tile colour"]]),
-    S("tile.consoleIcon", "Console mark in the top-right corner", [["line", "Line drawing"], ["badge", "Short name badge"], ["none", "None"]]),
+    S("tile.consoleIcon", "Console mark on game tiles", [["line", "Line drawing, top right"], ["tab", "Corner tab, top left (iiSU style)"], ["badge", "Short name badge"], ["none", "None"]]),
     R("tile.consoleIconSize", "Console mark size", 14, 36, 1, "dp"),
     R("tile.systemRing", "Console-colour ring", 0, 8, 0.5, "dp", "Always shown. 0 = none."),
   ]},
@@ -410,7 +420,7 @@ const GROUPS = [
     T("hero.showSystem", "Show the system"),
   ]},
   { id: "systemTile", title: "System tiles", desc: "The grid of systems beside the Jump back in card.", items: [
-    S("systemTile.style", "Style", [["line", "Console drawing + name"], ["name", "Name only"]]),
+    S("systemTile.style", "Style", [["line", "Console drawing + name"], ["xmb", "XMB icon: faded art + bold drawing"], ["name", "Name only"]]),
     T("systemTile.showCount", "Show the number of games"),
     R("systemTile.tint", "Console-colour wash", 0, 1, 0.01, ""),
   ]},
@@ -440,7 +450,7 @@ const GROUPS = [
     S("nav.style", "Navigation", [["dock", "Dock along the bottom"], ["tabs", "Tabs in the header"]]),
     R("nav.apps", "App shortcuts in the dock", 0, 7, 1, "", "On the Thor you choose which apps."),
     S("nav.labels", "Labels on the dock buttons", [["active", "Only the active one"], ["all", "All"], ["none", "Icons only"]]),
-    S("nav.captionPlace", "Caption naming the focused item", [["header", "In the header"], ["aboveDock", "Just above the dock"]]),
+    S("nav.captionPlace", "Caption naming the focused item", [["header", "In the header"], ["nameplate", "Nameplate at the top (hints beside the dock)"], ["aboveDock", "Just above the dock"]]),
   ]},
   { id: "hints", title: "Controller hints", items: [
     T("hints.show", "Show the hint bar"),
@@ -477,6 +487,8 @@ const GROUPS = [
 ];
 const ALL_ITEMS = GROUPS.flatMap((g) => g.items.map((it) => ({ ...it, group: g.id })));
 
+// Whole-look variations to compare (applied over the proposal). Files: design/themes/look-*.json
+const LOOKS = {"Draft 3 (proposal)": {}, "A · Draft 3, calmer": {"name": "Look A: Draft 3, calmer", "colors": {"artDim": 0.62, "textMuted": "#ECEAF2", "accent": "#FFFFFF"}, "glass": {"opacity": 0.94, "borderOpacity": 0.55, "borderWidth": 1}, "type": {"wordmarkSize": 28, "wordmarkWeight": 700, "tabSize": 16, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 14, "labelWeight": 500, "clockSize": 17, "clockWeight": 500, "displayFont": "Lexend", "bodyFont": "Lexend"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 4}, "systemTile": {"style": "xmb", "showCount": false}}, "B · Light (Cocoon + iiSU)": {"name": "Look B: light (Cocoon + iiSU)", "colors": {"backgroundStyle": "dots", "background": "#E9E8F0", "backgroundTop": "#F6F6F9", "glowStrength": 0.2, "text": "#23212D", "textMuted": "#5A5769", "accent": "#23212D", "tabActiveFill": "#23212D", "tabActiveText": "#FFFFFF", "tabIdleText": "#4E4B5E", "hintBadge": "#23212D", "hintBadgeText": "#FFFFFF", "focusRing": "#3FD39A", "focusGlow": "#3FD39A", "focusGlowStrength": 0.55, "messageBar": "#FFFFFF"}, "glass": {"fill": "#FFFFFF", "opacity": 1, "border": "#DCDAE5", "borderOpacity": 1, "borderWidth": 1, "text": "#23212D", "textMuted": "#625F72", "radius": 18}, "shape": {"tileRadius": 18, "focusRingWidth": 4, "focusRingGap": 2, "shadowColor": "#4A4766"}, "type": {"wordmarkSize": 26, "wordmarkWeight": 700, "tabSize": 15, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 13, "labelWeight": 500, "clockSize": 16, "clockWeight": 500, "displayFont": "Poppins", "bodyFont": "Poppins"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 5}, "systemTile": {"style": "xmb", "showCount": false, "tint": 0.6}, "motion": {"focusScale": 1.07, "stiffness": 520, "damping": 0.9, "focusLift": 0, "idleBob": false}, "nav": {"captionPlace": "nameplate"}, "hints": {"colorA": "#23212D", "colorB": "#23212D", "colorX": "#23212D", "colorY": "#23212D", "colorOther": "#23212D"}, "hero": {"showSystem": false}}, "C · Light over your art": {"name": "Look C: light over your art", "colors": {"backgroundStyle": "artLight", "background": "#E9E8F0", "backgroundTop": "#F6F6F9", "glowStrength": 0.2, "text": "#23212D", "textMuted": "#5A5769", "accent": "#23212D", "tabActiveFill": "#23212D", "tabActiveText": "#FFFFFF", "tabIdleText": "#4E4B5E", "hintBadge": "#23212D", "hintBadgeText": "#FFFFFF", "focusRing": "#3FD39A", "focusGlow": "#3FD39A", "focusGlowStrength": 0.55, "messageBar": "#FFFFFF", "artBlur": 40, "artDim": 0.74}, "glass": {"fill": "#FFFFFF", "opacity": 0.9, "border": "#DCDAE5", "borderOpacity": 1, "borderWidth": 1, "text": "#23212D", "textMuted": "#625F72", "radius": 18}, "shape": {"tileRadius": 18, "focusRingWidth": 4, "focusRingGap": 2, "shadowColor": "#4A4766"}, "type": {"wordmarkSize": 26, "wordmarkWeight": 700, "tabSize": 15, "tabWeight": 600, "shelfTitleSize": 15, "shelfTitleWeight": 600, "shelfTitleCase": "title", "shelfTitleTracking": 0, "tileTitleSize": 17, "tileTitleWeight": 600, "labelSize": 13, "labelWeight": 500, "clockSize": 16, "clockWeight": 500, "displayFont": "Outfit", "bodyFont": "Outfit"}, "shelf": {"marker": "none", "titleColor": "muted"}, "tile": {"consoleIcon": "tab", "consoleIconSize": 18, "systemRing": 5}, "systemTile": {"style": "xmb", "showCount": false, "tint": 0.6}, "motion": {"focusScale": 1.07, "stiffness": 520, "damping": 0.9, "focusLift": 0, "idleBob": false}, "nav": {"captionPlace": "nameplate"}, "hints": {"colorA": "#23212D", "colorB": "#23212D", "colorX": "#23212D", "colorY": "#23212D", "colorOther": "#23212D"}, "hero": {"showSystem": false}}};
 const SOUND_PRESETS = {
   "Pop (proposal)": clone(PROPOSAL.sounds.events),
   "Chiptune": {
@@ -835,7 +847,8 @@ function backgroundCss(forBottom) {
   if (forBottom && theme.companion.background === "color") return `background:${css(theme.companion.backgroundColor)}`;
   const grad = `linear-gradient(${css(c.backgroundTop)}, ${css(c.background)})`;
   if (c.backgroundStyle === "solid") return `background:${css(c.background)}`;
-  if (c.backgroundStyle === "gradient") return `background:${grad}`;
+  if (c.backgroundStyle === "gradient" || c.backgroundStyle === "artLight") return `background:${grad}`;
+  if (c.backgroundStyle === "dots") return `background:radial-gradient(rgba(${rgb(c.text)},0.11) 1px, transparent 1.3px) 0 0/14px 14px, ${grad}`;
   const a = Math.max(0, Math.min(1, c.glowStrength));
   const ga = rgb(c.glowA), gb = rgb(c.glowB);
   return `background:radial-gradient(circle at 12% 5%, rgba(${ga},${a}) 0, transparent 55%), radial-gradient(circle at 92% 100%, rgba(${gb},${a}) 0, transparent 50%), ${grad}`;
@@ -926,12 +939,12 @@ function renderBottom() {
   };
   if (mock.nowPlaying) {
     const g = mock.nowPlaying;
-    main = `<div style="display:flex;gap:20px;height:100%">${c.layout === "art" ? coverPanel(g) : ""}<div style="display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0">
+    main = `<div style="display:flex;gap:20px;height:100%">${c.layout === "art" ? coverPanel(g) : ""}<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px;min-width:0">
       <span style="${labelStyle()}color:${css(t.colors.accent)}">● NOW PLAYING</span><div style="${heading}">${esc(g.title)}</div><div style="color:${css(t.colors.textMuted)}">on ${esc(EMULATOR[g.sys] || "RetroArch")}</div></div></div>`;
   } else if (focused) {
     if (c.layout === "minimal") main = `<div style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center"><div style="${heading}">${esc(focused.title)}</div>${badgeHtml(focused.sys)}</div>`;
     else if (c.layout === "info") main = `<div style="background:${css(t.colors.surface)};border-radius:${t.shape.cardRadius}px;padding:20px;display:flex;flex-direction:column;gap:6px"><div style="${heading}">${esc(focused.title)}</div>${facts(focused)}</div>`;
-    else main = `<div style="display:flex;gap:20px;height:100%">${coverPanel(focused)}<div style="display:flex;flex-direction:column;justify-content:center;gap:8px;min-width:0">${badgeHtml(focused.sys)}<div style="${heading}">${esc(focused.title)}</div>${facts(focused)}</div></div>`;
+    else main = `<div style="display:flex;gap:20px;height:100%">${coverPanel(focused)}<div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:8px;min-width:0">${badgeHtml(focused.sys)}<div style="${heading}">${esc(focused.title)}</div>${facts(focused)}</div></div>`;
   } else if (mock.focusApp) {
     main = `<div style="display:flex;gap:16px;align-items:center"><div style="width:72px;height:72px;border-radius:20px;background:${mock.focusApp[1]}"></div><div style="${heading}">${esc(mock.focusApp[0])}</div></div>`;
   } else {
@@ -998,6 +1011,25 @@ function consoleIcon(sys, size, color, sw = 1.7) {
     default: return S(`<rect x="2.5" y="8" width="19" height="9" rx="4.5"/><path d="M6.5 12.5h3M8 11v3"/><circle cx="15.5" cy="11.6" r="0.9"/><circle cx="17.6" cy="13.6" r="0.9"/>`);
   }
 }
+// Bold, simplified console shapes for XMB icons and corner tabs: original drawings, no makers' logos.
+let gradSeq = 0;
+function consoleGlyph(sys, size, color, sw = 2.2, gradient = null) {
+  let defs = "", stroke = color;
+  if (gradient) { const id = `cg${++gradSeq}`; defs = `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${gradient[0]}"/><stop offset="1" stop-color="${gradient[1]}"/></linearGradient></defs>`; stroke = `url(#${id})`; }
+  const S = (inner) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${stroke}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${defs}${inner}</svg>`;
+  switch (ICON_KIND[sys] || "pad") {
+    case "clamshell": return S(`<rect x="4.5" y="3" width="15" height="8" rx="2.2"/><rect x="5.5" y="13.5" width="13" height="7.5" rx="2.2"/>`);
+    case "portrait": return S(`<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><rect x="9" y="5.5" width="6" height="5.5" rx="1"/>`);
+    case "landscape": return S(`<rect x="2.5" y="7" width="19" height="10.5" rx="4"/><rect x="8.5" y="9.5" width="7" height="5.5" rx="1"/>`);
+    case "tablet": return S(`<rect x="6.5" y="5.5" width="11" height="13" rx="1.5"/><path d="M6.5 5.5H5A2.5 2.5 0 0 0 2.5 8v8A2.5 2.5 0 0 0 5 18.5h1.5M17.5 5.5H19A2.5 2.5 0 0 1 21.5 8v8a2.5 2.5 0 0 1-2.5 2.5h-1.5"/>`);
+    case "cartridge": return S(`<path d="M6.5 4.5h11v6h3v9h-17v-9h3z"/><path d="M9.5 7.5h5"/>`);
+    case "cube": return S(`<rect x="4" y="4" width="16" height="16" rx="3.5"/><circle cx="12" cy="12" r="3.8"/>`);
+    case "slim": return S(`<rect x="8" y="2.5" width="8" height="19" rx="2.2"/><path d="M10.5 6.5h3"/>`);
+    case "lid": return S(`<rect x="3" y="6.5" width="18" height="12.5" rx="2.2"/><circle cx="12" cy="12.75" r="3.6"/>`);
+    case "stack": return S(`<rect x="3.5" y="8.5" width="12" height="12" rx="2.6"/><path d="M8.5 8.5V5.6c0-1.2.9-2.1 2.1-2.1h7.8c1.2 0 2.1.9 2.1 2.1v7.8c0 1.2-.9 2.1-2.1 2.1h-2.9"/>`);
+    default: return S(`<rect x="2.5" y="8" width="19" height="9.5" rx="4.75"/><path d="M7.5 10.75v4M5.5 12.75h4M15.5 11.5h.01M18 13.75h.01"/>`);
+  }
+}
 function lineSvg(inner, size, color, sw = 1.8) { return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; }
 function tabIcon(id, size, color) {
   if (id === "games") return lineSvg(`<path d="M4 11.5 12 4.5l8 7V20h-5.5v-5.5h-5V20H4z"/>`, size, color);
@@ -1029,6 +1061,11 @@ function consoleMark(sys) {
   const t = theme;
   if (t.tile.consoleIcon === "none") return "";
   if (t.tile.consoleIcon === "badge") return `<span class="c-icon" style="${badgeStyle(sys)}">${esc(short(sys))}</span>`;
+  if (t.tile.consoleIcon === "tab") {
+    // iiSU-style: the frame's top-left corner grows into a tab holding the console drawing in white.
+    const box = t.tile.consoleIconSize + 10;
+    return `<span class="c-tab" style="width:${box}px;height:${box}px;background:${css(sysColor(sys))};border-radius:0 0 ${Math.round(box * 0.42)}px 0">${consoleGlyph(sys, Math.round(box * 0.64), "#FFFFFF", 2.4)}</span>`;
+  }
   const s = t.tile.consoleIconSize;
   return `<span class="c-icon" style="width:${s + 8}px;height:${s + 8}px;${glassCss("border-radius:99px;")}">${consoleIcon(sys, s, mix(sysColor(sys), "#000000", 0.15))}</span>`;
 }
@@ -1039,7 +1076,7 @@ function artTileHtml(game, size, idx) {
     ? coverHtml(game.title, game.sys, game.ratio, size, size, "cover")
     : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.45)});font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.tileTitleWeight};font-size:${Math.max(11, Math.round(t.type.tileTitleSize * size / 160))}px;color:#fff">${esc(game.title)}</div>`;
   const inner = `<div style="position:absolute;inset:0;display:flex">${art}</div>${ringOverlay(color, rad)}${consoleMark(game.sys)}`;
-  return focusableHtml({ w: size, h: size, rad, idx, data: `data-game="${esc(game.key)}"`, inner, elevated: true, ring: false });
+  return focusableHtml({ w: size, h: size, rad, idx, data: `data-game="${esc(game.key)}"`, inner, elevated: true, ring: true });
 }
 function heroHtml(idx, w, h) {
   const t = theme, g = lastPlayed(), color = sysColor(g.sys), rad = t.glass.radius;
@@ -1047,13 +1084,14 @@ function heroHtml(idx, w, h) {
   const meta = [t.hero.showSystem ? SYSTEMS[g.sys] : null, t.hero.showPlaytime ? "Played 3 h 12 min" : null].filter(Boolean).join(" · ");
   const panel = `<div style="position:absolute;left:10px;right:10px;bottom:10px;padding:10px 12px;display:flex;align-items:center;gap:12px;z-index:4;${glassCss(`border-radius:${Math.max(8, rad - 8)}px;`)}">
       <div style="flex:1;min-width:0"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:${Math.round(t.type.tileTitleSize * 1.2)}px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15">${esc(g.title)}</div>
-      ${meta ? `<div style="font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.labelWeight};font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:2px;white-space:nowrap">${esc(meta)}</div>` : ""}</div>
+      ${meta ? `<div style="font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.labelWeight};font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(meta)}</div>` : ""}</div>
       <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:99px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};font-family:${fontStack(t.type.bodyFont)};font-weight:800;font-size:${t.type.labelSize + 1}px;white-space:nowrap"><i style="font-style:normal;width:20px;height:20px;border-radius:99px;background:${css(t.colors.hintBadgeText)};color:${css(t.colors.hintBadge)};display:inline-flex;align-items:center;justify-content:center;font-size:11px">A</i>${esc(t.hero.prompt)}</span></div>`;
   const inner = `<div style="position:absolute;inset:0;display:flex">${art}</div>${panel}${ringOverlay(color, rad)}${consoleMark(g.sys)}`;
-  return focusableHtml({ w, h, rad, idx, data: `data-hero="${esc(g.key)}"`, inner, elevated: true, ring: false });
+  return focusableHtml({ w, h, rad, idx, data: `data-hero="${esc(g.key)}"`, inner, elevated: true, ring: true });
 }
 function systemTileHtml(s, idx, w, h) {
   const t = theme, st = t.systemTile, g = t.glass, color = sysColor(s.id), rad = g.radius;
+  if (st.style === "xmb") return xmbTileHtml(s, idx, w, h);
   const name = s.id === "all" ? "All games" : SYSTEMS[s.id];
   const wash = `linear-gradient(135deg, rgba(${rgb(color)},${st.tint}) 0%, rgba(${rgb(color)},${(st.tint * 0.3).toFixed(3)}) 100%)`;
   let visual = "";
@@ -1066,7 +1104,18 @@ function systemTileHtml(s, idx, w, h) {
   const count = st.showCount ? `<span style="position:absolute;right:10px;top:9px;font:800 11px/1 ${fontStack(t.type.bodyFont)};padding:4px 7px;border-radius:99px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};z-index:3">${s.count}</span>` : "";
   const nameEl = `<div style="position:absolute;left:12px;right:10px;bottom:9px;font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${Math.max(12, Math.min(15, t.type.tabSize - 3))}px;line-height:1.1;color:${css(g.text)};display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;z-index:3">${esc(name)}</div>`;
   const inner = `<div style="position:absolute;inset:0;background:${wash}"></div>${visual ? `<div style="position:absolute;left:12px;top:10px;z-index:3">${visual}</div>` : ""}${count}${nameEl}${edgeOverlay(rad)}`;
-  return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner, elevated: true, ring: false, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
+  return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner, elevated: true, ring: true, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
+}
+// XMB icon (as iiSU calls them): the system's own box art faded and tinted behind one bold drawing, gradient edge, no text.
+function xmbTileHtml(s, idx, w, h) {
+  const t = theme, st = t.systemTile, color = sysColor(s.id), rad = t.glass.radius, tint = Math.max(0, Math.min(1, st.tint));
+  const sample = s.id === "all" ? lastPlayed() : (libById(s.id)?.games || []).map((gm) => mkGame(s.id, gm)).find((gm) => gm.ratio != null);
+  // The middle of the cover only (zoomed in past titles and logos), desaturated and faint.
+  const art = sample ? `<div style="position:absolute;inset:0;display:flex;opacity:${(0.16 + 0.2 * tint).toFixed(2)};filter:grayscale(1) blur(0.6px);transform:scale(2.2);transform-origin:50% 58%">${coverHtml(sample.title, sample.sys, sample.ratio, w, h, "cover")}</div>` : "";
+  const wash = `<div style="position:absolute;inset:0;background:linear-gradient(135deg, rgba(${rgb(color)},${(0.26 * tint).toFixed(3)}), rgba(${rgb(color)},${(0.08 * tint).toFixed(3)}))"></div>`;
+  const glyph = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:2">${consoleGlyph(s.id, Math.round(Math.min(w, h) * 0.56), null, 2.1, [mix(color, "#ffffff", 0.15), mix(color, "#000000", 0.2)])}</div>`;
+  const edge = `<div class="xmb-ring" style="padding:2px;border-radius:${rad}px;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.35)}, ${mix(color, "#000000", 0.1)})"></div>`;
+  return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner: art + wash + glyph + edge, elevated: true, ring: true, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
 }
 function navDockHtml(next) {
   const t = theme, nav = t.nav, h = t.header;
@@ -1095,6 +1144,7 @@ function heroHeaderHtml(next) {
     : `<span class="m-clock" style="font-family:${fontStack(t.type.bodyFont)};font-size:${t.type.clockSize}px;font-weight:${t.type.clockWeight};color:${css(t.colors.text)}">${esc(clockText())}</span>`;
   const wordmark = h.showWordmark ? `<span class="m-wordmark" style="font-size:${t.type.wordmarkSize}px;font-weight:${t.type.wordmarkWeight}">${esc(h.wordmark)}</span>` : "";
   if (t.nav.style === "dock") {
+    if (t.nav.captionPlace === "nameplate") return `<div class="m-header">${wordmark}<span style="flex:1"></span><div class="m-nameplate" id="mNameplate" style="${glassCss("border-radius:99px;")}"></div><span style="margin-left:auto">${status}</span></div>`;
     const caption = t.nav.captionPlace === "header" ? `<div class="m-caption in-header" id="mCaption"></div>` : `<span style="flex:1"></span>`;
     return `<div class="m-header">${wordmark}${caption}<span style="margin-left:auto">${status}</span></div>`;
   }
@@ -1103,6 +1153,12 @@ function heroHeaderHtml(next) {
 }
 function artBgHtml(sub, w, h) {
   const t = theme, c = t.colors, blur = Math.max(0, c.artBlur), dim = Math.max(0, Math.min(1, c.artDim));
+  const base = `<div style="position:absolute;inset:0;background:linear-gradient(${css(c.backgroundTop)}, ${css(c.background)})"></div>`;
+  if (c.backgroundStyle === "dots") {
+    // Light: a fine dot grid and two soft pools of the focused item's colour.
+    const color = sub.kind === "system" ? sysColor(sub.id) : sysColor(sub.game.sys), a = Math.min(0.6, Math.max(0, c.glowStrength) * 2);
+    return `${base}<div style="position:absolute;inset:0;background:radial-gradient(circle at 92% 6%, rgba(${rgb(color)},${a.toFixed(3)}) 0, transparent 44%), radial-gradient(circle at 4% 98%, rgba(${rgb(color)},${(a * 0.75).toFixed(3)}) 0, transparent 40%)"></div><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(${rgb(c.text)},0.11) 1px, transparent 1.3px);background-size:14px 14px"></div>`;
+  }
   let art = "";
   if (sub.kind === "game" && sub.game.ratio != null) {
     const m = blur * 2;
@@ -1111,7 +1167,9 @@ function artBgHtml(sub, w, h) {
     const color = sub.kind === "system" ? sysColor(sub.id) : sysColor(sub.game.sys);
     art = `<div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, ${mix(color, "#ffffff", 0.15)}, ${mix(color, "#000000", 0.55)})"></div>`;
   }
-  return `<div style="position:absolute;inset:0;background:linear-gradient(${css(c.backgroundTop)}, ${css(c.background)})"></div>${art}<div style="position:absolute;inset:0;background:rgba(0,0,0,${dim})"></div>`;
+  // "artLight" veils the art with the light background colour instead of black.
+  const veil = c.backgroundStyle === "artLight" ? rgb(c.background) : [0, 0, 0];
+  return `${base}${art}<div style="position:absolute;inset:0;background:rgba(${veil},${dim})"></div>`;
 }
 function currentSubject() {
   if (mock.nowPlaying) return { kind: "game", game: mock.nowPlaying };
@@ -1119,16 +1177,28 @@ function currentSubject() {
   if (mock.focusGame) return { kind: "game", game: mock.focusGame };
   return { kind: "game", game: lastPlayed() };
 }
-function captionHtml() {
+function captionParts() {
   const t = theme, el = focusables[focusIdx];
-  if (!el) return "";
-  let label = "", title = "", meta = "", color = t.colors.accent, hints = [];
-  if (el.dataset.hero) { const g = findGame(el.dataset.hero); label = "Last played"; title = g.title; meta = SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", t.hero.prompt], ["Y", "Emulator"]]; }
-  else if (el.dataset.system) { const s = systemsList().find((x) => x.id === el.dataset.system); label = "System"; title = s.id === "all" ? "All games" : SYSTEMS[s.id]; meta = `${s.count} games`; color = sysColor(s.id); hints = [["A", "Open"]]; }
-  else if (el.dataset.game) { const g = findGame(el.dataset.game); const inside = mock.view !== "home"; label = inside ? SYSTEMS[g.sys] : "Recent"; title = g.title; meta = inside ? "" : SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"]]; if (inside) hints.push(["B", "Back"]); }
-  else if (el.dataset.tab) { label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
-  else if (el.dataset.app) { label = "App"; title = el.dataset.app; hints = [["A", "Open"]]; }
+  if (!el) return null;
+  let kind = "other", label = "", title = "", meta = "", color = t.colors.accent, hints = [];
+  if (el.dataset.hero) { const g = findGame(el.dataset.hero); kind = "hero"; label = "Last played"; title = g.title; meta = SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", t.hero.prompt], ["Y", "Emulator"]]; }
+  else if (el.dataset.system) { const s = systemsList().find((x) => x.id === el.dataset.system); kind = "system"; label = "System"; title = s.id === "all" ? "All games" : SYSTEMS[s.id]; meta = `${s.count} games`; color = sysColor(s.id); hints = [["A", "Open"]]; }
+  else if (el.dataset.game) { const g = findGame(el.dataset.game); const inside = mock.view !== "home"; kind = "game"; label = inside ? SYSTEMS[g.sys] : "Recent"; title = g.title; meta = inside ? "" : SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"]]; if (inside) hints.push(["B", "Back"]); }
+  else if (el.dataset.tab) { kind = "tab"; label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
+  else if (el.dataset.app) { kind = "app"; label = "App"; title = el.dataset.app; hints = [["A", "Open"]]; }
   else { hints = [["A", "Select"], ["B", "Home"]]; }
+  return { kind, label, title, meta, color, hints };
+}
+function nameplateHtml(p) {
+  const t = theme, ty = t.type;
+  if (!p || !p.title || !t.layout.focusCaption) return "";
+  const sub = p.kind === "tab" || p.kind === "app" ? "" : (p.meta || p.label);
+  return `<span class="np-title" style="font-family:${fontStack(ty.displayFont)};font-weight:${ty.tabWeight};font-size:${ty.tileTitleSize}px;color:${css(t.glass.text)}">${esc(p.title)}</span>${sub ? `<span class="np-sub" style="font-family:${fontStack(ty.bodyFont)};font-weight:${ty.labelWeight};font-size:${ty.labelSize}px;color:${css(t.glass.textMuted)}">${esc(sub)}</span>` : ""}`;
+}
+function captionHtml() {
+  const t = theme, p = captionParts();
+  if (!p) return "";
+  const { label, title, meta, color, hints } = p;
   const sh = t.shelf, ty = t.type;
   const labelColor = sh.titleColor === "system" ? color : sh.titleColor === "text" ? t.colors.text : t.colors.textMuted;
   const marker = sh.marker === "dot" ? `<span style="width:9px;height:9px;border-radius:99px;background:${css(color)};flex:none"></span>` : sh.marker === "bar" ? `<span style="width:4px;height:16px;border-radius:2px;background:${css(color)};flex:none"></span>` : "";
@@ -1140,7 +1210,10 @@ function captionHtml() {
 }
 function updateHeroChrome() {
   if (theme.layout.games !== "hero") return;
+  const p = captionParts();
   const cap = document.getElementById("mCaption"); if (cap) cap.innerHTML = captionHtml();
+  const np = document.getElementById("mNameplate"); if (np) { const html = nameplateHtml(p); np.innerHTML = html; np.style.visibility = html ? "visible" : "hidden"; }
+  const dh = document.getElementById("mDockHints"); if (dh) dh.innerHTML = p ? hintsHtml(p.hints) : "";
   const bg = document.getElementById("topBg"); if (bg) bg.innerHTML = artBgHtml(currentSubject(), 833, 468);
 }
 function systemViewHtml(next, room) {
@@ -1186,13 +1259,16 @@ function renderHeroTop() {
       <div style="${glassCss("padding:18px;")}"><div style="font-family:${fontStack(t.type.displayFont)};font-size:${t.type.tabSize}px;font-weight:${t.type.tabWeight}">Theme</div>
       <div style="margin-top:8px">Active: ${esc(t.name)} (imported)</div><div style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:6px">Fonts: ${esc(t.type.displayFont)} · ${esc(t.type.bodyFont)}</div></div></div>`;
   }
-  const bgLayer = t.colors.backgroundStyle === "art" ? `<div class="bg-layer" id="topBg"></div>` : `<div class="bg-layer" style="${backgroundCss(false)}"></div>`;
+  const bgLayer = ["art", "artLight", "dots"].includes(t.colors.backgroundStyle) ? `<div class="bg-layer" id="topBg"></div>` : `<div class="bg-layer" style="${backgroundCss(false)}"></div>`;
   const msg = mock.message ? `<div class="m-msg" style="${glassCss()}">${esc(mock.message)}</div>` : "";
   const anim = mock.animate ? (t.motion.reduceMotion || t.motion.tabTransition === "none" ? "" : t.motion.tabTransition === "fade" ? "anim-fade" : mock.lastDir > 0 ? "anim-slide-fwd" : "anim-slide-back") : "";
   mock.animate = false;
   const dockNav = t.nav.style === "dock";
-  const captionRow = dockNav && t.nav.captionPlace === "header" ? "" : `<div class="m-caption" id="mCaption"></div>`;
-  const dockRow = dockNav ? `<div style="display:flex;justify-content:center;flex:none;padding-top:10px">${navDockHtml(next)}</div>` : "";
+  const nameplate = dockNav && t.nav.captionPlace === "nameplate";
+  const captionRow = dockNav && (t.nav.captionPlace === "header" || nameplate) ? "" : `<div class="m-caption" id="mCaption"></div>`;
+  const dockRow = !dockNav ? ""
+    : nameplate ? `<div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;flex:none;padding-top:10px"><span></span>${navDockHtml(next)}<div class="dock-hints" id="mDockHints"></div></div>`
+    : `<div style="display:flex;justify-content:center;flex:none;padding-top:10px">${navDockHtml(next)}</div>`;
   const top = Math.round(pad * 0.6), bottom = dockNav ? 10 : top;
   const clip = dockNav && t.nav.captionPlace === "aboveDock" ? "overflow:hidden" : visible ? "overflow:visible" : "";
   $("#topScreen").innerHTML = `<div class="mock" style="${vars()}">${bgLayer}<div class="content" style="padding:${top}px ${pad}px ${bottom}px">${header}<div style="height:${Math.round(t.spacing.headerGap * 0.75)}px;flex:none"></div>
@@ -1461,6 +1537,19 @@ document.addEventListener("click", (e) => {
   if (b.id === "resetNo") { $("#resetConfirm").hidden = true; return; }
   if (b.id === "resetYes") { theme = clone(PROPOSAL); approved = {}; notes = {}; $("#resetConfirm").hidden = true; buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); toast("Back to the proposal"); return; }
 });
+let preLook = null;
+function fillLooks() {
+  const sel = $("#lookSelect"); if (!sel) return;
+  sel.innerHTML = `<option value="">Choose…</option>${Object.keys(LOOKS).map((k) => `<option>${esc(k)}</option>`).join("")}${preLook ? `<option value="__mine">Back to my values</option>` : ""}`;
+}
+document.addEventListener("change", (e) => {
+  if (!e.target || e.target.id !== "lookSelect" || !e.target.value) return;
+  const v = e.target.value;
+  if (v === "__mine") { if (preLook) theme = clone(preLook); preLook = null; }
+  else { if (!preLook) preLook = clone(theme); theme = deepMerge(clone(PROPOSAL), clone(LOOKS[v])); }
+  buildGroups(); ensureFonts(); refreshStatus(); scheduleRender(); markDirty(); fillLooks();
+  toast(v === "__mine" ? "Back to your values" : `Showing ${v}. "Back to my values" in the same menu restores yours.`);
+});
 document.addEventListener("keydown", (e) => {
   if (e.target.closest("input, textarea, select")) return;
   const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", Enter: "A", Backspace: "B", y: "Y", Y: "Y", q: "L1", Q: "L1", e: "R1", E: "R1" };
@@ -1493,7 +1582,7 @@ async function copyTheme(note) {
 // ======================================================================================
 (function start() {
   try { const local = JSON.parse(localStorage.getItem("wiis-workbench") || "null"); if (local && local.theme) { theme = deepMerge(clone(PROPOSAL), local.theme); approved = local.approved || {}; notes = local.notes || {}; } } catch (e) { /* no local copy */ }
-  buildGroups(); ensureFonts(); refreshStatus(); renderAll();
+  buildGroups(); ensureFonts(); refreshStatus(); fillLooks(); renderAll();
   setSave("Connecting…");
   const timer = setTimeout(() => { if (!db) setSave("Saved in this browser only"); }, 10000);
   if (!window.claude || !window.claude.use) { clearTimeout(timer); setSave("Saved in this browser only"); return; }

@@ -63,3 +63,16 @@ Building Draft 3 on the device needed a few details the workbench doesn't show. 
 | System screen | Keeps its dark panels from 0.2.0; the workbench sketches it frosted | Proposed |
 | Apps grid | A focused tile at the left edge isn't cut off (the workbench mock clips it) | Proposed |
 | Emulator and dock-app pickers | Dark dialogs as in 0.2.0 (not drawn in the workbench) | Proposed |
+
+### Draft 4 directions (2026-11-14, from your iiSU and Cocoon references)
+
+Three whole looks to compare with Draft 3, in the workbench under **Try a look** and as files in `design/themes/look-*-2026-11-14.json`. Review page: https://claude.ai/artifact/RCwi4oEs8crTPdWceYL6xT
+
+| Look | What changes | Status |
+|---|---|---|
+| A · Draft 3, calmer | Dark art kept (veil 62%), Lexend, 14 dp minimum text, sentence-case caption, XMB system icons, corner tabs, no count badges | Proposed |
+| B · Light (Cocoon + iiSU) | Light dot-grid background with a soft colour glow, solid white surfaces, ink text, Poppins, nameplate + hints beside the dock, mint focus ring and glow, firm spring (no bounce, no bob), XMB icons, corner tabs | Proposed (my pick) |
+| C · Light over your art | B over the focused game's art washed light, Outfit | Proposed |
+
+New setting values (workbench only until you choose; the launcher draws them once a look is picked): `tile.consoleIcon: "tab"`, `systemTile.style: "xmb"`, `nav.captionPlace: "nameplate"`, `colors.backgroundStyle: "dots"` and `"artLight"`. Don't import a look file on the Thor before then: 0.3.0 would draw a light look's text on its dark fallback background.
+
