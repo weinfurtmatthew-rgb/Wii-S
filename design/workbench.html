@@ -170,7 +170,19 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 @keyframes slideFwd { from { transform: translateX(16%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes slideBack { from { transform: translateX(-16%); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .m-track, .m-scroll, .meter i { transition: none; } }
+.c-icon { position: absolute; top: 6px; right: 6px; z-index: 4; display: flex; align-items: center; justify-content: center; }
+.m-vgrid { position: relative; overflow: hidden; flex: none; }
+.m-vgrid-inner { position: relative; display: grid; transition: transform .26s cubic-bezier(.2,.7,.2,1); }
+.m-caption { display: flex; align-items: center; gap: 14px; flex: none; min-height: 26px; padding-top: 6px; }
+.m-caption .cap-text { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; white-space: nowrap; overflow: hidden; }
+.m-caption .m-hints { padding-top: 0; }
+.art-bg { position: absolute; }
+.dock { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; display: flex; gap: 10px; align-items: center; padding: 8px 12px; z-index: 5; }
+.dock .app { width: 40px; height: 40px; border-radius: 99px; display: flex; align-items: center; justify-content: center; flex: none; }
+.status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; white-space: nowrap; z-index: 5; }
+.tabs-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px; }
+.lb { font: 800 10px/1 system-ui, sans-serif; padding: 4px 6px; border-radius: 6px; flex: none; }
+@media (prefers-reduced-motion: reduce) { .m-track, .m-scroll, .m-vgrid-inner, .meter i { transition: none; } }
 </style>
 
 <header class="bar">
@@ -227,7 +239,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script type="application/json" id="proposal">{"schema":1,"name":"Hybrid proposal 1","layout":{"games":"shelves","showRecent":true,"recentCount":12,"systemOrder":"registry","scrollAnchor":"start"},"colors":{"backgroundStyle":"glow","background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#FF6B4A","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#F6F1E7","textMuted":"#A8A1B8","accent":"#FF6B4A","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0.45,"tabActiveFill":"#FF6B4A","tabActiveText":"#15141E","tabIdleText":"#A8A1B8","hintBadge":"#3A3552","hintBadgeText":"#F6F1E7","messageBar":"#2E2A44"},"systemColors":{"recent":"#FFD24A","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":4,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"bottom","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"dot","showCount":true},"tile":{"artStyle":"full","artFit":"contain","titleVisibility":"focused","systemBadge":"recent","showFileType":false,"placeholder":"system"},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Games","tabApps":"Apps","tabSystem":"System"},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#3A3552","colorB":"#3A3552","colorX":"#3A3552","colorY":"#3A3552","colorOther":"#3A3552"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"triangle","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
+<script type="application/json" id="proposal">{"schema":2,"name":"Draft 2","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"registry","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"art","artBlur":36,"artDim":0.5,"background":"#15141E","backgroundTop":"#1D1A2C","glowA":"#FF6B4A","glowB":"#3FA7F5","glowStrength":0.16,"surface":"#221F33","tile":"#2A2740","tileFocused":"#353052","text":"#FFFFFF","textMuted":"#D9D4E6","accent":"#FF6B4A","focusRing":"#FFD24A","focusGlow":"#FFD24A","focusGlowStrength":0,"tabActiveFill":"#FF6B4A","tabActiveText":"#FFFFFF","tabIdleText":"#3B3549","hintBadge":"#1E1B27","hintBadgeText":"#FFFFFF","messageBar":"#2E2A44"},"glass":{"fill":"#FFFFFF","opacity":0.82,"blur":24,"border":"#FFFFFF","borderOpacity":0.9,"borderWidth":1.5,"text":"#1E1B27","textMuted":"#5E5870","radius":22},"systemColors":{"recent":"#FFD24A","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":22,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":0,"focusRingGap":3,"shadow":"soft","shadowColor":"#000000","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":16,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Fredoka","bodyFont":"Nunito","wordmarkSize":30,"wordmarkWeight":700,"tabSize":17,"tabWeight":700,"shelfTitleSize":14,"shelfTitleWeight":800,"shelfTitleCase":"upper","shelfTitleTracking":1.4,"tileTitleSize":16,"tileTitleWeight":700,"labelSize":12,"labelWeight":700,"clockSize":18,"clockWeight":600},"shelf":{"titleColor":"system","marker":"bar","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"line","consoleIconSize":22,"systemRing":3},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":true},"systemTile":{"style":"line","showCount":true,"tint":0.5},"motion":{"focusScale":1.08,"pressScale":0.94,"stiffness":400,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#1E1B27","colorB":"#1E1B27","colorX":"#1E1B27","colorY":"#1E1B27","colorOther":"#1E1B27"},"companion":{"layout":"artDock","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880,988],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0,"lowpass":7000,"noise":0,"volume":0.32},"select":{"wave":"triangle","notes":[659,988],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0,"lowpass":8000,"noise":0,"volume":0.5},"back":{"wave":"triangle","notes":[740,494],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0,"lowpass":6000,"noise":0,"volume":0.45},"tab":{"wave":"square","notes":[523,784],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0,"lowpass":3200,"noise":0,"volume":0.28},"launch":{"wave":"triangle","notes":[523,659,784,1047],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0,"lowpass":9000,"noise":0,"volume":0.55},"error":{"wave":"square","notes":[233,196],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0,"lowpass":2200,"noise":0,"volume":0.35},"bump":{"wave":"sine","notes":[150],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6,"lowpass":2000,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
 <script>
 "use strict";
 // ======================================================================================
@@ -249,14 +261,16 @@ const short = (id) => SHORT[id] || id.toUpperCase();
 
 // Invented sample library (titles and covers are placeholders, not real games).
 const LIB = [
-  { id: "nds", games: [["Star Courier", 1.1], ["Puzzle Parade", 1.1], ["Garden Days", 1.1], ["Pocket Atlas", null], ["Sky Mail", 1.1], ["Tiny Tactics", 1.1]] },
   { id: "n64", games: [["Tiny Kingdom", 1.42], ["Rally Rush 64", 1.42], ["Moon Base", 1.42], ["Paper Pilots", null]] },
+  { id: "gba", games: [["Pixel Quest", 1], ["Sky Garden", 1], ["Rail Rider", null]] },
+  { id: "nds", games: [["Star Courier", 1.1], ["Puzzle Parade", 1.1], ["Garden Days", 1.1], ["Pocket Atlas", null], ["Sky Mail", 1.1], ["Tiny Tactics", 1.1]] },
+  { id: "n3ds", games: [["Lumen Island", 1.1], ["Paper Planets", 1.1]] },
   { id: "gc", games: [["Coral Drift", 0.71], ["Lantern Keep", 0.71], ["Hover Cup", 0.71]] },
   { id: "ps2", games: [["Night Market", 0.71], ["Iron Tide", 0.71], ["Echo Run", null], ["Kite Festival", 0.71]] },
 ];
-const RECENT = [["nds", 0], ["n64", 0], ["gc", 0], ["ps2", 0]];
+const RECENT = [["nds", 0], ["n64", 0], ["gc", 0], ["ps2", 0], ["gba", 0], ["n3ds", 0], ["nds", 2], ["gc", 1], ["ps2", 3]];
 const APPS = [["Settings", "#6F7DFF"], ["Files", "#F2A33A"], ["Browser", "#3FB4E8"], ["Music", "#E5527A"], ["Camera", "#5BBF7A"], ["Store", "#9A6BFF"], ["Clock", "#F07E4B"], ["Gallery", "#45C2B1"]];
-const EMULATOR = { nds: "melonDS", n64: "RetroArch", gc: "Dolphin", ps2: "NetherSX2" };
+const EMULATOR = { nds: "melonDS", n64: "RetroArch", gc: "Dolphin", ps2: "NetherSX2", gba: "RetroArch", n3ds: "Azahar" };
 const SOUND_EVENTS = ["move", "select", "back", "tab", "launch", "error", "bump"];
 const EVENT_LABEL = { move: "Move focus", select: "Select", back: "Back", tab: "Switch tab", launch: "Start a game", error: "Error", bump: "End of a row" };
 
@@ -277,14 +291,23 @@ const F = (path, label, hint) => ({ path, label, type: "font", hint });
 
 const GROUPS = [
   { id: "layout", title: "Layout", desc: "How the Games screen is arranged.", items: [
-    S("layout.games", "Games arrangement", [["shelves", "A row per system"], ["grid", "One grid with headings"]]),
+    S("layout.games", "Games arrangement", [["hero", "Jump back in + systems"], ["shelves", "A row per system"], ["grid", "One grid with headings"]]),
     T("layout.showRecent", "Recently played row", "First row, newest first."),
     R("layout.recentCount", "Games in Recently played", 4, 24, 1, ""),
     S("layout.systemOrder", "System order", [["registry", "Console order"], ["alphabetical", "A to Z"], ["mostGames", "Most games first"]]),
     S("layout.scrollAnchor", "Where the focused tile sits in its row", [["start", "Near the left"], ["center", "Centred"], ["edge", "Only scroll when needed"]]),
+    R("layout.heroWidth", "Jump back in card width", 280, 460, 2, "dp"),
+    R("layout.systemColumns", "System columns", 2, 4, 1, ""),
+    R("layout.systemRows", "System rows shown", 1, 3, 1, "", "More systems scroll."),
+    R("layout.systemTileHeight", "System tile height", 64, 140, 2, "dp"),
+    R("layout.recentTileSize", "Recent game tile size", 64, 140, 2, "dp"),
+    R("layout.gridTileSize", "Game tile size inside a system", 96, 200, 2, "dp"),
+    T("layout.focusCaption", "Caption naming the focused item", "Along the bottom of the top screen."),
   ]},
   { id: "colors", title: "Colours", desc: "The launcher's palette. Background style and glow apply to both screens unless the bottom screen has its own colour.", items: [
-    S("colors.backgroundStyle", "Background style", [["solid", "Solid"], ["gradient", "Gradient"], ["glow", "Gradient + glow"]]),
+    S("colors.backgroundStyle", "Background style", [["art", "Focused game's art"], ["solid", "Solid"], ["gradient", "Gradient"], ["glow", "Gradient + glow"]]),
+    R("colors.artBlur", "Art background blur", 0, 80, 1, "dp"),
+    R("colors.artDim", "Art background darkening", 0, 0.9, 0.01, ""),
     C("colors.background", "Background", "Bottom of the gradient, or the solid colour."),
     C("colors.backgroundTop", "Background, top of gradient"),
     C("colors.glowA", "Glow colour, top left"),
@@ -305,6 +328,17 @@ const GROUPS = [
     C("colors.hintBadge", "Hint badge (default)"),
     C("colors.hintBadgeText", "Hint badge text"),
     C("colors.messageBar", "Message bar"),
+  ]},
+  { id: "glass", title: "Frosted glass", desc: "The light panels and tiles that sit over the art background.", items: [
+    C("glass.fill", "Glass colour"),
+    R("glass.opacity", "Glass opacity", 0.3, 1, 0.01, "", "Lower lets more of the art show through."),
+    R("glass.blur", "Blur behind the glass", 0, 48, 1, "dp"),
+    C("glass.border", "Glass edge colour"),
+    R("glass.borderOpacity", "Glass edge opacity", 0, 1, 0.01, ""),
+    R("glass.borderWidth", "Glass edge width", 0, 4, 0.5, "dp"),
+    C("glass.text", "Text on glass"),
+    C("glass.textMuted", "Secondary text on glass"),
+    R("glass.radius", "Glass corner radius", 6, 40, 1, "dp"),
   ]},
   { id: "systems", title: "System colours", desc: "Each system's colour: shelf titles and markers, tile strips, badges and placeholder tiles.", items:
     Object.keys(PROPOSAL.systemColors).map((id) => C(`systemColors.${id}`, SYSTEMS[id] || id)) },
@@ -364,6 +398,19 @@ const GROUPS = [
     S("tile.systemBadge", "System badge on tiles", [["always", "Always"], ["recent", "Only in Recently played"], ["never", "Never"]]),
     T("tile.showFileType", "File type on title-only tiles"),
     S("tile.placeholder", "Tile without art", [["system", "System-colour panel"], ["plain", "Plain tile colour"]]),
+    S("tile.consoleIcon", "Console mark in the top-right corner", [["line", "Line drawing"], ["badge", "Short name badge"], ["none", "None"]]),
+    R("tile.consoleIconSize", "Console mark size", 14, 36, 1, "dp"),
+    R("tile.systemRing", "Console-colour ring", 0, 8, 0.5, "dp", "Always shown. 0 = none."),
+  ]},
+  { id: "hero", title: "Jump back in card", desc: "The big card for your last-played game.", items: [
+    X("hero.prompt", "Button text"),
+    T("hero.showPlaytime", "Show time played"),
+    T("hero.showSystem", "Show the system"),
+  ]},
+  { id: "systemTile", title: "System tiles", desc: "The grid of systems beside the Jump back in card.", items: [
+    S("systemTile.style", "Style", [["line", "Console drawing + name"], ["name", "Name only"]]),
+    T("systemTile.showCount", "Show the number of games"),
+    R("systemTile.tint", "Console-colour wash", 0, 1, 0.01, ""),
   ]},
   { id: "motion", title: "Motion", desc: "The preview uses the launcher's own spring maths, so tiles here move like they will on the Thor.", items: [
     R("motion.focusScale", "Focus scale", 1, 1.25, 0.01, "×"),
@@ -386,6 +433,8 @@ const GROUPS = [
     X("header.tabGames", "Games tab label"),
     X("header.tabApps", "Apps tab label"),
     X("header.tabSystem", "System tab label"),
+    T("header.statusPill", "Status pill: clock, Wi-Fi, battery"),
+    T("header.tabIcons", "Icons in the tabs"),
   ]},
   { id: "hints", title: "Controller hints", items: [
     T("hints.show", "Show the hint bar"),
@@ -398,7 +447,7 @@ const GROUPS = [
     C("hints.colorOther", "Other buttons (L1/R1, Start, Select)"),
   ]},
   { id: "companion", title: "Bottom screen", items: [
-    S("companion.layout", "Layout", [["art", "Large cover + details"], ["info", "Details card"], ["minimal", "Title only"]]),
+    S("companion.layout", "Layout", [["artDock", "Art + app dock"], ["art", "Large cover + details"], ["info", "Details card"], ["minimal", "Title only"]]),
     S("companion.background", "Background", [["inherit", "Same as the top screen"], ["color", "Its own colour"]]),
     C("companion.backgroundColor", "Own background colour"),
     T("companion.showPlaytime", "Show time played"),
@@ -406,6 +455,9 @@ const GROUPS = [
     T("companion.showEmulator", "Show the emulator"),
     T("companion.showClock", "Show the clock"),
     T("companion.showHints", "Show button hints"),
+    T("companion.dock", "App dock"),
+    R("companion.dockApps", "Apps in the dock", 3, 7, 1, "", "On the Thor you choose which apps."),
+    T("companion.showDrawer", "App-drawer button"),
   ]},
   { id: "sounds", title: "Sounds", desc: "Synthesised from these settings, identically here and on the Thor. On the device you can still replace any sound with your own file (System → Sounds).", items: [
     T("sounds.enabled", "Interface sounds"),
@@ -694,7 +746,7 @@ function applyLoaded(d) {
 // ======================================================================================
 // Mock launcher
 // ======================================================================================
-const mock = { section: "games", focus: null, bottomOverride: null, lastDir: 1 };
+const mock = { section: "games", view: "home", focus: null, bottomOverride: null, lastDir: 1 };
 let renderQueued = false;
 function scheduleRender() { if (!renderQueued) { renderQueued = true; requestAnimationFrame(() => { renderQueued = false; renderAll(); }); } }
 
@@ -748,7 +800,7 @@ function badgeStyle(sys) {
 function badgeHtml(sys) { return `<span style="${badgeStyle(sys)}">${esc(short(sys))}</span>`; }
 
 /** A focusable element drawn like WiisTile: hard shadow, glow, surface, ring, content. */
-function focusableHtml({ w, h, rad, idx, data, inner, elevated = true, fill, fillFocused, ring = true }) {
+function focusableHtml({ w, h, rad, idx, data, inner, elevated = true, fill, fillFocused, ring = true, surface = "" }) {
   const t = theme, sh = t.shape;
   const ringOut = sh.focusRingGap + sh.focusRingWidth;
   const hard = elevated && sh.shadow === "hard" ? `<div class="tile-hard" style="transform:translate(${sh.shadowOffset}px,${sh.shadowOffset}px);background:${css(sh.shadowColor)};border-radius:${rad}px"></div>` : "";
@@ -756,14 +808,14 @@ function focusableHtml({ w, h, rad, idx, data, inner, elevated = true, fill, fil
   const ringEl = ring && sh.focusRingWidth > 0 ? `<div class="tile-ring" style="inset:${-ringOut}px;border:${sh.focusRingWidth}px solid ${css(t.colors.focusRing)};border-radius:${rad + ringOut}px"></div>` : "";
   const border = sh.tileBorderWidth > 0 ? `border:${sh.tileBorderWidth}px solid ${css(sh.tileBorderColor)};` : "";
   return `<div class="focusable" data-idx="${idx}" ${data} style="width:${w ? w + "px" : "auto"};${h ? `height:${h}px;` : ""}" data-elevated="${elevated}" data-fill="${esc(fill || t.colors.tile)}" data-fill-focused="${esc(fillFocused || t.colors.tileFocused)}">
-    ${hard}${glow}<div class="tile-surface" style="border-radius:${rad}px;background:${css(fill || t.colors.tile)};${border}"></div>
+    ${hard}${glow}<div class="tile-surface" style="border-radius:${rad}px;background:${css(fill || t.colors.tile)};${border}${surface}"></div>
     <div class="tile-inner" style="border-radius:${rad}px;${w ? "" : "position:relative"}">${inner}</div>${ringEl}</div>`;
 }
 
 function samples() {
   const shelves = [];
   const byId = Object.fromEntries(LIB.map((s) => [s.id, s]));
-  const mk = (sys, [title, ratio]) => ({ key: `${sys}:${title}`, sys, title, ratio, ext: { nds: "NDS", n64: "Z64", gc: "RVZ", ps2: "ISO" }[sys] });
+  const mk = mkGame;
   if (theme.layout.showRecent) shelves.push({ id: "recent", title: "Recently played", games: RECENT.slice(0, theme.layout.recentCount).map(([sys, i]) => mk(sys, byId[sys].games[i])) });
   let order = LIB.slice();
   if (theme.layout.systemOrder === "alphabetical") order.sort((a, b) => SYSTEMS[a.id].localeCompare(SYSTEMS[b.id]));
@@ -799,6 +851,7 @@ function hintsHtml(list) {
 }
 
 function renderTop() {
+  if (theme.layout.games === "hero") return renderHeroTop();
   const t = theme, pad = t.spacing.screenPadding;
   const tabs = [["games", t.header.tabGames], ["apps", t.header.tabApps], ["system", t.header.tabSystem]];
   let idx = 0;
@@ -853,6 +906,7 @@ function vars() {
 }
 
 function renderBottom() {
+  if (theme.companion.layout === "artDock") return renderDockBottom();
   const t = theme, c = t.companion;
   const focused = mock.focusGame;
   let main = "";
@@ -884,6 +938,255 @@ function renderBottom() {
       ${c.showHints && focused && !mock.nowPlaying ? hintsHtml([["A", "Play"], ["Y", "Emulator"]]) : ""}</div></div>`;
 }
 
+// ======================================================================================
+// Draft 2 layout: art background, frosted glass, Jump back in + systems grid + recent row,
+// original console line drawings, art + app dock on the bottom screen.
+// ======================================================================================
+function mkGame(sys, [title, ratio]) { return { key: `${sys}:${title}`, sys, title, ratio, ext: { nds: "NDS", n64: "Z64", gc: "RVZ", ps2: "ISO", gba: "GBA", n3ds: "3DS" }[sys] }; }
+function libById(id) { return LIB.find((s) => s.id === id); }
+function lastPlayed() { const [sys, i] = RECENT[0]; return mkGame(sys, libById(sys).games[i]); }
+function recentGames() { return theme.layout.showRecent ? RECENT.slice(1, 1 + theme.layout.recentCount).map(([sys, i]) => mkGame(sys, libById(sys).games[i])) : []; }
+function allGames() { return LIB.flatMap((s) => s.games.map((g) => mkGame(s.id, g))); }
+function systemsList() {
+  const order = LIB.slice();
+  if (theme.layout.systemOrder === "alphabetical") order.sort((a, b) => SYSTEMS[a.id].localeCompare(SYSTEMS[b.id]));
+  if (theme.layout.systemOrder === "mostGames") order.sort((a, b) => b.games.length - a.games.length);
+  return [{ id: "all", count: LIB.reduce((n, s) => n + s.games.length, 0) }, ...order.map((s) => ({ id: s.id, count: s.games.length }))];
+}
+function sysColor(id) { return id === "all" ? theme.colors.accent : theme.systemColors[id] || theme.colors.accent; }
+function glassHex() {
+  const g = theme.glass;
+  const a = Math.round(Math.max(0, Math.min(1, g.opacity)) * 255).toString(16).padStart(2, "0");
+  return `#${a}${String(g.fill || "#FFFFFF").replace("#", "").slice(-6)}`.toUpperCase();
+}
+function glassBlur() { const b = theme.glass.blur; return `backdrop-filter:blur(${b}px) saturate(1.15);-webkit-backdrop-filter:blur(${b}px) saturate(1.15);`; }
+function glassCss(extra = "") {
+  const g = theme.glass;
+  return `background:rgba(${rgb(g.fill)},${g.opacity});${glassBlur()}border:${g.borderWidth}px solid rgba(${rgb(g.border)},${g.borderOpacity});border-radius:${g.radius}px;color:${css(g.text)};${extra}`;
+}
+function edgeOverlay(rad) {
+  const g = theme.glass;
+  return g.borderWidth > 0 ? `<div style="position:absolute;inset:0;border:${g.borderWidth}px solid rgba(${rgb(g.border)},${g.borderOpacity});border-radius:${rad}px;pointer-events:none;z-index:2"></div>` : "";
+}
+function ringOverlay(color, rad) {
+  const r = theme.tile.systemRing;
+  return r > 0 ? `<div style="position:absolute;inset:0;border:${r}px solid ${css(color)};border-radius:${rad}px;pointer-events:none;z-index:3"></div>` : "";
+}
+
+// Original line drawings of console shapes (no makers' logos), drawn on a 24-unit grid.
+const ICON_KIND = { nds: "clamshell", n3ds: "clamshell", gb: "portrait", gbc: "portrait", gba: "landscape", psp: "landscape", switch: "tablet",
+  nes: "cartridge", snes: "cartridge", n64: "cartridge", genesis: "cartridge", gc: "cube", wii: "slim", wiiu: "slim", ps2: "slim", xbox360: "slim",
+  psx: "lid", steam: "pad", all: "stack" };
+function consoleIcon(sys, size, color, sw = 1.7) {
+  const S = (inner) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+  switch (ICON_KIND[sys] || "pad") {
+    case "clamshell": return S(`<rect x="4" y="2.5" width="16" height="9" rx="2"/><rect x="7" y="4.5" width="10" height="5" rx="0.8"/><rect x="4" y="13" width="16" height="8.5" rx="2"/><rect x="8" y="14.8" width="8" height="4.6" rx="0.8"/>`);
+    case "portrait": return S(`<rect x="6" y="2" width="12" height="20" rx="2.2"/><rect x="8" y="4" width="8" height="7" rx="0.8"/><path d="M9.5 14.5v3M8 16h3"/><circle cx="15" cy="15.2" r="0.9"/><circle cx="16.6" cy="17.2" r="0.9"/>`);
+    case "landscape": return S(`<rect x="2" y="7" width="20" height="11" rx="4"/><rect x="8" y="9" width="8" height="7" rx="0.8"/><path d="M4.8 12.5h2.4M6 11.3v2.4"/><circle cx="18.2" cy="11.6" r="0.9"/><circle cx="19.6" cy="13.8" r="0.9"/>`);
+    case "tablet": return S(`<rect x="5.5" y="6" width="13" height="12" rx="1.2"/><rect x="2" y="6" width="3.5" height="12" rx="1.75"/><rect x="18.5" y="6" width="3.5" height="12" rx="1.75"/><circle cx="3.75" cy="9" r="0.7"/><circle cx="20.25" cy="13.5" r="0.7"/>`);
+    case "cartridge": return S(`<rect x="3" y="11" width="18" height="8.5" rx="2"/><rect x="8" y="5" width="8" height="6" rx="1"/><path d="M6 15.5h3M15 15.5h3"/>`);
+    case "cube": return S(`<rect x="4.5" y="4.5" width="15" height="15" rx="3"/><circle cx="12" cy="12" r="3.6"/>`);
+    case "slim": return S(`<rect x="8" y="2" width="8" height="20" rx="2"/><path d="M10 6h4"/><circle cx="12" cy="17.5" r="1.2"/>`);
+    case "lid": return S(`<rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="10" cy="13" r="3.6"/><path d="M15.5 11h2.5M15.5 14h2.5"/>`);
+    case "stack": return S(`<rect x="7" y="3" width="13" height="13" rx="2.5"/><rect x="4" y="8" width="13" height="13" rx="2.5"/>`);
+    default: return S(`<rect x="2.5" y="8" width="19" height="9" rx="4.5"/><path d="M6.5 12.5h3M8 11v3"/><circle cx="15.5" cy="11.6" r="0.9"/><circle cx="17.6" cy="13.6" r="0.9"/>`);
+  }
+}
+function lineSvg(inner, size, color, sw = 1.8) { return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`; }
+function tabIcon(id, size, color) {
+  if (id === "games") return lineSvg(`<path d="M4 11.5 12 4.5l8 7V20h-5.5v-5.5h-5V20H4z"/>`, size, color);
+  if (id === "apps") return lineSvg(`<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>`, size, color);
+  return lineSvg(`<path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2" fill="${color}"/><circle cx="15" cy="12" r="2" fill="${color}"/><circle cx="10" cy="17" r="2" fill="${color}"/>`, size, color);
+}
+const DOCK = [["Browser", "#3FB4E8", "globe"], ["Video", "#E5484D", "play"], ["Store", "#3DBA74", "bag"], ["Music", "#9A6BFF", "note"], ["Files", "#F2A33A", "folder"], ["Chat", "#5865F2", "bubble"], ["Camera", "#2FB3A3", "camera"]];
+function dockGlyph(kind, size) {
+  const w = "#FFFFFF";
+  switch (kind) {
+    case "globe": return lineSvg(`<circle cx="12" cy="12" r="8"/><ellipse cx="12" cy="12" rx="3.5" ry="8"/><path d="M4 12h16"/>`, size, w);
+    case "play": return lineSvg(`<path d="M9 7.5v9l7.5-4.5z" fill="${w}"/>`, size, w);
+    case "bag": return lineSvg(`<rect x="5" y="8" width="14" height="12" rx="2"/><path d="M9 8a3 3 0 0 1 6 0"/>`, size, w);
+    case "note": return lineSvg(`<circle cx="9" cy="17" r="2.6"/><path d="M11.6 17V5.5l6 1.8"/>`, size, w);
+    case "folder": return lineSvg(`<path d="M3.5 7.5h6l2 2h9v10h-17z"/>`, size, w);
+    case "bubble": return lineSvg(`<rect x="3.5" y="5" width="17" height="11.5" rx="4"/><path d="M8 16.5 6.5 20l4.5-3.5"/>`, size, w);
+    default: return lineSvg(`<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><circle cx="12" cy="13.5" r="3.3"/><path d="M9 7.5l1.2-2.5h3.6L15 7.5"/>`, size, w);
+  }
+}
+function drawerGlyph(size, color) {
+  let dots = "";
+  for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) dots += `<circle cx="${6 + c * 6}" cy="${6 + r * 6}" r="1.6" fill="${color}" stroke="none"/>`;
+  return lineSvg(dots, size, color);
+}
+const WIFI = (c) => lineSvg(`<path d="M3 9a13 13 0 0 1 18 0M6 12.5a8.5 8.5 0 0 1 12 0M9.2 15.8a4 4 0 0 1 5.6 0"/><circle cx="12" cy="19" r="1.1" fill="${c}"/>`, 16, c, 2);
+const BATTERY = (c) => lineSvg(`<rect x="2.5" y="7.5" width="17" height="9" rx="2"/><path d="M21.5 10.5v3"/><rect x="4.5" y="9.5" width="10" height="5" rx="1" fill="${c}" stroke="none"/>`, 18, c, 1.6);
+
+function consoleMark(sys) {
+  const t = theme;
+  if (t.tile.consoleIcon === "none") return "";
+  if (t.tile.consoleIcon === "badge") return `<span class="c-icon" style="${badgeStyle(sys)}">${esc(short(sys))}</span>`;
+  const s = t.tile.consoleIconSize;
+  return `<span class="c-icon" style="width:${s + 8}px;height:${s + 8}px;${glassCss("border-radius:99px;")}">${consoleIcon(sys, s, mix(sysColor(sys), "#000000", 0.15))}</span>`;
+}
+function artTileHtml(game, size, idx) {
+  const t = theme, color = sysColor(game.sys);
+  const rad = Math.min(t.shape.tileRadius, Math.round(size / 4));
+  const art = game.ratio != null
+    ? coverHtml(game.title, game.sys, game.ratio, size, size, "cover")
+    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;padding:10px;text-align:center;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.45)});font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.tileTitleWeight};font-size:${Math.max(11, Math.round(t.type.tileTitleSize * size / 160))}px;color:#fff">${esc(game.title)}</div>`;
+  const inner = `<div style="position:absolute;inset:0;display:flex">${art}</div>${ringOverlay(color, rad)}${consoleMark(game.sys)}`;
+  return focusableHtml({ w: size, h: size, rad, idx, data: `data-game="${esc(game.key)}"`, inner, elevated: true, ring: false });
+}
+function heroHtml(idx, w, h) {
+  const t = theme, g = lastPlayed(), color = sysColor(g.sys), rad = t.glass.radius;
+  const art = g.ratio != null ? coverHtml(g.title, g.sys, g.ratio, w, h, "cover") : `<div style="width:100%;height:100%;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.45)})"></div>`;
+  const meta = [t.hero.showSystem ? SYSTEMS[g.sys] : null, t.hero.showPlaytime ? "Played 3 h 12 min" : null].filter(Boolean).join(" · ");
+  const panel = `<div style="position:absolute;left:10px;right:10px;bottom:10px;padding:10px 12px;display:flex;align-items:center;gap:12px;z-index:4;${glassCss(`border-radius:${Math.max(8, rad - 8)}px;`)}">
+      <div style="flex:1;min-width:0"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:${Math.round(t.type.tileTitleSize * 1.2)}px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.15">${esc(g.title)}</div>
+      ${meta ? `<div style="font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.labelWeight};font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:2px;white-space:nowrap">${esc(meta)}</div>` : ""}</div>
+      <span style="display:inline-flex;align-items:center;gap:7px;padding:5px 12px 5px 5px;border-radius:99px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};font-family:${fontStack(t.type.bodyFont)};font-weight:800;font-size:${t.type.labelSize + 1}px;white-space:nowrap"><i style="font-style:normal;width:20px;height:20px;border-radius:99px;background:${css(t.colors.hintBadgeText)};color:${css(t.colors.hintBadge)};display:inline-flex;align-items:center;justify-content:center;font-size:11px">A</i>${esc(t.hero.prompt)}</span></div>`;
+  const inner = `<div style="position:absolute;inset:0;display:flex">${art}</div>${panel}${ringOverlay(color, rad)}${consoleMark(g.sys)}`;
+  return focusableHtml({ w, h, rad, idx, data: `data-hero="${esc(g.key)}"`, inner, elevated: true, ring: false });
+}
+function systemTileHtml(s, idx, w, h) {
+  const t = theme, st = t.systemTile, g = t.glass, color = sysColor(s.id), rad = g.radius;
+  const name = s.id === "all" ? "All games" : SYSTEMS[s.id];
+  const wash = `linear-gradient(135deg, rgba(${rgb(color)},${st.tint}) 0%, rgba(${rgb(color)},${(st.tint * 0.3).toFixed(3)}) 100%)`;
+  let visual = "";
+  if (s.id === "all") {
+    const mini = Math.round(Math.min(h * 0.24, 26));
+    visual = `<div style="display:grid;grid-template-columns:repeat(2, ${mini}px);gap:3px">${RECENT.slice(0, 4).map(([sys, i]) => { const gm = mkGame(sys, libById(sys).games[i]); const mc = sysColor(sys); return `<div style="width:${mini}px;height:${mini}px;border-radius:6px;background:linear-gradient(135deg, ${mix(mc, "#ffffff", 0.25)}, ${mix(mc, "#000000", 0.35)});box-shadow:0 1px 3px rgba(0,0,0,.25)"></div>`; }).join("")}</div>`;
+  } else if (st.style === "line") {
+    visual = consoleIcon(s.id, Math.round(Math.min(h * 0.46, w * 0.4)), mix(color, "#000000", 0.3), 1.6);
+  }
+  const count = st.showCount ? `<span style="position:absolute;right:10px;top:9px;font:800 11px/1 ${fontStack(t.type.bodyFont)};padding:4px 7px;border-radius:99px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};z-index:3">${s.count}</span>` : "";
+  const nameEl = `<div style="position:absolute;left:12px;right:10px;bottom:9px;font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${Math.max(12, Math.min(15, t.type.tabSize - 3))}px;line-height:1.1;color:${css(g.text)};display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;z-index:3">${esc(name)}</div>`;
+  const inner = `<div style="position:absolute;inset:0;background:${wash}"></div>${visual ? `<div style="position:absolute;left:12px;top:10px;z-index:3">${visual}</div>` : ""}${count}${nameEl}${edgeOverlay(rad)}`;
+  return focusableHtml({ w, h, rad, idx, data: `data-system="${s.id}"`, inner, elevated: true, ring: false, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
+}
+function heroHeaderHtml(next) {
+  const t = theme, h = t.header;
+  const tabs = [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
+    const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
+    const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:7px 14px;font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${h.tabIcons ? tabIcon(id, 16, css(color)) : ""}${esc(label)}</div>`;
+    return focusableHtml({ w: 0, h: 0, rad: Math.min(t.shape.tabRadius, 40), idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : "#1A1E1B27" });
+  }).join("");
+  const lb = (s) => `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">${s}</span>`;
+  const textColor = css(t.glass.text);
+  const status = h.statusPill
+    ? `<span class="status-pill" style="${glassCss("border-radius:99px;")}font-family:${fontStack(t.type.bodyFont)};font-size:${Math.round(t.type.clockSize * 0.8)}px;font-weight:${t.type.clockWeight}">${WIFI(textColor)}${BATTERY(textColor)}<span>76%</span><span class="m-clock-text">${esc(clockText())}</span></span>`
+    : `<span class="m-clock" style="font-family:${fontStack(t.type.bodyFont)};font-size:${t.type.clockSize}px;font-weight:${t.type.clockWeight};color:${css(t.colors.text)}">${esc(clockText())}</span>`;
+  return `<div class="m-header">${h.showWordmark ? `<span class="m-wordmark" style="font-size:${t.type.wordmarkSize}px;font-weight:${t.type.wordmarkWeight}">${esc(h.wordmark)}</span>` : ""}
+    <div class="tabs-pill" style="${glassCss("border-radius:99px;")}">${lb("L1")}${tabs}${lb("R1")}</div><span style="margin-left:auto">${status}</span></div>`;
+}
+function artBgHtml(sub, w, h) {
+  const t = theme, c = t.colors, blur = Math.max(0, c.artBlur), dim = Math.max(0, Math.min(1, c.artDim));
+  let art = "";
+  if (sub.kind === "game" && sub.game.ratio != null) {
+    const m = blur * 2;
+    art = `<div class="art-bg" style="left:${-m}px;top:${-m}px;filter:blur(${blur}px) saturate(1.25)">${coverHtml(sub.game.title, sub.game.sys, sub.game.ratio, w + 2 * m, h + 2 * m, "cover")}</div>`;
+  } else if (sub.kind === "game" || sub.kind === "system") {
+    const color = sub.kind === "system" ? sysColor(sub.id) : sysColor(sub.game.sys);
+    art = `<div style="position:absolute;inset:0;background:radial-gradient(circle at 30% 30%, ${mix(color, "#ffffff", 0.15)}, ${mix(color, "#000000", 0.55)})"></div>`;
+  }
+  return `<div style="position:absolute;inset:0;background:linear-gradient(${css(c.backgroundTop)}, ${css(c.background)})"></div>${art}<div style="position:absolute;inset:0;background:rgba(0,0,0,${dim})"></div>`;
+}
+function currentSubject() {
+  if (mock.nowPlaying) return { kind: "game", game: mock.nowPlaying };
+  if (mock.focusSystem) return { kind: "system", id: mock.focusSystem };
+  if (mock.focusGame) return { kind: "game", game: mock.focusGame };
+  return { kind: "game", game: lastPlayed() };
+}
+function captionHtml() {
+  const t = theme, el = focusables[focusIdx];
+  if (!el) return "";
+  let label = "", title = "", meta = "", color = t.colors.accent, hints = [];
+  if (el.dataset.hero) { const g = findGame(el.dataset.hero); label = "Last played"; title = g.title; meta = SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", t.hero.prompt], ["Y", "Emulator"]]; }
+  else if (el.dataset.system) { const s = systemsList().find((x) => x.id === el.dataset.system); label = "System"; title = s.id === "all" ? "All games" : SYSTEMS[s.id]; meta = `${s.count} games`; color = sysColor(s.id); hints = [["A", "Open"]]; }
+  else if (el.dataset.game) { const g = findGame(el.dataset.game); const inside = mock.view !== "home"; label = inside ? SYSTEMS[g.sys] : "Recent"; title = g.title; meta = inside ? "" : SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"]]; if (inside) hints.push(["B", "Back"]); }
+  else if (el.dataset.tab) { label = "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
+  else if (el.dataset.app) { label = "App"; title = el.dataset.app; hints = [["A", "Open"], ["B", "Home"]]; }
+  else { hints = [["A", "Select"], ["B", "Home"]]; }
+  const sh = t.shelf, ty = t.type;
+  const labelColor = sh.titleColor === "system" ? color : sh.titleColor === "text" ? t.colors.text : t.colors.textMuted;
+  const marker = sh.marker === "dot" ? `<span style="width:9px;height:9px;border-radius:99px;background:${css(color)};flex:none"></span>` : sh.marker === "bar" ? `<span style="width:4px;height:16px;border-radius:2px;background:${css(color)};flex:none"></span>` : "";
+  const labelText = ty.shelfTitleCase === "upper" ? label.toUpperCase() : ty.shelfTitleCase === "lower" ? label.toLowerCase() : label;
+  const left = t.layout.focusCaption && (label || title) ? `<div class="cap-text">${marker}<span style="font-family:${fontStack(ty.displayFont)};font-size:${ty.shelfTitleSize}px;font-weight:${ty.shelfTitleWeight};letter-spacing:${ty.shelfTitleTracking}px;color:${css(labelColor)}">${esc(labelText)}</span>
+      <span style="font-family:${fontStack(ty.bodyFont)};font-weight:${ty.tileTitleWeight};font-size:${ty.tileTitleSize}px;color:${css(t.colors.text)};overflow:hidden;text-overflow:ellipsis">${esc(title)}</span>${meta ? `<span style="${labelStyle()}">${esc(meta)}</span>` : ""}</div>` : `<div class="cap-text"></div>`;
+  return left + hintsHtml(hints);
+}
+function updateHeroChrome() {
+  if (theme.layout.games !== "hero") return;
+  const cap = document.getElementById("mCaption"); if (cap) cap.innerHTML = captionHtml();
+  const bg = document.getElementById("topBg"); if (bg) bg.innerHTML = artBgHtml(currentSubject(), 833, 468);
+}
+function systemViewHtml(next, room) {
+  const t = theme, L = t.layout, gap = t.spacing.tileGap, id = mock.view;
+  const games = id === "all" ? allGames() : (libById(id)?.games || []).map((g) => mkGame(id, g));
+  const size = L.gridTileSize, rS = room(size), color = sysColor(id);
+  const back = `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">B</span>`;
+  const title = `<div style="display:flex;align-items:center;gap:10px;height:36px;flex:none">${back}
+      ${id !== "all" ? `<span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;${glassCss("border-radius:99px;")}">${consoleIcon(id, 20, mix(color, "#000000", 0.15))}</span>` : ""}
+      <span style="font-family:${fontStack(t.type.displayFont)};font-size:${Math.round(t.type.wordmarkSize * 0.8)}px;font-weight:${t.type.wordmarkWeight};color:${css(t.colors.text)}">${esc(id === "all" ? "All games" : SYSTEMS[id])}</span>
+      <span style="${labelStyle()}">${games.length} games</span></div>`;
+  return `<div style="display:flex;flex-direction:column;height:100%">${title}<div style="position:relative;flex:1;min-height:0;overflow:hidden"><div class="m-scroll" id="vscroll" style="padding:${rS}px"><div class="m-grid" style="gap:${gap}px">${games.map((g) => artTileHtml(g, size, next())).join("")}</div></div></div></div>`;
+}
+function renderHeroTop() {
+  const t = theme, L = t.layout, pad = t.spacing.screenPadding, gap = t.spacing.tileGap, innerW = 833 - 2 * pad;
+  let n = 0; const next = () => n++;
+  const room = (size) => Math.ceil((size * (t.motion.focusScale - 1)) / 2) + t.motion.focusLift + Math.ceil(t.motion.idleBobAmplitude) + 4;
+  const header = heroHeaderHtml(next);
+  let body = "", visible = false;
+  if (mock.section === "games" && mock.view === "home") {
+    visible = true;
+    const rows = Math.max(1, L.systemRows), cols = Math.max(1, L.systemColumns), sysH = L.systemTileHeight;
+    const blockH = rows * sysH + (rows - 1) * gap;
+    const heroW = Math.min(L.heroWidth, innerW - 160);
+    const rS = room(Math.max(140, sysH));
+    const gridW = innerW - heroW - gap - rS;
+    const cellW = Math.floor((gridW - (cols - 1) * gap) / cols);
+    const hero = heroHtml(next(), heroW, blockH);
+    const grid = `<div class="m-vgrid" style="width:${gridW + 2 * rS}px;height:${blockH + 2 * rS}px;margin:${-rS}px;padding:${rS}px"><div class="m-vgrid-inner" style="grid-template-columns:repeat(${cols}, ${cellW}px);grid-auto-rows:${sysH}px;gap:${gap}px">${systemsList().map((s) => systemTileHtml(s, next(), cellW, sysH)).join("")}</div></div>`;
+    const recent = recentGames();
+    const rR = room(L.recentTileSize);
+    const row = recent.length ? `<div class="m-row" style="margin:${-rR}px 0"><div class="m-track" data-shelf="recent" data-view="${innerW}" style="gap:${gap}px;padding:${rR}px 0">${recent.map((g) => artTileHtml(g, L.recentTileSize, next())).join("")}</div></div>` : "";
+    body = `<div style="display:flex;flex-direction:column;gap:${gap}px"><div style="display:flex;gap:${gap}px;align-items:flex-start">${hero}${grid}</div>${row}</div>`;
+  } else if (mock.section === "games") {
+    body = systemViewHtml(next, room);
+  } else if (mock.section === "apps") {
+    const rA = room(136);
+    body = `<div class="m-grid" style="gap:${gap}px;padding:${rA}px 0">${APPS.map(([name, col]) => focusableHtml({ w: 136, h: 120, rad: t.glass.radius, idx: next(), data: `data-app="${esc(name)}"`, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur(),
+      inner: `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;z-index:3"><div style="width:52px;height:52px;border-radius:16px;background:${col}"></div><span style="font-family:${fontStack(t.type.bodyFont)};font-weight:700;font-size:12px;color:${css(t.glass.text)}">${esc(name)}</span></div>${edgeOverlay(t.glass.radius)}` })).join("")}</div>`;
+  } else {
+    const chips = ["Theme", "Sounds", "Box art", "Report"].map((name, i) => focusableHtml({ w: 0, h: 0, rad: 99, idx: next(), data: `data-sys="${i}"`, elevated: false, fill: i === 0 ? t.colors.accent : glassHex(), fillFocused: i === 0 ? t.colors.accent : glassHex(), surface: i === 0 ? "" : glassBlur(), inner: `<span style="display:block;padding:10px 18px;font-weight:700;color:${css(i === 0 ? t.colors.tabActiveText : t.glass.text)}">${name}</span>` })).join("");
+    body = `<div style="padding:6px 0;display:flex;flex-direction:column;gap:14px"><div style="display:flex;gap:10px">${chips}</div>
+      <div style="${glassCss("padding:18px;")}"><div style="font-family:${fontStack(t.type.displayFont)};font-size:${t.type.tabSize}px;font-weight:${t.type.tabWeight}">Theme</div>
+      <div style="margin-top:8px">Active: ${esc(t.name)} (imported)</div><div style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:6px">Fonts: ${esc(t.type.displayFont)} · ${esc(t.type.bodyFont)}</div></div></div>`;
+  }
+  const bgLayer = t.colors.backgroundStyle === "art" ? `<div class="bg-layer" id="topBg"></div>` : `<div class="bg-layer" style="${backgroundCss(false)}"></div>`;
+  const msg = mock.message ? `<div class="m-msg" style="${glassCss()}">${esc(mock.message)}</div>` : "";
+  const anim = mock.animate ? (t.motion.reduceMotion || t.motion.tabTransition === "none" ? "" : t.motion.tabTransition === "fade" ? "anim-fade" : mock.lastDir > 0 ? "anim-slide-fwd" : "anim-slide-back") : "";
+  mock.animate = false;
+  $("#topScreen").innerHTML = `<div class="mock" style="${vars()}">${bgLayer}<div class="content" style="padding:${Math.round(pad * 0.6)}px ${pad}px">${header}<div style="height:${Math.round(t.spacing.headerGap * 0.75)}px;flex:none"></div>
+    <div class="m-body ${anim}" style="${visible ? "overflow:visible" : ""}">${body}</div>${msg}<div class="m-caption" id="mCaption"></div></div></div>`;
+}
+function renderDockBottom() {
+  const t = theme, c = t.companion, sub = currentSubject();
+  let art = "";
+  if (sub.kind === "game") {
+    const g = sub.game, color = sysColor(g.sys);
+    art = g.ratio != null ? `<div style="position:absolute;inset:0;display:flex">${coverHtml(g.title, g.sys, g.ratio, 538, 468, "cover")}</div>`
+      : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.5)});font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:34px;color:#fff;text-align:center;padding:40px">${esc(g.title)}</div>`;
+  } else if (sub.kind === "system") {
+    const color = sysColor(sub.id);
+    art = `<div style="position:absolute;inset:0;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center;background:radial-gradient(circle at 35% 30%, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.5)})">${sub.id === "all" ? consoleIcon("all", 150, "rgba(255,255,255,.92)", 1.2) : consoleIcon(sub.id, 170, "rgba(255,255,255,.92)", 1.2)}<span style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.wordmarkWeight};font-size:30px;color:#fff">${esc(sub.id === "all" ? "All games" : SYSTEMS[sub.id])}</span></div>`;
+  }
+  const textColor = css(t.glass.text);
+  const clock = c.showClock ? `<div class="status-pill" style="position:absolute;right:14px;top:12px;${glassCss("border-radius:99px;")}font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.clockWeight};font-size:${Math.round(t.type.clockSize * 0.8)}px"><span class="m-clock-text">${esc(clockText())}</span></div>` : "";
+  const now = mock.nowPlaying ? `<div class="status-pill" style="position:absolute;left:14px;top:12px;${glassCss("border-radius:99px;")}font-weight:700;font-size:13px"><span style="color:${css(t.colors.accent)}">● NOW PLAYING</span><span>${esc(mock.nowPlaying.title)}</span></div>` : "";
+  const dock = c.dock ? `<div class="dock" style="${glassCss("border-radius:99px;")}">${c.showDrawer ? `<span class="app" style="background:rgba(${rgb(t.glass.text)},0.08)">${drawerGlyph(20, textColor)}</span>` : ""}${DOCK.slice(0, Math.max(0, c.dockApps)).map(([name, col, gl]) => `<span class="app" title="${esc(name)}" style="background:${col}">${dockGlyph(gl, 20)}</span>`).join("")}</div>` : "";
+  const hints = c.showHints && sub.kind === "game" && !mock.nowPlaying ? `<div style="position:absolute;left:14px;right:14px;bottom:${c.dock ? 74 : 14}px">${hintsHtml([["A", "Play"], ["Y", "Details"]])}</div>` : "";
+  $("#bottomScreen").innerHTML = `<div class="mock" style="${vars()}"><div class="bg-layer" style="background:${css(t.colors.background)}"></div>${art}${now}${clock}${hints}${dock}</div>`;
+}
+
 function renderAll() {
   renderTop();
   bindFocusables();
@@ -903,11 +1206,11 @@ function bindFocusables() {
 }
 function restoreFocus() {
   let target = 0;
-  if (mock.focus) { const i = focusables.findIndex((el) => el.dataset.game === mock.focus || el.dataset.app === mock.focus || el.dataset.tab === mock.focus || el.dataset.sys === mock.focus); if (i >= 0) target = i; }
-  else { const i = focusables.findIndex((el) => el.dataset.game); if (i >= 0) target = i; }
+  if (mock.focus) { const i = focusables.findIndex((el) => keyOf(el) === mock.focus); if (i >= 0) target = i; }
+  else { let i = focusables.findIndex((el) => el.dataset.hero); if (i < 0) i = focusables.findIndex((el) => el.dataset.game); if (i >= 0) target = i; }
   setFocus(target, false, true);
 }
-function keyOf(el) { return el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
+function keyOf(el) { return el.dataset.hero ? "hero" : el.dataset.system ? `sys:${el.dataset.system}` : el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
 function setFocus(i, sound, instant) {
   const prev = focusables[focusIdx];
   focusIdx = i;
@@ -921,18 +1224,30 @@ function setFocus(i, sound, instant) {
   }
   if (sound && prev !== el) playSound("move");
   // bottom screen follows focus
-  const game = el.dataset.game ? findGame(el.dataset.game) : null;
+  const game = el.dataset.game ? findGame(el.dataset.game) : el.dataset.hero ? findGame(el.dataset.hero) : null;
   const app = el.dataset.app ? APPS.find((a) => a[0] === el.dataset.app) : null;
-  if (game || app || !mock.focusGame) { mock.focusGame = game; mock.focusApp = app; }
+  mock.focusSystem = el.dataset.system || (game || app ? null : mock.focusSystem);
+  if (game || app || el.dataset.system || !mock.focusGame) { mock.focusGame = game; mock.focusApp = app; }
   scrollIntoView(el, instant);
+  updateHeroChrome();
   renderBottom();
   kick();
 }
 function findGame(key) { for (const s of samples()) for (const g of s.games) if (g.key === key) return g; return null; }
 function scrollIntoView(el, instant) {
+  const vg = el.closest(".m-vgrid-inner");
+  if (vg) {
+    const viewH = vg.parentElement.clientHeight - parseFloat(getComputedStyle(vg.parentElement).paddingTop) * 2;
+    const top = el.offsetTop, bottom = top + el.offsetHeight;
+    let cur = Number(vg.dataset.y || 0), want = cur;
+    if (top < cur) want = top; else if (bottom > cur + viewH) want = bottom - viewH;
+    want = Math.max(0, want); vg.dataset.y = want;
+    if (instant) { vg.style.transition = "none"; vg.style.transform = `translateY(${-want}px)`; vg.offsetWidth; vg.style.transition = ""; }
+    else vg.style.transform = `translateY(${-want}px)`;
+  }
   const track = el.closest(".m-track");
   if (track) {
-    const viewW = 833 - 2 * theme.spacing.screenPadding;
+    const viewW = Number(track.dataset.view || (833 - 2 * theme.spacing.screenPadding));
     const ringOut = theme.shape.focusRingGap + theme.shape.focusRingWidth;
     const lead = ringOut + Math.round((Math.max(theme.shape.tileWidth, theme.shape.tileHeight) * (theme.motion.focusScale - 1)) / 2) + 4;
     const offset = el.offsetLeft; const size = el.offsetWidth;
@@ -1025,8 +1340,12 @@ function activate() {
   const el = focusables[focusIdx]; if (!el) return;
   const s = springs.get(el); if (s) { s.ptarget = 1; kick(); setTimeout(() => { s.ptarget = 0; kick(); }, 120); }
   if (el.dataset.tab) { switchSection(el.dataset.tab); return; }
-  if (el.dataset.game) {
-    const g = findGame(el.dataset.game);
+  if (el.dataset.system) {
+    playSound("select"); mock.prevFocus = keyOf(el); mock.view = el.dataset.system; mock.focus = null; mock.animate = true; mock.lastDir = 1;
+    renderAll(); return;
+  }
+  if (el.dataset.game || el.dataset.hero) {
+    const g = findGame(el.dataset.game || el.dataset.hero);
     playSound("launch"); mock.nowPlaying = g; renderBottom();
     clearTimeout(activate.t); activate.t = setTimeout(() => { mock.nowPlaying = null; renderBottom(); }, 2600);
     return;
@@ -1037,7 +1356,7 @@ function switchSection(id, sound = true) {
   if (mock.section === id) return;
   const order = ["games", "apps", "system"];
   mock.lastDir = order.indexOf(id) > order.indexOf(mock.section) ? 1 : -1;
-  mock.section = id; mock.focus = null; mock.animate = true;
+  mock.section = id; mock.view = "home"; mock.focus = null; mock.animate = true;
   if (sound) playSound("tab");
   $("#topSection").textContent = { games: "Games", apps: "Apps", system: "System" }[id];
   renderAll();
@@ -1047,8 +1366,12 @@ function press(key) {
   switch (key) {
     case "left": case "right": case "up": case "down": navigate(key); break;
     case "A": activate(); break;
-    case "B": playSound("back"); if (mock.section !== "games") switchSection("games", false); break;
-    case "Y": if (focusables[focusIdx]?.dataset.game) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); } break;
+    case "B":
+      playSound("back");
+      if (mock.section === "games" && mock.view !== "home") { mock.view = "home"; mock.focus = mock.prevFocus || null; mock.animate = true; mock.lastDir = -1; renderAll(); }
+      else if (mock.section !== "games") switchSection("games", false);
+      break;
+    case "Y": if (focusables[focusIdx]?.dataset.game || focusables[focusIdx]?.dataset.hero) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); } break;
     case "L1": switchSection(order[(order.indexOf(mock.section) + 2) % 3]); break;
     case "R1": switchSection(order[(order.indexOf(mock.section) + 1) % 3]); break;
     case "Start": switchSection("system"); break;
@@ -1117,7 +1440,7 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault(); press(k);
 });
 new ResizeObserver(fitScreens).observe($("#device"));
-setInterval(() => { renderBottom(); const c = document.querySelector(".m-clock"); if (c) c.textContent = clockText(); }, 30000);
+setInterval(() => { renderBottom(); const c = document.querySelector(".m-clock"); if (c) c.textContent = clockText(); document.querySelectorAll("#topScreen .m-clock-text").forEach((e) => (e.textContent = clockText())); }, 30000);
 if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("#previewMotion").checked = false;
 
 async function exportTheme() {

@@ -33,3 +33,10 @@ These are fixed for now. Each can become a token if you want control over it:
 | 2026-11-13 | Overall mood | Hybrid: modern dark layout, warm, chunky, colourful tiles, playful sounds | **Approved** (direction only) |
 | 2026-11-13 | All 143 workbench details | Proposal 1 (`default.json`) | Proposed, awaiting review |
 | 2026-11-13 | Draft 1 (yours, `design/themes/draft-1-2026-11-13.json`) | Focused tile centred in its row (`layout.scrollAnchor: center`); bar before row titles (`shelf.marker: bar`); sine wave for the move sound (`sounds.events.move.wave: sine`) | **Draft, open to change.** Not approved, not built into the launcher |
+| 2026-11-14 | Base look (from your inspiration pictures) | Frosted light panels and tiles over the focused game's art, blurred and darkened | **Your answer** (direction) |
+| 2026-11-14 | Top screen | "Jump back in" card for the last game + systems grid beside it + recent games row | **Your answer** (direction) |
+| 2026-11-14 | Bottom screen | The focused game's art with an Android app dock and app-drawer button | **Your answer** (direction) |
+| 2026-11-14 | Tiles | Full box art in a thin ring of the console's colour, small console mark top right | **Your answer** (direction) |
+| 2026-11-14 | Focus | Grow and bounce only; no focus ring, no glow | **Your answer** (direction) |
+| 2026-11-14 | Console marks | Original line drawings of console shapes (no makers' logos) | **Your answer** (direction) |
+| 2026-11-14 | Draft 2 (`design/themes/draft-2-2026-11-14.json`, now the proposal in `default.json`) | Implements the answers above, keeps Draft 1's three changes; every other value is my proposal | **Draft, open to change.** Not approved |

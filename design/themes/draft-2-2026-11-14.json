@@ -1,0 +1,309 @@
+{
+  "schema": 2,
+  "name": "Draft 2",
+  "layout": {
+    "games": "hero",
+    "showRecent": true,
+    "recentCount": 12,
+    "systemOrder": "registry",
+    "scrollAnchor": "center",
+    "heroWidth": 360,
+    "systemColumns": 3,
+    "systemRows": 2,
+    "systemTileHeight": 96,
+    "recentTileSize": 96,
+    "gridTileSize": 132,
+    "focusCaption": true
+  },
+  "colors": {
+    "backgroundStyle": "art",
+    "artBlur": 36,
+    "artDim": 0.5,
+    "background": "#15141E",
+    "backgroundTop": "#1D1A2C",
+    "glowA": "#FF6B4A",
+    "glowB": "#3FA7F5",
+    "glowStrength": 0.16,
+    "surface": "#221F33",
+    "tile": "#2A2740",
+    "tileFocused": "#353052",
+    "text": "#FFFFFF",
+    "textMuted": "#D9D4E6",
+    "accent": "#FF6B4A",
+    "focusRing": "#FFD24A",
+    "focusGlow": "#FFD24A",
+    "focusGlowStrength": 0,
+    "tabActiveFill": "#FF6B4A",
+    "tabActiveText": "#FFFFFF",
+    "tabIdleText": "#3B3549",
+    "hintBadge": "#1E1B27",
+    "hintBadgeText": "#FFFFFF",
+    "messageBar": "#2E2A44"
+  },
+  "glass": {
+    "fill": "#FFFFFF",
+    "opacity": 0.82,
+    "blur": 24,
+    "border": "#FFFFFF",
+    "borderOpacity": 0.9,
+    "borderWidth": 1.5,
+    "text": "#1E1B27",
+    "textMuted": "#5E5870",
+    "radius": 22
+  },
+  "systemColors": {
+    "recent": "#FFD24A",
+    "nes": "#E4483C",
+    "snes": "#8C6CF0",
+    "n64": "#2FB86B",
+    "gb": "#9CB83A",
+    "gbc": "#C653D9",
+    "gba": "#5B6CFF",
+    "nds": "#3FA7F5",
+    "n3ds": "#EC4A63",
+    "gc": "#7C5CFF",
+    "wii": "#56C6F2",
+    "wiiu": "#22A6C8",
+    "switch": "#FF4B57",
+    "genesis": "#2F6FE4",
+    "psx": "#B4B8C6",
+    "ps2": "#3D5BD9",
+    "psp": "#7C8796",
+    "xbox360": "#7BC043",
+    "steam": "#5B8DEF"
+  },
+  "shape": {
+    "tileWidth": 196,
+    "tileHeight": 196,
+    "tileRadius": 22,
+    "tileBorderWidth": 0,
+    "tileBorderColor": "#3A3552",
+    "focusRingWidth": 0,
+    "focusRingGap": 3,
+    "shadow": "soft",
+    "shadowColor": "#000000",
+    "shadowOffset": 6,
+    "systemStrip": "none",
+    "systemStripSize": 6,
+    "tabStyle": "pill",
+    "tabRadius": 999,
+    "cardRadius": 24,
+    "dialogRadius": 28,
+    "badgeRadius": 999
+  },
+  "spacing": {
+    "screenPadding": 28,
+    "headerGap": 16,
+    "shelfGap": 22,
+    "tileGap": 18,
+    "shelfTitleGap": 10
+  },
+  "type": {
+    "displayFont": "Fredoka",
+    "bodyFont": "Nunito",
+    "wordmarkSize": 30,
+    "wordmarkWeight": 700,
+    "tabSize": 17,
+    "tabWeight": 700,
+    "shelfTitleSize": 14,
+    "shelfTitleWeight": 800,
+    "shelfTitleCase": "upper",
+    "shelfTitleTracking": 1.4,
+    "tileTitleSize": 16,
+    "tileTitleWeight": 700,
+    "labelSize": 12,
+    "labelWeight": 700,
+    "clockSize": 18,
+    "clockWeight": 600
+  },
+  "shelf": {
+    "titleColor": "system",
+    "marker": "bar",
+    "showCount": true
+  },
+  "tile": {
+    "artStyle": "full",
+    "artFit": "cover",
+    "titleVisibility": "never",
+    "systemBadge": "never",
+    "showFileType": false,
+    "placeholder": "system",
+    "consoleIcon": "line",
+    "consoleIconSize": 22,
+    "systemRing": 3
+  },
+  "hero": {
+    "prompt": "Jump back in",
+    "showPlaytime": true,
+    "showSystem": true
+  },
+  "systemTile": {
+    "style": "line",
+    "showCount": true,
+    "tint": 0.5
+  },
+  "motion": {
+    "focusScale": 1.08,
+    "pressScale": 0.94,
+    "stiffness": 400,
+    "damping": 0.55,
+    "focusLift": 4,
+    "idleBob": true,
+    "idleBobAmplitude": 2,
+    "idleBobPeriodMs": 1800,
+    "tabTransition": "slide",
+    "tabTransitionMs": 220,
+    "reduceMotion": false
+  },
+  "header": {
+    "showWordmark": true,
+    "wordmark": "Wii-S",
+    "clock24h": false,
+    "showDate": false,
+    "tabGames": "Home",
+    "tabApps": "Apps",
+    "tabSystem": "System",
+    "statusPill": true,
+    "tabIcons": true
+  },
+  "hints": {
+    "show": true,
+    "align": "end",
+    "badgeShape": "circle",
+    "colorA": "#1E1B27",
+    "colorB": "#1E1B27",
+    "colorX": "#1E1B27",
+    "colorY": "#1E1B27",
+    "colorOther": "#1E1B27"
+  },
+  "companion": {
+    "layout": "artDock",
+    "background": "inherit",
+    "backgroundColor": "#15141E",
+    "showPlaytime": true,
+    "showLastPlayed": true,
+    "showEmulator": true,
+    "showClock": true,
+    "showHints": false,
+    "dock": true,
+    "dockApps": 5,
+    "showDrawer": true
+  },
+  "sounds": {
+    "enabled": true,
+    "volume": 0.7,
+    "events": {
+      "move": {
+        "wave": "sine",
+        "notes": [
+          880,
+          988
+        ],
+        "noteMs": 18,
+        "attackMs": 2,
+        "decayMs": 45,
+        "sweep": 0,
+        "lowpass": 7000,
+        "noise": 0,
+        "volume": 0.32
+      },
+      "select": {
+        "wave": "triangle",
+        "notes": [
+          659,
+          988
+        ],
+        "noteMs": 45,
+        "attackMs": 2,
+        "decayMs": 90,
+        "sweep": 0,
+        "lowpass": 8000,
+        "noise": 0,
+        "volume": 0.5
+      },
+      "back": {
+        "wave": "triangle",
+        "notes": [
+          740,
+          494
+        ],
+        "noteMs": 45,
+        "attackMs": 2,
+        "decayMs": 80,
+        "sweep": 0,
+        "lowpass": 6000,
+        "noise": 0,
+        "volume": 0.45
+      },
+      "tab": {
+        "wave": "square",
+        "notes": [
+          523,
+          784
+        ],
+        "noteMs": 30,
+        "attackMs": 1,
+        "decayMs": 60,
+        "sweep": 0,
+        "lowpass": 3200,
+        "noise": 0,
+        "volume": 0.28
+      },
+      "launch": {
+        "wave": "triangle",
+        "notes": [
+          523,
+          659,
+          784,
+          1047
+        ],
+        "noteMs": 70,
+        "attackMs": 3,
+        "decayMs": 220,
+        "sweep": 0,
+        "lowpass": 9000,
+        "noise": 0,
+        "volume": 0.55
+      },
+      "error": {
+        "wave": "square",
+        "notes": [
+          233,
+          196
+        ],
+        "noteMs": 90,
+        "attackMs": 2,
+        "decayMs": 120,
+        "sweep": 0,
+        "lowpass": 2200,
+        "noise": 0,
+        "volume": 0.35
+      },
+      "bump": {
+        "wave": "sine",
+        "notes": [
+          150
+        ],
+        "noteMs": 20,
+        "attackMs": 1,
+        "decayMs": 50,
+        "sweep": -6,
+        "lowpass": 2000,
+        "noise": 0.15,
+        "volume": 0.5
+      }
+    }
+  },
+  "haptics": {
+    "enabled": true,
+    "events": {
+      "move": "light",
+      "select": "medium",
+      "back": "light",
+      "tab": "light",
+      "launch": "heavy",
+      "error": "heavy",
+      "bump": "light"
+    }
+  }
+}

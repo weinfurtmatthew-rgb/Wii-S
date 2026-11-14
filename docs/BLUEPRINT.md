@@ -19,6 +19,7 @@
 | D9 | Design control | **The owner decides every design detail.** Hybrid mood approved as a direction. All values are proposals until approved in the Design Workbench; see `docs/DESIGN.md` |
 | D10 | Box art | Start now with no-account sources (your art folder, libretro thumbnails). Other services researched in `docs/SCRAPING.md`; which to add is the owner's call |
 | D11 | Sounds | Interface sounds on, synthesised from the theme; the owner can replace any sound with their own file on the device |
+| D12 | Look and layout (Draft 2) | From the owner's inspiration pictures: frosted light glass over the focused game's art; Jump back in + systems grid + recent row; art + app dock on the bottom screen; full-art tiles in a console-colour ring with a console line drawing; focus by grow and bounce. Values open until approved (`docs/DESIGN.md`) |
 
 **Stack simplifications (efficiency):**
 - **No Hilt yet.** The graph is about a dozen singletons, so a hand-written `AppGraph` replaces Hilt. That means no annotation processing, faster builds and a smaller APK. Revisit if the graph grows.

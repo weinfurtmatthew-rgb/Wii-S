@@ -80,7 +80,7 @@ class WorkbenchParityTest {
 
     /** Checksums printed by the workbench's synth() for each default sound: length, sum, sum of |x|. */
     private val workbenchChecksums = mapOf(
-        "move" to doubleArrayOf(3572.0, 0.356191, 307.817951),
+        "move" to doubleArrayOf(3572.0, -0.456534, 391.545129),
         "select" to doubleArrayOf(7938.0, 1.978287, 1173.504936),
         "back" to doubleArrayOf(7497.0, 2.423449, 1037.009329),
         "tab" to doubleArrayOf(5292.0, 1.990627, 481.624616),

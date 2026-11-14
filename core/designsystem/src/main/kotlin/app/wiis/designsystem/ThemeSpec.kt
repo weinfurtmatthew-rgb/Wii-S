@@ -17,16 +17,19 @@ import kotlinx.serialization.json.Json
 @Immutable
 @Serializable
 data class ThemeSpec(
-    val schema: Int = 1,
-    val name: String = "Hybrid proposal 1",
+    val schema: Int = 2,
+    val name: String = "Draft 2",
     val layout: LayoutTokens = LayoutTokens(),
     val colors: ColorTokens = ColorTokens(),
+    val glass: GlassTokens = GlassTokens(),
     val systemColors: Map<String, String> = DEFAULT_SYSTEM_COLORS,
     val shape: ShapeTokens = ShapeTokens(),
     val spacing: SpacingTokens = SpacingTokens(),
     val type: TypeTokens = TypeTokens(),
     val shelf: ShelfTokens = ShelfTokens(),
     val tile: TileTokens = TileTokens(),
+    val hero: HeroTokens = HeroTokens(),
+    val systemTile: SystemTileTokens = SystemTileTokens(),
     val motion: MotionTokens = MotionTokens(),
     val header: HeaderTokens = HeaderTokens(),
     val hints: HintTokens = HintTokens(),
@@ -46,20 +49,43 @@ data class ThemeSpec(
 
 @Immutable @Serializable
 data class LayoutTokens(
-    /** "shelves" (one horizontal row per system) or "grid" (one vertical grid with headers). */
-    val games: String = "shelves",
+    /**
+     * "hero" (Jump back in card + systems grid + recent row), "shelves" (one row per system) or
+     * "grid" (one vertical grid with headers).
+     */
+    val games: String = "hero",
     val showRecent: Boolean = true,
     val recentCount: Int = 12,
     /** "registry" (fixed console order), "alphabetical", "mostGames". */
     val systemOrder: String = "registry",
     /** Where a row scrolls the focused tile: "edge" (minimal), "start", "center". */
-    val scrollAnchor: String = "start",
+    val scrollAnchor: String = "center",
+    /** Hero layout: width of the Jump back in card, in dp. */
+    val heroWidth: Int = 360,
+    /** Hero layout: systems grid beside the card. */
+    val systemColumns: Int = 3,
+    val systemRows: Int = 2,
+    val systemTileHeight: Int = 96,
+    /** Hero layout: size of the square game tiles in the recent row. */
+    val recentTileSize: Int = 96,
+    /** Size of game tiles inside a system's game grid. */
+    val gridTileSize: Int = 132,
+    /** A line under the recent row naming the focused game or system. */
+    val focusCaption: Boolean = true,
 )
 
 @Immutable @Serializable
 data class ColorTokens(
-    /** "solid", "gradient" (backgroundTop → background) or "glow" (gradient plus two soft light pools). */
-    val backgroundStyle: String = "glow",
+    /**
+     * "art" (the focused game's art, blurred and dimmed), "solid", "gradient" (backgroundTop →
+     * background) or "glow" (gradient plus two soft light pools). "art" falls back to the gradient
+     * when a game has no art yet.
+     */
+    val backgroundStyle: String = "art",
+    /** Blur radius for the art background, in dp. */
+    val artBlur: Int = 36,
+    /** How much the art background is darkened: 0 = untouched, 1 = black. */
+    val artDim: Float = 0.5f,
     val background: String = "#15141E",
     val backgroundTop: String = "#1D1A2C",
     val glowA: String = "#FF6B4A",
@@ -68,18 +94,35 @@ data class ColorTokens(
     val surface: String = "#221F33",
     val tile: String = "#2A2740",
     val tileFocused: String = "#353052",
-    val text: String = "#F6F1E7",
-    val textMuted: String = "#A8A1B8",
+    val text: String = "#FFFFFF",
+    val textMuted: String = "#D9D4E6",
     val accent: String = "#FF6B4A",
     val focusRing: String = "#FFD24A",
     val focusGlow: String = "#FFD24A",
-    val focusGlowStrength: Float = 0.45f,
+    val focusGlowStrength: Float = 0f,
     val tabActiveFill: String = "#FF6B4A",
-    val tabActiveText: String = "#15141E",
-    val tabIdleText: String = "#A8A1B8",
-    val hintBadge: String = "#3A3552",
-    val hintBadgeText: String = "#F6F1E7",
+    val tabActiveText: String = "#FFFFFF",
+    val tabIdleText: String = "#3B3549",
+    val hintBadge: String = "#1E1B27",
+    val hintBadgeText: String = "#FFFFFF",
     val messageBar: String = "#2E2A44",
+)
+
+/** Frosted-glass panels and tiles that sit over the art background. */
+@Immutable @Serializable
+data class GlassTokens(
+    val fill: String = "#FFFFFF",
+    /** Fill opacity: 1 = solid, lower lets the art show through. */
+    val opacity: Float = 0.82f,
+    /** Blur of whatever is behind the glass, in dp. */
+    val blur: Int = 24,
+    val border: String = "#FFFFFF",
+    val borderOpacity: Float = 0.9f,
+    val borderWidth: Float = 1.5f,
+    /** Text on glass. */
+    val text: String = "#1E1B27",
+    val textMuted: String = "#5E5870",
+    val radius: Int = 22,
 )
 
 val DEFAULT_SYSTEM_COLORS: Map<String, String> = linkedMapOf(
@@ -111,14 +154,14 @@ data class ShapeTokens(
     val tileRadius: Int = 22,
     val tileBorderWidth: Int = 0,
     val tileBorderColor: String = "#3A3552",
-    val focusRingWidth: Int = 4,
+    val focusRingWidth: Int = 0,
     val focusRingGap: Int = 3,
     /** "none", "soft" (blurred drop shadow) or "hard" (solid offset block, retro). */
     val shadow: String = "soft",
     val shadowColor: String = "#000000",
     val shadowOffset: Int = 6,
     /** Coloured band naming the system: "none", "top", "bottom", "left". */
-    val systemStrip: String = "bottom",
+    val systemStrip: String = "none",
     val systemStripSize: Int = 6,
     /** "pill" (filled), "underline" or "text". */
     val tabStyle: String = "pill",
@@ -164,7 +207,7 @@ data class ShelfTokens(
     /** Shelf title colour: "system", "text" or "muted". */
     val titleColor: String = "system",
     /** Marker before the shelf title: "dot", "bar" or "none". */
-    val marker: String = "dot",
+    val marker: String = "bar",
     val showCount: Boolean = true,
 )
 
@@ -173,14 +216,37 @@ data class TileTokens(
     /** "full" (art fills the tile), "card" (art above a title strip) or "title" (no art). */
     val artStyle: String = "full",
     /** "contain" (whole cover visible) or "cover" (fill and crop). */
-    val artFit: String = "contain",
+    val artFit: String = "cover",
     /** Title text on art tiles: "always", "focused" or "never". */
-    val titleVisibility: String = "focused",
+    val titleVisibility: String = "never",
     /** System name badge: "always", "recent" (only in Recently played) or "never". */
-    val systemBadge: String = "recent",
+    val systemBadge: String = "never",
     val showFileType: Boolean = false,
     /** Tile without art: "system" (system-colour panel) or "plain" (tile colour). */
     val placeholder: String = "system",
+    /** Small console mark in the top-right corner: "line" (line drawing), "badge" (short name) or "none". */
+    val consoleIcon: String = "line",
+    val consoleIconSize: Int = 22,
+    /** Always-on ring in the console's colour, in dp (0 = none). */
+    val systemRing: Int = 3,
+)
+
+/** The "Jump back in" card for the last-played game. */
+@Immutable @Serializable
+data class HeroTokens(
+    val prompt: String = "Jump back in",
+    val showPlaytime: Boolean = true,
+    val showSystem: Boolean = true,
+)
+
+/** System tiles in the grid beside the hero card. */
+@Immutable @Serializable
+data class SystemTileTokens(
+    /** "line" (large console line drawing + name) or "name" (name only). */
+    val style: String = "line",
+    val showCount: Boolean = true,
+    /** How strongly the console colour washes over the glass, 0..1. */
+    val tint: Float = 0.5f,
 )
 
 @Immutable @Serializable
@@ -207,9 +273,13 @@ data class HeaderTokens(
     val wordmark: String = "Wii-S",
     val clock24h: Boolean = false,
     val showDate: Boolean = false,
-    val tabGames: String = "Games",
+    val tabGames: String = "Home",
     val tabApps: String = "Apps",
     val tabSystem: String = "System",
+    /** Clock, Wi-Fi and battery together in a pill at the top right. */
+    val statusPill: Boolean = true,
+    /** Small icons in the tabs. */
+    val tabIcons: Boolean = true,
 )
 
 @Immutable @Serializable
@@ -219,17 +289,20 @@ data class HintTokens(
     val align: String = "end",
     /** "circle", "rounded" or "square". */
     val badgeShape: String = "circle",
-    val colorA: String = "#3A3552",
-    val colorB: String = "#3A3552",
-    val colorX: String = "#3A3552",
-    val colorY: String = "#3A3552",
-    val colorOther: String = "#3A3552",
+    val colorA: String = "#1E1B27",
+    val colorB: String = "#1E1B27",
+    val colorX: String = "#1E1B27",
+    val colorY: String = "#1E1B27",
+    val colorOther: String = "#1E1B27",
 )
 
 @Immutable @Serializable
 data class CompanionTokens(
-    /** Bottom screen: "art" (large cover + details), "info" (details card) or "minimal" (title only). */
-    val layout: String = "art",
+    /**
+     * Bottom screen: "artDock" (focused art full screen + app dock), "art" (large cover + details),
+     * "info" (details card) or "minimal" (title only).
+     */
+    val layout: String = "artDock",
     /** "inherit" (same background as the top screen) or "color". */
     val background: String = "inherit",
     val backgroundColor: String = "#15141E",
@@ -237,7 +310,12 @@ data class CompanionTokens(
     val showLastPlayed: Boolean = true,
     val showEmulator: Boolean = true,
     val showClock: Boolean = true,
-    val showHints: Boolean = true,
+    val showHints: Boolean = false,
+    /** Dock of Android apps on the bottom screen. */
+    val dock: Boolean = true,
+    val dockApps: Int = 5,
+    /** App-drawer button at the start of the dock. */
+    val showDrawer: Boolean = true,
 )
 
 @Immutable @Serializable
@@ -273,7 +351,7 @@ data class SynthSpec(
 val SOUND_EVENTS = listOf("move", "select", "back", "tab", "launch", "error", "bump")
 
 val DEFAULT_SOUNDS: Map<String, SynthSpec> = linkedMapOf(
-    "move" to SynthSpec("triangle", listOf(880f, 988f), 18, 2, 45, 0f, 7000f, 0f, 0.32f),
+    "move" to SynthSpec("sine", listOf(880f, 988f), 18, 2, 45, 0f, 7000f, 0f, 0.32f),
     "select" to SynthSpec("triangle", listOf(659f, 988f), 45, 2, 90, 0f, 8000f, 0f, 0.5f),
     "back" to SynthSpec("triangle", listOf(740f, 494f), 45, 2, 80, 0f, 6000f, 0f, 0.45f),
     "tab" to SynthSpec("square", listOf(523f, 784f), 30, 1, 60, 0f, 3200f, 0f, 0.28f),
