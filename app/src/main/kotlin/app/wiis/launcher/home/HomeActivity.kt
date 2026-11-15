@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import app.wiis.launcher.CrashLog
@@ -45,7 +46,7 @@ class HomeActivity : ComponentActivity() {
         graph.perf.onResume(this)
         graph.sounds.quietMoves(600)
         viewModel.onReturnedHome()
-        graph.companionPlacer.ensurePlaced()
+        graph.companionPlacer.ensurePlacedFromHome(this) { lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED) }
     }
 
     override fun onPause() {

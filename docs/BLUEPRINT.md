@@ -113,6 +113,16 @@ The Thor's report: `PatternSyntaxException` in the font loader. Its pattern for 
 | Pattern check | `RegexPortabilityTest` reads every `Regex(...)` in the app's source and rejects braces ICU would refuse |
 | Crash report | A report from an older version is dropped after an update, so a fix doesn't open on the old crash. Top screen only also ends with the update |
 
+### 0.4.3-i4: bottom screen placement
+
+On 0.4.2 the Thor's bottom screen showed something other than Wii-S. Placement hasn't changed since the spike, which worked, so 0.4.3 makes it sturdier and says what happened:
+
+| Piece | State in 0.4.3-i4 |
+|---|---|
+| Starting it | From the top-screen home itself rather than the app in the background; once more 2.5 s after Home opens if another app's bottom screen came up over it |
+| Choosing the display | A public presentation display that is on, then any other public display that is on |
+| Report | System → Report shows the last placement attempt (started, display off, none found, or Android's refusal with its reason) and the display picked |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

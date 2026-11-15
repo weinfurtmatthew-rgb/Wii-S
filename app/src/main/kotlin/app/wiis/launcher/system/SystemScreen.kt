@@ -326,7 +326,7 @@ private fun ReportPage(style: WiisStyle, onPickRomFolder: () -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ActionTile("Refresh", onClick = { refresh++ })
         ActionTile("Share report", onClick = { share(context, report) })
-        ActionTile("Re-place bottom screen", onClick = { graph.companionPlacer.ensurePlaced(force = true); refresh++ })
+        ActionTile("Re-place bottom screen", onClick = { graph.companionPlacer.ensurePlaced(force = true, from = context); refresh++ })
         ActionTile("ROM folder…", onClick = onPickRomFolder)
     }
     savedTo?.let { Note("Saved to $it", style) }
@@ -359,6 +359,8 @@ private fun buildReport(context: Context, g: AppGraph): String = buildString {
     append(probe.homeResolution())
     val c = g.shared.companion.value
     appendLine(if (c != null) "Companion: RUNNING on display ${c.displayId}, mode ${c.mode}" else "Companion: NOT visible")
+    appendLine("Last placement: ${g.companionPlacer.lastAttempt}")
+    appendLine("Bottom screen picked: ${g.companionPlacer.secondaryDisplayId() ?: "none"}")
     appendLine()
     append(g.perf.report(probe.displays().firstOrNull { it.id == 0 }?.refreshHz))
     appendLine()
