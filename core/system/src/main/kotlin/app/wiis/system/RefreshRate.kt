@@ -8,7 +8,8 @@ import android.app.Activity
  */
 object RefreshRate {
     fun preferHighest(activity: Activity): Float? {
-        val display = activity.display ?: return null
+        // Robolectric's activities have no display; on a device this always succeeds.
+        val display = runCatching { activity.display }.getOrNull() ?: return null
         val current = display.mode
         val best = display.supportedModes
             .filter { it.physicalWidth == current.physicalWidth && it.physicalHeight == current.physicalHeight }

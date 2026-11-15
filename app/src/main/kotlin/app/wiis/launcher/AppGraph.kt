@@ -52,12 +52,23 @@ class WiisApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        graph = AppGraph(this)
-        graph.apps.start()
-        graph.systemStatus.start()
-        graph.companionPlacer.start()
-        graph.startThemeServices()
+        CrashLog.install(this)
+        // A report from the last crash is shown before anything else starts (see CrashScreen).
+        if (CrashLog.pending(this) != null) return
+        try {
+            graph = AppGraph(this)
+            graph.apps.start()
+            graph.systemStatus.start()
+            graph.companionPlacer.start()
+            graph.startThemeServices()
+        } catch (t: Throwable) {
+            CrashLog.record(this, t)
+            throw t
+        }
     }
+
+    /** False while a crash report is waiting to be seen: the launcher's graph hasn't started. */
+    val isRunning: Boolean get() = this::graph.isInitialized
 }
 
 val Context.graph: AppGraph get() = (applicationContext as WiisApplication).graph

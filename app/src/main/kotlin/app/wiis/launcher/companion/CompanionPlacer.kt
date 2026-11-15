@@ -42,6 +42,7 @@ class CompanionPlacer(private val context: Context, private val shared: SharedSt
         displayManager.displays.firstOrNull { it.displayId != Display.DEFAULT_DISPLAY }?.displayId
 
     fun ensurePlaced(force: Boolean = false) {
+        if (app.wiis.launcher.CrashLog.bottomScreenPaused(context)) return
         if (!force) {
             if (shared.companion.value != null) return
             if (shared.session.value?.usesBothScreens == true) return

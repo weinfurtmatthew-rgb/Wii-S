@@ -76,6 +76,9 @@ import app.wiis.launcher.CompanionStatus
 import app.wiis.launcher.Focus
 import app.wiis.launcher.Session
 import app.wiis.launcher.formatPlaytime
+import app.wiis.launcher.CrashLog
+import app.wiis.launcher.CrashScreen
+import app.wiis.launcher.WiisApplication
 import app.wiis.launcher.graph
 import app.wiis.launcher.ui.AppIcon
 import app.wiis.launcher.ui.ClockText
@@ -94,10 +97,24 @@ import app.wiis.launcher.ui.formatLastPlayed
  */
 class CompanionActivity : ComponentActivity() {
 
+    /** A crash report is up on the top screen; this screen only points to it. */
+    private var reporting = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         window.addFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        if (CrashLog.bottomScreenPaused(this)) {
+            // Turned off from the crash report until the next update.
+            reporting = true
+            finish()
+            return
+        }
+        if (CrashLog.pending(this) != null || !(application as WiisApplication).isRunning) {
+            reporting = true
+            CrashScreen.showOnBottom(this)
+            return
+        }
+        enableEdgeToEdge()
         app.wiis.system.RefreshRate.preferHighest(this)
         setContent { WiisRoot { CompanionScreen() } }
     }
@@ -111,12 +128,15 @@ class CompanionActivity : ComponentActivity() {
     // brings it back the next time the top-screen home resumes.
     override fun onStart() {
         super.onStart()
+        if (reporting) return
         val mode = if (intent.getBooleanExtra(EXTRA_SELF_PLACED, false)) "B (self-placed)" else "A (SECONDARY_HOME)"
-        graph.shared.companionAttached(CompanionStatus(display.displayId, mode, System.currentTimeMillis()))
+        // Robolectric's activities have no display; on a device this always succeeds.
+        val displayId = runCatching { display.displayId }.getOrDefault(-1)
+        graph.shared.companionAttached(CompanionStatus(displayId, mode, System.currentTimeMillis()))
     }
 
     override fun onStop() {
-        if (!isChangingConfigurations) graph.shared.companionAttached(null)
+        if (!reporting && !isChangingConfigurations) graph.shared.companionAttached(null)
         super.onStop()
     }
 

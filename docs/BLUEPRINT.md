@@ -92,6 +92,17 @@ Open design questions from this iteration are in `docs/DESIGN.md` (marked "Propo
 | RetroAchievements | Username and Web API key in System → RetroAchievements (kept out of backups). ROMs are matched by RetroAchievements' own fingerprint for NES, SNES, N64, Game Boy family, Genesis and DS, by title for disc systems. Game lists cached a week, progress five minutes |
 | Tests | 73 unit tests (fingerprints, parsing, title matching, stats, theme upgrade, parity). Screenshot tests render the top screen in light and dark and the bottom-screen pages |
 
+### 0.4.1-i4: crash report
+
+0.4.0-i4 crashed on every start on the owner's Thor. It doesn't crash in any test here (Robolectric runs of the real app with a full library, every saved theme, light and dark, 320 to 448 dpi), so the cause is something only the device has. 0.4.1 records it instead of guessing:
+
+| Piece | State in 0.4.1-i4 |
+|---|---|
+| Crash report | Any uncaught error is written to `files/last-crash.txt`. The next start shows it on the top screen (plain Android views, nothing from the theme) with Share report, Copy, Save to Downloads, Start Wii-S and Top screen only; the bottom screen points to it |
+| Top screen only | Starts without the bottom screen until a newer version is installed, in case the bottom screen is what fails |
+| Readable reports | Release builds keep class names and line numbers (`-dontobfuscate`), about 0.3 MB larger |
+| Start-up tests | `LaunchSmokeTest` opens the real top and bottom screens (opt-in with the screenshot tests): empty and full libraries, a controller walk through every section, every bottom page by swipe, every saved theme in both modes, four screen densities, and the crash report |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.
