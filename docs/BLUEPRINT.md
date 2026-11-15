@@ -147,6 +147,10 @@ On 0.4.3 and 0.5.0 the Thor's bottom screen still showed something else. Likely 
 | Report | Shows the method and what the last attempt did (window shown, or why not) |
 | Test | `LaunchSmokeTest` adds a second display: Home puts the window on it, it follows the top screen's highlight, and switching method takes it down |
 
+### 0.5.2-i5: no Android status bar
+
+The owner confirmed the bottom screen shows with 0.5.1. Android's status bar (Wi-Fi, battery, time) was still drawn over the top screen; Wii-S has its own status pill, so Home hides the bar and keeps it hidden after other apps or dialogs. A swipe down from the top edge shows it for a moment. The layout's safe-area padding drops to zero, so the header sits where the design puts it.
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

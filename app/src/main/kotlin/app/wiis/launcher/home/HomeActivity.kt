@@ -5,6 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import android.hardware.display.DisplayManager
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -42,6 +45,7 @@ class HomeActivity : ComponentActivity() {
             return
         }
         enableEdgeToEdge()
+        hideStatusBar()
         graph.perf.refreshHz = RefreshRate.preferHighest(this)
         graph.perf.attach(this)
         setContent {
@@ -57,6 +61,23 @@ class HomeActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Wii-S draws its own Wi-Fi, battery and clock, so Android's status bar stays hidden on the top
+     * screen. A swipe down from the top edge still shows it for a moment.
+     */
+    private fun hideStatusBar() {
+        WindowCompat.getInsetsController(window, window.decorView).apply {
+            systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(WindowInsetsCompat.Type.statusBars())
+        }
+    }
+
+    // Android can bring the bar back after another app or a dialog; hide it again.
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus && !reporting) hideStatusBar()
     }
 
     private fun showBottom() {
@@ -93,6 +114,7 @@ class HomeActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         if (reporting) return
+        hideStatusBar()
         graph.perf.onResume(this)
         graph.sounds.quietMoves(600)
         viewModel.onReturnedHome()

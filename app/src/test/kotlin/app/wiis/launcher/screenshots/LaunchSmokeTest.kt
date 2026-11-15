@@ -74,6 +74,17 @@ class LaunchSmokeTest {
         }
     }
 
+    @Test fun `the top screen hides Android's status bar`() {
+        ActivityScenario.launch(HomeActivity::class.java).use { s ->
+            run(1000)
+            s.onActivity { a ->
+                val insets = androidx.core.view.ViewCompat.getRootWindowInsets(a.window.decorView)
+                org.junit.Assert.assertNotNull(insets)
+                org.junit.Assert.assertFalse(insets!!.isVisible(androidx.core.view.WindowInsetsCompat.Type.statusBars()))
+            }
+        }
+    }
+
     @Test fun `bottom screen opens`() {
         ActivityScenario.launch<CompanionActivity>(Intent(app, CompanionActivity::class.java)).use { s ->
             run(4000)
