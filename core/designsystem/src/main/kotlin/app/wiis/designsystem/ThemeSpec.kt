@@ -401,6 +401,20 @@ data class CompanionTokens(
     val showAchievements: Boolean = true,
     /** How the pages are shown: "tabs" (labels at the top) or "dots" (dots at the bottom). */
     val pageStyle: String = "tabs",
+    /** Stats page: a line of the last 12 weeks under each number. */
+    val sparklines: Boolean = true,
+    /** The play-time chart's first range: "week", "12w" (12 weeks) or "year" (12 months). */
+    val chartRange: String = "12w",
+    /** Achievements page: a progress ring beside the list (otherwise a bar under the title). */
+    val achievementsRing: Boolean = true,
+    /** Achievements page: total time, sessions and last played beside the list. */
+    val achievementsPlaytime: Boolean = true,
+    /** One colour per number on the Stats page; the first is also the chart's. */
+    val statColors: List<String> = listOf("#2F86F6", "#1FA968", "#8A5CF6", "#F28C28"),
+    /** RetroAchievements rarity: gold under 1 in 10 players, silver under 1 in 3, bronze the rest. */
+    val trophyGold: String = "#E9AE25",
+    val trophySilver: String = "#A3AEBE",
+    val trophyBronze: String = "#C9773D",
 )
 
 @Immutable @Serializable

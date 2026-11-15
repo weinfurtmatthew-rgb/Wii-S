@@ -31,9 +31,13 @@ import app.wiis.launcher.companion.AchievementsPage
 import app.wiis.launcher.companion.CompanionPage
 import app.wiis.launcher.companion.CompanionPager
 import app.wiis.launcher.companion.GameStatsPage
+import app.wiis.launcher.companion.PageIcon
+import app.wiis.launcher.companion.PlayFact
 import app.wiis.launcher.companion.SystemDetailsPage
 import app.wiis.launcher.companion.SystemStatsPage
 import app.wiis.launcher.stats.GameStats
+import app.wiis.launcher.stats.History
+import app.wiis.launcher.stats.Played
 import app.wiis.launcher.stats.SystemStats
 import app.wiis.launcher.stats.Week
 import app.wiis.launcher.ui.ImageSource
@@ -60,30 +64,53 @@ class CompanionScreenshots {
     private val min = 60_000L
     private val pages = listOf(CompanionPage.Details, CompanionPage.Stats, CompanionPage.Achievements)
 
-    private val gameStats = GameStats(192 * min, 9, 21 * min, 51 * min, 1_759_400_000_000, 1_763_100_000_000, Week(listOf(0, 35 * min, 0, 60 * min, 48 * min, 0, 0), 4))
-    private val names = listOf("First Steps", "Night Flight", "Full Satchel", "No Detours", "Early Bird", "Collector", "Rain or Shine", "Long Haul", "Perfect Week", "Postmaster")
-    private val progress = RaGameProgress(1, "Star Courier", "Nintendo DS", null, names.mapIndexed { i, n ->
-        RaAchievement(i, n, "Sample description for $n", listOf(5, 10, 10, 25, 5, 10, 25, 50, 10, 25)[i], "b$i", i, if (i % 3 != 2) "2026-10-0${1 + i % 8} 12:00:00" else null, null)
-    })
+    private val now = 1_763_150_000_000L // Fri 14 Nov 2026, evening
+    private val history = History(
+        weeks = listOf(0, 0, 0, 0, 0, 0, 18, 25, 0, 30, 49, 70).map { it * min },
+        weekSessions = listOf(0, 0, 0, 0, 0, 0, 1, 1, 0, 2, 2, 3),
+        weekGames = listOf(0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1),
+        months = List(10) { 0L } + listOf(73 * min, 119 * min),
+    )
+    private val recent = listOf(23L, 17L, 12L, 17L).mapIndexed { i, m -> val start = now - (i * 26L + 3) * 3_600_000L; Played("sample:nds/Star Courier", "nds", start, start + m * min) }
+    private val gameStats = GameStats(192 * min, 9, 21 * min, 51 * min, 1_759_400_000_000, now, Week(listOf(0, 35, 0, 0, 20, 15, 0).map { it * min }, 4), history, recent)
+    private val sample = listOf(
+        Triple("First Steps", "Finish the opening chapter", 78), Triple("Night Flight", "Make a delivery after dark", 52), Triple("Full Satchel", "Carry ten parcels at once", 41),
+        Triple("No Detours", "Finish a route without stopping once", 18), Triple("Early Bird", "Deliver before sunrise", 63), Triple("Collector", "Find every stamp in one town", 27),
+        Triple("Rain or Shine", "Deliver a parcel in a thunderstorm", 22), Triple("Long Haul", "Fly 1,000 km in total", 9), Triple("Perfect Week", "Seven days without a late parcel", 12),
+        Triple("Postmaster", "Reach the top rank at the post office", 6), Triple("Secret Path", "Discover the hidden valley", 15), Triple("Completionist", "Unlock everything else", 3),
+    )
+    private val progress = RaGameProgress(1, "Star Courier", "Nintendo DS", null, sample.mapIndexed { i, (n, d, rate) ->
+        RaAchievement(i, n, d, listOf(5, 10, 10, 25, 5, 10, 25, 50, 10, 25, 10, 50)[i], "b$i", i, if (i in listOf(0, 1, 4, 5, 10, 2)) String.format(java.util.Locale.US, "2026-11-%02d %02d:%02d:00", 10 - i % 9, 18 + i % 4, (i * 7) % 60) else null, null, numAwarded = rate * 2)
+    }, numDistinctPlayers = 200)
+    private val facts = listOf(
+        PlayFact(PageIcon.Clock, 0, "Total time", "3.2 h"), PlayFact(PageIcon.Play, 1, "Sessions", "9"), PlayFact(PageIcon.Calendar, 3, "Last played", "Today"),
+    )
     private fun game(t: String, s: String) = Game("sample:$s/$t", "sample", t, t, "$t.rom", s, 1)
 
     @Test fun gameStats() = shoot("bottom-1-game-stats", 1) { GameStatsPage(gameStats, LocalWiis.current.systemColor("nds")) }
     @Test fun gameStatsDark() = shoot("bottom-2-game-stats-dark", 1, dark = true) { GameStatsPage(gameStats, LocalWiis.current.systemColor("nds")) }
-    @Test fun gameAchievements() = shoot("bottom-3-game-achievements", 2) { AchievementsPage(RaResult.OfGame(progress), LocalWiis.current.systemColor("nds"), {}, {}) }
-    @Test fun gameAchievementsDark() = shoot("bottom-4-game-achievements-dark", 2, dark = true) { AchievementsPage(RaResult.OfGame(progress), LocalWiis.current.systemColor("nds"), {}, {}) }
+    @Test fun gameAchievements() = shoot("bottom-3-game-achievements", 2) { AchievementsPage(RaResult.OfGame(progress), LocalWiis.current.systemColor("nds"), {}, {}, game("Star Courier", "nds"), facts = facts) }
+    @Test fun gameAchievementsDark() = shoot("bottom-4-game-achievements-dark", 2, dark = true) { AchievementsPage(RaResult.OfGame(progress), LocalWiis.current.systemColor("nds"), {}, {}, game("Star Courier", "nds"), facts = facts) }
     @Test fun notSetUp() = shoot("bottom-5-not-set-up", 2) { AchievementsPage(RaResult.NotSetUp, LocalWiis.current.systemColor("nds"), {}, {}) }
     @Test fun systemDetails() = shoot("bottom-6-system-details", 0) { SystemDetailsPage("nds", "Nintendo DS", 6, 4, "melonDS") }
     @Test fun systemStats() = shoot("bottom-7-system-stats", 1) {
-        SystemStatsPage(SystemStats(366 * min, 4, 6, listOf(game("Star Courier", "nds") to 192 * min, game("Puzzle Parade", "nds") to 95 * min, game("Garden Days", "nds") to 41 * min), gameStats.week), "Nintendo DS", LocalWiis.current.systemColor("nds"))
+        SystemStatsPage(SystemStats(366 * min, 4, 6, listOf(game("Star Courier", "nds") to 192 * min, game("Puzzle Parade", "nds") to 95 * min, game("Garden Days", "nds") to 41 * min), gameStats.week, history.copy(weeks = history.weeks.map { it * 2 }, weekGames = listOf(0, 0, 0, 0, 0, 0, 2, 1, 0, 3, 2, 2)), 18, now), "Nintendo DS", LocalWiis.current.systemColor("nds"))
     }
     @Test fun systemAchievements() = shoot("bottom-8-system-achievements", 2) {
         AchievementsPage(
-            RaResult.OfSystem("Nintendo DS", listOf("Star Courier" to 6, "Puzzle Parade" to 4, "Sky Mail" to 7, "Tiny Tactics" to 2).mapIndexed { i, (t, n) -> RaCompletionEntry(i, t, null, 18, "Nintendo DS", 12, n, 0, null) }),
-            LocalWiis.current.systemColor("nds"), {}, {},
+            RaResult.OfSystem("Nintendo DS", listOf(Triple("Star Courier", 6, "beaten-softcore"), Triple("Puzzle Parade", 12, "mastered"), Triple("Sky Mail", 7, null), Triple("Tiny Tactics", 2, null)).mapIndexed { i, (t, n, award) ->
+                RaCompletionEntry(i, t, null, 18, "Nintendo DS", 12, n, 0, "2026-11-1${4 - i} 10:00:00", highestAwardKind = award)
+            }),
+            LocalWiis.current.systemColor("nds"), {}, {}, systemId = "nds",
+            facts = listOf(PlayFact(PageIcon.Clock, 0, "Total time", "6.1 h"), PlayFact(PageIcon.Games, 1, "Games played", "4 of 6"), PlayFact(PageIcon.Calendar, 3, "Last played", "Today")),
         )
     }
 
-    private fun shoot(name: String, page: Int, dark: Boolean = false, content: @androidx.compose.runtime.Composable () -> Unit) {
+    @Test fun systemStatsWeek() = shoot("bottom-9-system-stats-week", 1, spec = ThemeSpec().let { it.copy(companion = it.companion.copy(chartRange = "week")) }) {
+        SystemStatsPage(SystemStats(366 * min, 4, 6, listOf(game("Star Courier", "nds") to 192 * min, game("Puzzle Parade", "nds") to 95 * min, game("Garden Days", "nds") to 41 * min), gameStats.week, history, 18, now), "Nintendo DS", LocalWiis.current.systemColor("nds"))
+    }
+
+    private fun shoot(name: String, page: Int, dark: Boolean = false, spec: ThemeSpec = this.spec, content: @androidx.compose.runtime.Composable () -> Unit) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
             WiisTheme(spec = spec.resolve(dark), fonts = fonts(), feedback = UiFeedback.None) {

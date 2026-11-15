@@ -123,6 +123,19 @@ On 0.4.2 the Thor's bottom screen showed something other than Wii-S. Placement h
 | Choosing the display | A public presentation display that is on, then any other public display that is on |
 | Report | System → Report shows the last placement attempt (started, display off, none found, or Android's refusal with its reason) and the display picked |
 
+## Iteration 5: bottom-screen Stats and Achievements from the owner's mocks (0.5.0-i5)
+
+| Piece | State in 0.5.0-i5 |
+|---|---|
+| Page tabs | Three equal tabs with icons (Details, Stats, Achievements) beside the clock; swipe still works |
+| Stats | Four numbers with 12-week lines (a game: total, sessions, average session, average per week; a console: total, games played, average per week, plays per week); a play-time chart with this week, 12 weeks or 12 months from a menu; recent sessions for a game, top games for a console |
+| Play history | `Stats.history`: logged play per week and month, sessions and games per week; weekly averages count from the first logged week |
+| Achievements for a game | Cover, title, trophy counts by rarity (gold under 1 in 10 players, silver under 1 in 3), All / Locked / Unlocked, rows with unlock date and time or how many players have it, play time and a progress ring beside the list |
+| Achievements for a console | Console tile, mastered and beaten counts, All / In progress / Finished, each game's progress and award, play time and a ring over every game |
+| RetroAchievements data | Each achievement's unlock count and the set's player count (rarity); each game's highest award (mastered, completed, beaten) |
+| Style | Option 1 (calm) as chosen; settings for the numbers' colours, trophy colours, chart range, ring and play time |
+| Tests | 82 unit tests (history, rarity, awards, regex portability among them); screenshot tests for every new page in light and dark, and the chart on this week |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

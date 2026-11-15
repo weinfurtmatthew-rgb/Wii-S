@@ -247,7 +247,20 @@
     "showDrawer": true,
     "showStats": true,
     "showAchievements": true,
-    "pageStyle": "tabs"
+    "pageStyle": "tabs",
+    "sparklines": true,
+    "chartRange": "12w",
+    "achievementsRing": true,
+    "achievementsPlaytime": true,
+    "statColors": [
+      "#2F86F6",
+      "#1FA968",
+      "#8A5CF6",
+      "#F28C28"
+    ],
+    "trophyGold": "#E9AE25",
+    "trophySilver": "#A3AEBE",
+    "trophyBronze": "#C9773D"
   },
   "sounds": {
     "enabled": true,

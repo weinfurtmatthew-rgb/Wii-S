@@ -105,7 +105,7 @@ Your answers: tabs on top with Stats on one screen, gold/silver/bronze by rarity
 | Layout | Page tabs with icons across the top (Details, Stats, Achievements); Stats fits one screen; the achievement list scrolls | **Your answer** |
 | Trophies | By rarity on RetroAchievements: gold if fewer than 1 in 10 players have it, silver under 1 in 3, bronze the rest | **Your answer**; the thresholds are proposed |
 | Extras | Trend line under each number, progress ring, play time on Achievements, chart range switch | **Your answer** |
-| Style | Option 1 (calm) or option 3 (neon dark, both screens) | **Your pick** |
+| Style | Option 1, calm: Draft 4's dark, no glow | **Your answer**; built into the launcher in 0.5.0 |
 | Stats for a game | Total time, sessions, average session, average per week; beside the chart, recent sessions | Proposed |
 | Stats for a console | Total time, games played, average per week, plays per week; beside the chart, Top games with covers and bars in each game's console colour | Proposed |
 | Big numbers | Hours with one decimal ("3.2 h"), minutes under an hour ("48 min"), as in the mock | Proposed |
@@ -117,7 +117,7 @@ Your answers: tabs on top with Stats on one screen, gold/silver/bronze by rarity
 | Left out from the mocks | The side rail, A/B hints and selection outline (touch-only screen), the repeated percentage bar, the info footer | Proposed |
 | Neon dark (option 3) | Navy #090D24 → #121A45, cards #121937 with glowing blue edges, electric-blue active items #2F7BFF with glow, cyan focus ring #4CC3FF with glow, a blue-to-magenta line around both screens | To compare |
 
-New settings (workbench only until you pick; the launcher draws them after): `colors.activeGlow`, `colors.edgeGlow`, `colors.frameGlow` (0 = off), `companion.sparklines`, `companion.chartRange`, `companion.achievementsRing`, `companion.achievementsPlaytime`, `companion.statColors`, `companion.trophyGold/Silver/Bronze`.
+New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.chartRange`, `companion.achievementsRing`, `companion.achievementsPlaytime`, `companion.statColors`, `companion.trophyGold/Silver/Bronze`. The glow settings (`colors.activeGlow`, `edgeGlow`, `frameGlow`) and the neon look stay in the workbench only, for reference: you chose calm, so the launcher doesn't draw glows.
 
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

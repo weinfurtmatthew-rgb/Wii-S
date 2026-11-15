@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 import java.io.File
+import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 
@@ -63,6 +64,42 @@ class StatsTest {
         val all = Stats.system("all", games, emptyList(), { stored[it] ?: 0 }, now, zone)
         assertEquals(5, all.gamesTotal)
         assertEquals("E", all.top.first().first.title)
+    }
+
+    @Test fun `history spreads sessions over weeks and months`() {
+        val log = listOf(
+            Played("a", "nds", at(2026, 11, 13, 23, 30), at(2026, 11, 14, 0, 45)), // this week: 75 min
+            Played("b", "nds", at(2026, 11, 3, 20), at(2026, 11, 3, 21)), // last week: 60 min
+            Played("a", "nds", at(2026, 8, 25, 20), at(2026, 8, 25, 20, 30)), // the first of the 12 weeks: 30 min, August
+            Played("a", "nds", at(2026, 6, 1, 20), at(2026, 6, 1, 21)), // before the 12 weeks, June
+        )
+        val h = Stats.history(log, now, zone)
+        assertEquals(12, h.weeks.size)
+        assertEquals(75 * minute, h.weeks[11])
+        assertEquals(60 * minute, h.weeks[10])
+        assertEquals(30 * minute, h.weeks[0])
+        assertEquals(listOf(1, 1, 1), listOf(h.weekSessions[11], h.weekSessions[10], h.weekSessions[0]))
+        assertEquals(1, h.weekGames[10])
+        // Months: June .. November, the current month last.
+        assertEquals(60 * minute, h.months[11 - 5])
+        assertEquals(30 * minute, h.months[11 - 3])
+        assertEquals(135 * minute, h.months[11])
+        // The first session is in the first of the 12 weeks, so averages count all 12.
+        assertEquals(12, h.activeWeeks)
+        assertEquals(165 * minute / 12, h.perWeekMillis)
+    }
+
+    @Test fun `averages start from the first logged week`() {
+        val h = Stats.history(listOf(Played("a", "nds", at(2026, 11, 10, 18), at(2026, 11, 10, 19))), now, zone)
+        assertEquals(1, h.activeWeeks)
+        assertEquals(60 * minute, h.perWeekMillis)
+        assertEquals(1, History.EMPTY.activeWeeks)
+    }
+
+    @Test fun `game stats keep the latest sessions, newest first`() {
+        val log = (1..6).map { Played("a", "nds", at(2026, 11, 8 + it, 18), at(2026, 11, 8 + it, 18) + 10 * it * minute) }
+        val s = Stats.game("a", log, 0, 0, now, zone)
+        assertEquals(listOf(14, 13, 12, 11), s.recent.map { Instant.ofEpochMilli(it.start).atZone(zone).dayOfMonth })
     }
 
     @Test fun `session log survives a reload`() {

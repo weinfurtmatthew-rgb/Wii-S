@@ -256,7 +256,7 @@ private fun StatsFor(subject: CompanionSubject, style: WiisStyle) {
         is CompanionSubject.OfSystem -> {
             val stats by produceState<SystemStats?>(null, subject.id) {
                 value = withContext(Dispatchers.IO) {
-                    Stats.system(subject.id, graph.currentGames(), graph.sessions.all(), graph.playtime::totalMillis, System.currentTimeMillis())
+                    Stats.system(subject.id, graph.currentGames(), graph.sessions.all(), graph.playtime::totalMillis, System.currentTimeMillis(), storedLast = graph.playtime::lastPlayed)
                 }
             }
             val color = if (subject.id == "all") style.accent else style.systemColor(subject.id)
@@ -284,7 +284,38 @@ private fun AchievementsFor(subject: CompanionSubject, style: WiisStyle, visible
         is CompanionSubject.OfGame -> style.systemColor(subject.game.systemId)
         is CompanionSubject.OfSystem -> if (subject.id == "all") style.accent else style.systemColor(subject.id)
     }
-    AchievementsPage(result, color, onSetUp = { graph.shared.requestSystemPage("ra") }, onRetry = { retry++ })
+    // Play time beside the list: the same numbers as the Stats page.
+    val facts by produceState(emptyList<PlayFact>(), subject, result) {
+        value = withContext(Dispatchers.IO) {
+            val now = System.currentTimeMillis()
+            when (subject) {
+                is CompanionSubject.OfGame -> {
+                    val s = Stats.game(subject.game.uri, graph.sessions.all(), graph.playtime.totalMillis(subject.game.uri), graph.playtime.lastPlayed(subject.game.uri), now)
+                    listOf(
+                        PlayFact(PageIcon.Clock, 0, "Total time", hours(s.totalMillis)),
+                        PlayFact(PageIcon.Play, 1, "Sessions", if (s.sessions == 0) "–" else "${s.sessions}"),
+                        PlayFact(PageIcon.Calendar, 3, "Last played", s.lastPlayed?.let(::formatLastPlayed) ?: "Never"),
+                    )
+                }
+                is CompanionSubject.OfSystem -> {
+                    val s = Stats.system(subject.id, graph.currentGames(), graph.sessions.all(), graph.playtime::totalMillis, now, storedLast = graph.playtime::lastPlayed)
+                    listOf(
+                        PlayFact(PageIcon.Clock, 0, "Total time", hours(s.totalMillis)),
+                        PlayFact(PageIcon.Games, 1, "Games played", "${s.gamesPlayed} of ${s.gamesTotal}"),
+                        PlayFact(PageIcon.Calendar, 3, "Last played", s.lastPlayed?.let(::formatLastPlayed) ?: "Never"),
+                    )
+                }
+            }
+        }
+    }
+    AchievementsPage(
+        result, color,
+        onSetUp = { graph.shared.requestSystemPage("ra") },
+        onRetry = { retry++ },
+        game = (subject as? CompanionSubject.OfGame)?.game,
+        systemId = (subject as? CompanionSubject.OfSystem)?.id,
+        facts = facts,
+    )
 }
 
 @Composable

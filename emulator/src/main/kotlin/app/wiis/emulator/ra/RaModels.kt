@@ -28,8 +28,15 @@ data class RaAchievement(
     val displayOrder: Int,
     val dateEarned: String?,
     val dateEarnedHardcore: String?,
+    /** How many players have unlocked it (softcore and hardcore). */
+    val numAwarded: Int = 0,
 ) {
     val earned: Boolean get() = dateEarned != null || dateEarnedHardcore != null
+    /** When it was unlocked: the hardcore date if there is one, as RetroAchievements gives it. */
+    val earnedAt: String? get() = dateEarnedHardcore ?: dateEarned
+
+    /** Share of the set's players who have it, in percent; null when RetroAchievements didn't say. */
+    fun rarityPercent(players: Int): Float? = if (players > 0) 100f * numAwarded / players else null
     val badgeUrl: String get() = "$MEDIA/Badge/$badgeName.png"
     val lockedBadgeUrl: String get() = "$MEDIA/Badge/${badgeName}_lock.png"
 }
@@ -40,6 +47,8 @@ data class RaGameProgress(
     val consoleName: String,
     val imageIcon: String?,
     val achievements: List<RaAchievement>,
+    /** Players who have played the set: with [RaAchievement.numAwarded], how rare each one is. */
+    val numDistinctPlayers: Int = 0,
 ) {
     val earned: Int get() = achievements.count { it.earned }
     val points: Int get() = achievements.sumOf { it.points }
@@ -66,6 +75,8 @@ data class RaCompletionEntry(
     val numAwarded: Int,
     val numAwardedHardcore: Int,
     val mostRecentAwardedDate: String?,
+    /** "mastered", "completed", "beaten-hardcore" or "beaten-softcore"; null when none yet. */
+    val highestAwardKind: String? = null,
 ) {
     val iconUrl: String? get() = imageIcon?.let { MEDIA + it }
     val unlocked: Int get() = maxOf(numAwarded, numAwardedHardcore)
@@ -114,8 +125,11 @@ object RaParse {
                     displayOrder = a.int("DisplayOrder") ?: 0,
                     dateEarned = a.str("DateEarned"),
                     dateEarnedHardcore = a.str("DateEarnedHardcore"),
+                    numAwarded = a.int("NumAwarded") ?: 0,
                 )
             },
+            numDistinctPlayers = o.int("NumDistinctPlayers")
+                ?: maxOf(o.int("NumDistinctPlayersCasual") ?: 0, o.int("NumDistinctPlayersHardcore") ?: 0),
         )
     }
 
@@ -134,6 +148,7 @@ object RaParse {
                 numAwarded = o.int("NumAwarded") ?: 0,
                 numAwardedHardcore = o.int("NumAwardedHardcore") ?: 0,
                 mostRecentAwardedDate = o.str("MostRecentAwardedDate"),
+                highestAwardKind = o.str("HighestAwardKind")?.takeIf { it.isNotBlank() },
             )
         }
     }

@@ -126,6 +126,21 @@ class RaParseTest {
         assertEquals("https://media.retroachievements.org/Images/0001.png", p.iconUrl)
     }
 
+    @Test fun `rarity comes from unlocks over players`() {
+        val p = RaParse.gameProgress(
+            """{"ID":7,"Title":"T","NumDistinctPlayers":"200","Achievements":[
+               {"ID":1,"Title":"Common","Points":5,"NumAwarded":150,"DateEarned":"2026-10-02 18:00:00"},
+               {"ID":2,"Title":"Rare","Points":25,"NumAwarded":"12"}]}""",
+        )
+        assertEquals(200, p.numDistinctPlayers)
+        assertEquals(75f, p.achievements[0].rarityPercent(p.numDistinctPlayers)!!, 0.01f)
+        assertEquals(6f, p.achievements[1].rarityPercent(p.numDistinctPlayers)!!, 0.01f)
+        assertEquals("2026-10-02 18:00:00", p.achievements[0].earnedAt)
+        // Older responses split players by mode; a set nobody played has no rarity.
+        assertEquals(40, RaParse.gameProgress("""{"ID":8,"NumDistinctPlayersCasual":40,"NumDistinctPlayersHardcore":25,"Achievements":[]}""").numDistinctPlayers)
+        assertEquals(null, p.achievements[0].rarityPercent(0))
+    }
+
     @Test fun `an empty achievement list may arrive as an array`() {
         val p = RaParse.gameProgress("""{"ID":5,"Title":"No Set","Achievements":[]}""")
         assertTrue(p.achievements.isEmpty())
@@ -145,6 +160,8 @@ class RaParseTest {
         assertEquals(2, c.size)
         assertEquals(14, c[0].unlocked)
         assertEquals(3, c[1].unlocked)
+        assertEquals(null, c[0].highestAwardKind)
+        assertEquals("mastered", RaParse.completion("""[{"GameID":3,"HighestAwardKind":"mastered"},{"GameID":4,"HighestAwardKind":""}]""").let { it[0].highestAwardKind + "/" + it[1].highestAwardKind }.substringBefore("/"))
     }
 
     @Test fun `api urls carry the key and parameters encoded`() {
