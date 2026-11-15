@@ -103,6 +103,16 @@ Open design questions from this iteration are in `docs/DESIGN.md` (marked "Propo
 | Readable reports | Release builds keep class names and line numbers (`-dontobfuscate`), about 0.3 MB larger |
 | Start-up tests | `LaunchSmokeTest` opens the real top and bottom screens (opt-in with the screenshot tests): empty and full libraries, a controller walk through every section, every bottom page by swipe, every saved theme in both modes, four screen densities, and the crash report |
 
+### 0.4.2-i4: the start-up crash, fixed
+
+The Thor's report: `PatternSyntaxException` in the font loader. Its pattern for reading Google Fonts' stylesheet ended in an unescaped `}`. The JVM, where every test runs, accepts that; Android compiles patterns with ICU, which rejects it. The font loader is created at start-up, so every build since 0.2.0 crashed on the Thor before drawing anything.
+
+| Piece | State in 0.4.2-i4 |
+|---|---|
+| Fonts | The stylesheet is read with plain text matching, no pattern (`FontCssTest` covers subsets, quotes and weight ranges). Theme fonts download on the first start with internet; until then the device font shows |
+| Pattern check | `RegexPortabilityTest` reads every `Regex(...)` in the app's source and rejects braces ICU would refuse |
+| Crash report | A report from an older version is dropped after an update, so a fix doesn't open on the old crash. Top screen only also ends with the update |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

@@ -14,8 +14,8 @@ android {
         applicationId = "app.wiis.launcher"
         minSdk = WiisSdk.MIN
         targetSdk = WiisSdk.TARGET
-        versionCode = 8
-        versionName = "0.4.1-i4"
+        versionCode = 9
+        versionName = "0.4.2-i4"
     }
 
     signingConfigs {

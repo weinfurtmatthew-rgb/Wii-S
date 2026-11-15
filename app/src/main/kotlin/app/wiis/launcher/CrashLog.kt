@@ -36,7 +36,7 @@ object CrashLog {
 
     fun report(context: Context, error: Throwable, thread: Thread?): String {
         val trace = StringWriter().also { error.printStackTrace(PrintWriter(it)) }.toString()
-        val version = runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "?"
+        val version = version(context)
         val time = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US).format(Date())
         return buildString {
             appendLine("Wii-S $version on ${Build.MANUFACTURER} ${Build.MODEL}, Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT})")
@@ -46,8 +46,23 @@ object CrashLog {
         }
     }
 
-    /** The report from the last crash, until it is dismissed. */
-    fun pending(context: Context): String? = file(context).takeIf { it.exists() }?.let { runCatching { it.readText() }.getOrNull() }
+    /**
+     * The report from the last crash, until it is dismissed. A report from another version is
+     * dropped: installing a fix shouldn't greet you with the old crash.
+     */
+    fun pending(context: Context): String? {
+        val f = file(context)
+        if (!f.exists()) return null
+        val text = runCatching { f.readText() }.getOrNull()
+        if (text == null || !text.startsWith("Wii-S ${version(context)} ")) {
+            f.delete()
+            return null
+        }
+        return text
+    }
+
+    private fun version(context: Context): String =
+        runCatching { context.packageManager.getPackageInfo(context.packageName, 0).versionName }.getOrNull() ?: "?"
 
     fun clear(context: Context) {
         file(context).delete()

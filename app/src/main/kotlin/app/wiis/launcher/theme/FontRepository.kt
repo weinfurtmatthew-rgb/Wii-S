@@ -93,20 +93,41 @@ class FontRepository(context: Context, private val scope: CoroutineScope) {
     }
 
     companion object {
-        private val FACE = Regex("""@font-face\s*\{([^}]*)}""")
-        private val WEIGHT = Regex("""font-weight:\s*(\d+)""")
-        private val SRC = Regex("""src:\s*url\(([^)]+)\)\s*format\('truetype'\)""")
-
-        /** weight -> TrueType URL; the last face per weight wins (the Latin subset comes last). */
+        /**
+         * weight -> TrueType URL; the last face per weight wins (the Latin subset comes last).
+         *
+         * Plain text matching, no regular expressions: Android compiles patterns with ICU, which
+         * rejects some that the JVM accepts. An unescaped "}" here made 0.2.0 to 0.4.1 crash on
+         * start on the Thor while every test passed.
+         */
         fun parseCss(css: String): Map<Int, String> {
             val out = LinkedHashMap<Int, String>()
-            for (face in FACE.findAll(css)) {
-                val body = face.groupValues[1]
-                val weight = WEIGHT.find(body)?.groupValues?.get(1)?.toIntOrNull() ?: continue
-                val url = SRC.find(body)?.groupValues?.get(1)?.trim('\'', '"') ?: continue
-                out[weight] = url
+            var from = 0
+            while (true) {
+                val at = css.indexOf("@font-face", from).takeIf { it >= 0 } ?: break
+                val open = css.indexOf('{', at).takeIf { it >= 0 } ?: break
+                val close = css.indexOf('}', open).takeIf { it >= 0 } ?: break
+                from = close + 1
+                val body = css.substring(open + 1, close)
+                val weight = declaration(body, "font-weight")?.takeWhile(Char::isDigit)?.toIntOrNull() ?: continue
+                val src = declaration(body, "src") ?: continue
+                if ("format('truetype')" !in src && "format(\"truetype\")" !in src) continue
+                val url = src.substringAfter("url(", "").substringBefore(")").trim().trim('\'', '"')
+                if (url.isNotEmpty()) out[weight] = url
             }
             return out
+        }
+
+        /** The value of "name: value;" in a CSS block, trimmed; null when the block doesn't set it. */
+        private fun declaration(body: String, name: String): String? {
+            var i = body.indexOf("$name:")
+            while (i >= 0) {
+                if (i == 0 || body[i - 1].isWhitespace() || body[i - 1] == ';' || body[i - 1] == '{') {
+                    return body.substring(i + name.length + 1).substringBefore(';').trim()
+                }
+                i = body.indexOf("$name:", i + 1)
+            }
+            return null
         }
     }
 }

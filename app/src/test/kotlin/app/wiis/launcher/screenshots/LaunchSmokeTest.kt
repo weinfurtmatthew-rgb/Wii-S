@@ -202,6 +202,16 @@ class LaunchSmokeTest {
         CrashLog.clear(app)
     }
 
+    @Test fun `a report from an older version is dropped after an update`() {
+        File(app.filesDir, "last-crash.txt").writeText("Wii-S 0.4.1-i4 on AYN AYN Thor, Android 13 (API 33)\n\njava.lang.ExceptionInInitializerError")
+        org.junit.Assert.assertNull(CrashLog.pending(app))
+        org.junit.Assert.assertFalse(File(app.filesDir, "last-crash.txt").exists())
+        ActivityScenario.launch(HomeActivity::class.java).use { s ->
+            run(1500)
+            s.onActivity { a -> org.junit.Assert.assertFalse("Wii-S stopped" in (a.window.decorView as android.view.ViewGroup).allText()) }
+        }
+    }
+
     private fun android.view.View.allText(): String = when (this) {
         is android.widget.TextView -> text.toString()
         is android.view.ViewGroup -> (0 until childCount).joinToString("\n") { getChildAt(it).allText() }
