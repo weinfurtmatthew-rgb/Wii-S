@@ -96,5 +96,28 @@ New setting values (workbench only until you choose; the launcher draws them onc
 | Achievements page | Unlocked count, points and a progress bar, then each achievement (earned first, locked dimmed with RetroAchievements' grey badge); for a console: every game with progress, most recent first | Proposed |
 | Draft 4 | All of the above, now the proposal in `default.json` (`design/themes/draft-4-2026-11-14.json`) | **Draft, open to change** |
 
+### Bottom-screen Stats and Achievements from your two mocks (2026-11-15)
+
+Your answers: tabs on top with Stats on one screen, gold/silver/bronze by rarity, and all four extras. The two styles are drawn in the workbench to compare before either goes into the launcher: **option 1** keeps Draft 4's calm dark, **option 3** is the neon dark ("Try a look" → "Draft 4 · neon dark (option 3)", with Dark mode ticked). Light mode is the same in both.
+
+| Detail | Value | Status |
+|---|---|---|
+| Layout | Page tabs with icons across the top (Details, Stats, Achievements); Stats fits one screen; the achievement list scrolls | **Your answer** |
+| Trophies | By rarity on RetroAchievements: gold if fewer than 1 in 10 players have it, silver under 1 in 3, bronze the rest | **Your answer**; the thresholds are proposed |
+| Extras | Trend line under each number, progress ring, play time on Achievements, chart range switch | **Your answer** |
+| Style | Option 1 (calm) or option 3 (neon dark, both screens) | **Your pick** |
+| Stats for a game | Total time, sessions, average session, average per week; beside the chart, recent sessions | Proposed |
+| Stats for a console | Total time, games played, average per week, plays per week; beside the chart, Top games with covers and bars in each game's console colour | Proposed |
+| Big numbers | Hours with one decimal ("3.2 h"), minutes under an hour ("48 min"), as in the mock | Proposed |
+| Colour per number | Blue #2F86F6, green #1FA968, purple #8A5CF6, orange #F28C28 (the chart uses the blue) | Proposed |
+| Trophy colours | Gold #E9AE25, silver #A3AEBE, bronze #C9773D | Proposed |
+| Chart | Bars with dashed guides; the current week (or day, or month) in full colour, the rest at half; opens on the last 12 weeks; a menu switches to this week or the last 12 months | Proposed |
+| Achievements for a game | Cover, title, RetroAchievements tag, trophy counts; All / Locked / Unlocked; each row: badge, name, two lines of description, then "Unlocked" with date and time, or "Locked" with how many players have it; ring in the console colour; play time box above it | Proposed |
+| Achievements for a console | Console tile, mastered and beaten counts; All / In progress / Finished; each game with a progress bar, its award and last unlock; ring over every game played | Proposed |
+| Left out from the mocks | The side rail, A/B hints and selection outline (touch-only screen), the repeated percentage bar, the info footer | Proposed |
+| Neon dark (option 3) | Navy #090D24 → #121A45, cards #121937 with glowing blue edges, electric-blue active items #2F7BFF with glow, cyan focus ring #4CC3FF with glow, a blue-to-magenta line around both screens | To compare |
+
+New settings (workbench only until you pick; the launcher draws them after): `colors.activeGlow`, `colors.edgeGlow`, `colors.frameGlow` (0 = off), `companion.sparklines`, `companion.chartRange`, `companion.achievementsRing`, `companion.achievementsPlaytime`, `companion.statColors`, `companion.trophyGold/Silver/Bronze`.
+
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 
