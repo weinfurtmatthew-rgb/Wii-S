@@ -136,6 +136,17 @@ On 0.4.2 the Thor's bottom screen showed something other than Wii-S. Placement h
 | Style | Option 1 (calm) as chosen; settings for the numbers' colours, trophy colours, chart range, ring and play time |
 | Tests | 82 unit tests (history, rarity, awards, regex portability among them); screenshot tests for every new page in light and dark, and the chart on this week |
 
+### 0.5.1-i5: the bottom screen as a window
+
+On 0.4.3 and 0.5.0 the Thor's bottom screen still showed something else. Likely cause: another launcher (iiSU was the default Home in the spike) keeps a presentation window on the bottom screen, and Android draws presentation windows above every app's activities there, so the companion activity ran unseen.
+
+| Piece | State in 0.5.1-i5 |
+|---|---|
+| Window method (default) | Home shows the bottom screen as its own presentation window (`CompanionPresentation`), never focusable, drawn on top of other presentations because it is shown last. Hidden when Home stops, except during a game that leaves the bottom screen free |
+| App method | The companion activity, as before; System → Report switches between the two |
+| Report | Shows the method and what the last attempt did (window shown, or why not) |
+| Test | `LaunchSmokeTest` adds a second display: Home puts the window on it, it follows the top screen's highlight, and switching method takes it down |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

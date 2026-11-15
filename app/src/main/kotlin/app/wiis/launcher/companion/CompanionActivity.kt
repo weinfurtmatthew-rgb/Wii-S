@@ -136,7 +136,7 @@ class CompanionActivity : ComponentActivity() {
     }
 
     override fun onStop() {
-        if (!reporting && !isChangingConfigurations) graph.shared.companionAttached(null)
+        if (!reporting && !isChangingConfigurations && graph.shared.companion.value?.mode?.startsWith("C") != true) graph.shared.companionAttached(null)
         super.onStop()
     }
 
@@ -155,7 +155,7 @@ class CompanionActivity : ComponentActivity() {
 }
 
 @Composable
-private fun CompanionScreen() {
+internal fun CompanionScreen() {
     val graph = LocalContext.current.graph
     val style = LocalWiis.current
     val tokens = style.spec.companion

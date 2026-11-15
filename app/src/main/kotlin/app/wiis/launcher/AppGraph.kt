@@ -96,7 +96,7 @@ class AppGraph(val context: Application) {
     val shared = SharedState()
     val playtime by lazy { PlaytimeStore(prefs) }
     val perf = PerfMonitor()
-    val companionPlacer by lazy { app.wiis.launcher.companion.CompanionPlacer(context, shared) }
+    val companionPlacer by lazy { app.wiis.launcher.companion.CompanionPlacer(context, shared) { bottomMethod.value == "window" } }
 
     val themes = ThemeRepository(context)
     val fonts = FontRepository(context, scope)
@@ -136,6 +136,16 @@ class AppGraph(val context: Application) {
         }
 
     // ---- Appearance (device-level): "theme" (as the theme says), "system", "light" or "dark" ----
+
+    // ---- Bottom screen method: "window" (a presentation owned by Home) or "app" (an activity) ----
+
+    private val _bottomMethod = MutableStateFlow(prefs.getString("bottom_method", "window") ?: "window")
+    val bottomMethod: StateFlow<String> = _bottomMethod.asStateFlow()
+
+    fun setBottomMethod(value: String) {
+        prefs.edit { putString("bottom_method", value) }
+        _bottomMethod.value = value
+    }
 
     private val _appearance = MutableStateFlow(prefs.getString("appearance", "theme") ?: "theme")
     val appearance: StateFlow<String> = _appearance.asStateFlow()

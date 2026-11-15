@@ -23,7 +23,7 @@ import java.util.Locale
  * It deliberately does NOT re-place the companion the moment it is covered, so it never fights
  * the user or an emulator that drives both screens (melonDS, Azahar).
  */
-class CompanionPlacer(private val context: Context, private val shared: SharedState) {
+class CompanionPlacer(private val context: Context, private val shared: SharedState, private val windowMethod: () -> Boolean = { false }) {
 
     private val displayManager = context.getSystemService(DisplayManager::class.java)
     private val main = Handler(Looper.getMainLooper())
@@ -63,6 +63,7 @@ class CompanionPlacer(private val context: Context, private val shared: SharedSt
     /** [from] is the activity asking (the top-screen home); starting from it is the most reliable. */
     fun ensurePlaced(force: Boolean = false, from: Context? = null) {
         if (CrashLog.bottomScreenPaused(context)) return note("off until the next update (chosen on the crash report)")
+        if (windowMethod()) return // Home shows it as a window (CompanionPresentation).
         if (!force) {
             if (shared.companion.value != null) return
             if (shared.session.value?.usesBothScreens == true) return
@@ -89,7 +90,7 @@ class CompanionPlacer(private val context: Context, private val shared: SharedSt
         }, RECHECK_MS)
     }
 
-    private fun note(what: String) {
+    fun note(what: String) {
         lastAttempt = "${SimpleDateFormat("HH:mm:ss", Locale.US).format(Date())} $what"
     }
 

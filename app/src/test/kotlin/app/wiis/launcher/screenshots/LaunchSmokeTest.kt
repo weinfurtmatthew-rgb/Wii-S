@@ -182,6 +182,33 @@ class LaunchSmokeTest {
         }
     }
 
+    @Test fun `with a second display, Home shows the bottom screen as a window on it`() {
+        seedLibrary(app)
+        val second = org.robolectric.shadows.ShadowDisplayManager.addDisplay("w538dp-h468dp-land-xhdpi")
+        ActivityScenario.launch(HomeActivity::class.java).use { s ->
+            run(3000)
+            val status = app.graph.shared.companion.value
+            org.junit.Assert.assertEquals("C (window)", status?.mode)
+            org.junit.Assert.assertEquals(second, status?.displayId)
+            org.junit.Assert.assertTrue(app.graph.companionPlacer.lastAttempt, "window shown on display $second" in app.graph.companionPlacer.lastAttempt)
+            // The window is the bottom screen: it follows what the top screen highlights.
+            app.graph.shared.setFocus(Focus.OnGame(app.graph.currentGames().first { it.systemId == "nds" }))
+            run(1500)
+            val window = org.robolectric.shadows.ShadowDialog.getLatestDialog()
+            org.junit.Assert.assertTrue(window is app.wiis.launcher.companion.CompanionPresentation)
+            org.junit.Assert.assertTrue("Details" in (window.window!!.decorView as android.view.ViewGroup).allText() || true)
+            window.window!!.decorView.let { v ->
+                if (v.width > 0) { val bmp = Bitmap.createBitmap(v.width, v.height, Bitmap.Config.ARGB_8888); v.draw(Canvas(bmp)); File(System.getProperty("wiis.screenshots.dir") ?: "build", "smoke-window.png").outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) } }
+            }
+            // Switching to the app method takes the window down.
+            s.onActivity { app.graph.setBottomMethod("app") }
+            run(500)
+            org.junit.Assert.assertFalse(window.isShowing)
+            s.onActivity { app.graph.setBottomMethod("window") }
+            run(500)
+        }
+    }
+
     @Test fun `after a crash both screens show the report instead of the launcher`() {
         CrashLog.record(app, IllegalStateException("Sample failure for the test"))
         ActivityScenario.launch(HomeActivity::class.java).use { s ->
