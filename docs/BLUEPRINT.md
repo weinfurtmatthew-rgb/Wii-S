@@ -151,6 +151,15 @@ On 0.4.3 and 0.5.0 the Thor's bottom screen still showed something else. Likely 
 
 The owner confirmed the bottom screen shows with 0.5.1. Android's status bar (Wi-Fi, battery, time) was still drawn over the top screen; Wii-S has its own status pill, so Home hides the bar and keeps it hidden after other apps or dialogs. A swipe down from the top edge shows it for a moment. The layout's safe-area padding drops to zero, so the header sits where the design puts it.
 
+### 0.5.3-i5: bottom cover, dock motion
+
+| Piece | State in 0.5.3-i5 |
+|---|---|
+| Bottom cover | The top screen's card parts (`ui/CardParts.kt`) draw it: cover, console-colour outline, corner tab; no panel |
+| Dock | A `Glider` draws the dark pill and the light highlight under the items and retargets without losing speed; labels fold and unfold; L1/R1 badges dip; the dock rises in on start and slides when the hints change width. Dock items don't grow (`WiisTile(grow = false)`) |
+| Settings | `nav.pillMotion`, `nav.focusGlide`, `nav.badgePress`, `nav.riseIn`, `nav.motionMs`, also in the workbench |
+| Test | `HeroScreenshots.dockGlide` captures R1 frame by frame (0 to 500 ms) |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

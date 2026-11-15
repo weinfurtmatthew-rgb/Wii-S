@@ -120,6 +120,9 @@ import app.wiis.launcher.ui.ClockText
 import app.wiis.launcher.ui.HintBar
 import app.wiis.launcher.ui.SystemBadge
 import app.wiis.launcher.ui.rememberArt
+import app.wiis.launcher.ui.ConsoleMark
+import app.wiis.launcher.ui.Cover
+import app.wiis.launcher.ui.SystemRing
 import app.wiis.system.AppEntry
 import app.wiis.system.DeviceStatus
 import kotlin.math.ceil
@@ -127,6 +130,35 @@ import kotlin.math.floor
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.animation.core.AnimationVector1D
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
 
 /**
  * The hero layout (Draft 3): art background, frosted glass, "Jump back in" card beside a grid of
@@ -244,6 +276,7 @@ fun HeroHomeScreen(
     val captionInHeader = dockNav && spec.nav.captionPlace == "header"
     val info = captionFor(focused, state, style)
     val topPad = (pad * 0.6f).roundToInt()
+    val presses = remember { ShoulderPresses() }
 
     Box(
         Modifier
@@ -252,8 +285,8 @@ fun HeroHomeScreen(
             .onPreviewKeyEvent { e ->
                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                 when (e.key) {
-                    Key.ButtonL1 -> { feedback.emit(UiEvent.Tab); actions.cycleSection(-1); true }
-                    Key.ButtonR1 -> { feedback.emit(UiEvent.Tab); actions.cycleSection(+1); true }
+                    Key.ButtonL1 -> { presses.l1++; feedback.emit(UiEvent.Tab); actions.cycleSection(-1); true }
+                    Key.ButtonR1 -> { presses.r1++; feedback.emit(UiEvent.Tab); actions.cycleSection(+1); true }
                     Key.ButtonStart -> { feedback.emit(UiEvent.Tab); actions.onStart(); true }
                     Key.ButtonSelect -> { feedback.emit(UiEvent.Tab); actions.onSelect(); true }
                     else -> false
@@ -297,12 +330,12 @@ fun HeroHomeScreen(
             }
             if (nameplate) {
                 DockRow(Modifier.fillMaxWidth().padding(top = 10.dp)) {
-                    NavDock(state, actions, onFocused)
+                    NavDock(state, actions, onFocused, presses)
                     HintBar(info.hints, fill = false, gap = 14.dp)
                 }
             } else if (dockNav) {
                 Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.Center) {
-                    NavDock(state, actions, onFocused)
+                    NavDock(state, actions, onFocused, presses)
                 }
             }
         }
@@ -994,78 +1027,6 @@ private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, acti
     }
 }
 
-/** Box art cropped to fill, or the system-colour panel (with the title when [titleSize] is set). */
-@Composable
-private fun BoxScope.Cover(game: Game, sizePx: Int, color: Color, titleSize: Int? = null) {
-    val style = LocalWiis.current
-    val art = rememberArt(game, sizePx)
-    if (art != null) {
-        Image(art.asImageBitmap(), contentDescription = game.title, contentScale = ContentScale.Crop, modifier = Modifier.matchParentSize())
-    } else {
-        Box(
-            Modifier
-                .matchParentSize()
-                .drawBehind { drawRect(cssLinearGradient(135f, size, listOf(mix(color, Color.White, 0.2f), mix(color, Color.Black, 0.45f)))) }
-                .padding(10.dp),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (titleSize != null) {
-                Text(
-                    game.title,
-                    style = TextStyle(
-                        fontFamily = style.fonts.body,
-                        fontWeight = FontWeight(style.spec.type.tileTitleWeight.coerceIn(100, 900)),
-                        fontSize = titleSize.sp,
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                    ),
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
-    }
-}
-
-/** The always-on ring in the console's colour (`tile.systemRing` dp). */
-@Composable
-private fun BoxScope.SystemRing(color: Color, shape: RoundedCornerShape) {
-    val ring = LocalWiis.current.spec.tile.systemRing
-    if (ring > 0) Box(Modifier.matchParentSize().border(ring.dp, color, shape))
-}
-
-/** The console mark in the top-right corner: a line drawing on a glass disc, or a name badge. */
-@Composable
-private fun BoxScope.ConsoleMark(systemId: String) {
-    val style = LocalWiis.current
-    val tile = style.spec.tile
-    val color = style.systemColor(systemId)
-    when (tile.consoleIcon) {
-        "none" -> Unit
-        "badge" -> SystemBadge(systemId, style, color, Modifier.align(Alignment.TopEnd).padding(top = 6.dp, end = 6.dp))
-        // iiSU-style: the frame's top-left corner grows into a tab holding the console in white.
-        "tab" -> {
-            val box = tile.consoleIconSize + 10
-            Box(
-                Modifier.align(Alignment.TopStart).size(box.dp).background(color, RoundedCornerShape(bottomEnd = (box * 0.42f).dp)),
-                contentAlignment = Alignment.Center,
-            ) {
-                ConsoleGlyph(systemId, (box * 0.64f).roundToInt().dp, Color.White, strokeUnits = 2.4f)
-            }
-        }
-        else -> Box(
-            Modifier
-                .align(Alignment.TopEnd)
-                .padding(top = 6.dp, end = 6.dp)
-                .size((tile.consoleIconSize + 8).dp)
-                .glass(style, CircleShape),
-            contentAlignment = Alignment.Center,
-        ) {
-            ConsoleIcon(systemId, tile.consoleIconSize.dp, mix(color, Color.Black, 0.15f))
-        }
-    }
-}
-
 // ---- One system's games ---------------------------------------------------------------------
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -1189,33 +1150,144 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
 @Composable
 private fun navFocusFill(): Color = LocalWiis.current.text.copy(alpha = 0.12f)
 
+/** Shoulder-button presses, so the L1/R1 badges can dip like keys. */
+@Stable
+private class ShoulderPresses {
+    var l1 by mutableIntStateOf(0)
+    var r1 by mutableIntStateOf(0)
+}
+
+/**
+ * The dock's moving parts, drawn under its items: the dark pill on the current section and the
+ * light highlight on the focused item. Each glides to its next place, smooth with no bounce. Every
+ * new target interrupts the running glide and keeps its speed, so a target that moves while a
+ * label unfolds is followed without stalling.
+ */
+@Stable
+private class Glider(private val scope: CoroutineScope) {
+    private val left = Animatable(0f)
+    private val top = Animatable(0f)
+    private val right = Animatable(0f)
+    private val bottom = Animatable(0f)
+    private val alpha = Animatable(0f)
+    private var placed by mutableStateOf(false)
+
+    /** Glides to [target]; appears in place when it was hidden, or when [glide] is off. */
+    fun show(target: Rect, ms: Int, glide: Boolean) {
+        val appear = !placed || alpha.value < 0.02f || !glide || ms <= 0
+        val spec = smooth((ms * 0.6f).toInt())
+        fun go(a: Animatable<Float, AnimationVector1D>, to: Float) =
+            scope.launch(start = CoroutineStart.UNDISPATCHED) { if (appear) a.snapTo(to) else a.animateTo(to, spec) }
+        go(left, target.left); go(top, target.top); go(right, target.right); go(bottom, target.bottom)
+        placed = true
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { alpha.animateTo(1f, if (ms <= 0) snap() else tween(ms * 2 / 3)) }
+    }
+
+    fun hide(ms: Int) {
+        scope.launch(start = CoroutineStart.UNDISPATCHED) { alpha.animateTo(0f, if (ms <= 0) snap() else tween(ms * 2 / 3)) }
+    }
+
+    fun DrawScope.draw(color: Color) {
+        val a = alpha.value
+        if (!placed || a <= 0f) return
+        val h = bottom.value - top.value
+        drawRoundRect(color.copy(alpha = color.alpha * a), Offset(left.value, top.value), Size(right.value - left.value, h), CornerRadius(h / 2f))
+    }
+}
+
+/** Smooth, no bounce: a critically damped spring that settles in about [ms]. */
+private fun smooth(ms: Int): AnimationSpec<Float> {
+    val w = 5.8f / (ms.coerceAtLeast(1) / 1000f)
+    return spring(dampingRatio = 1f, stiffness = w * w)
+}
+
 @Composable
-private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
+private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit, presses: ShoulderPresses) {
     val style = LocalWiis.current
     val nav = style.spec.nav
+    val ms = if (style.spec.motion.reduceMotion) 0 else nav.motionMs.coerceIn(0, 2000)
+    val density = LocalDensity.current
     val apps = state.dock.take(nav.apps.coerceAtLeast(0))
+
+    // Where each item sits in the dock, for the pill and the highlight to glide to.
+    val bounds = remember { mutableStateMapOf<String, Rect>() }
+    val items = remember { HashMap<String, LayoutCoordinates>() }
+    val dock = remember { arrayOfNulls<LayoutCoordinates>(1) }
+    fun measure(key: String) {
+        val d = dock[0] ?: return
+        val c = items[key] ?: return
+        if (d.isAttached && c.isAttached) bounds[key] = d.localBoundingBoxOf(c, clipBounds = false)
+    }
+    fun Modifier.track(key: String) = onPlaced { items[key] = it; measure(key) }
+    var focusedKey by remember { mutableStateOf<String?>(null) }
+    fun focus(key: String, focused: Boolean) { if (focused) focusedKey = key else if (focusedKey == key) focusedKey = null }
+
+    val scope = rememberCoroutineScope()
+    val pill = remember(scope) { Glider(scope) }
+    val highlight = remember(scope) { Glider(scope) }
+    val pillAt = bounds["nav:${state.section.name}"]
+    LaunchedEffect(pillAt) { pillAt?.let { pill.show(it, ms, glide = nav.pillMotion != "jump") } }
+    val halo = with(density) { 4.dp.toPx() }
+    val highlightAt = focusedKey?.takeIf { nav.focusGlide }?.let { key -> bounds[key]?.let { if (key.startsWith("app:")) it.inflate(halo) else it } }
+    LaunchedEffect(highlightAt) { if (highlightAt != null) highlight.show(highlightAt, ms, glide = true) else highlight.hide(ms) }
+
+    // Rises into place whenever Home opens or comes back.
+    val rise = remember { Animatable(0f) }
+    LifecycleEventEffect(Lifecycle.Event.ON_START) {
+        if (nav.riseIn && ms > 0) scope.launch { rise.snapTo(1f); rise.animateTo(0f, tween(ms * 6 / 5, easing = LinearOutSlowInEasing)) }
+    }
+    val riseBy = with(density) { 24.dp.toPx() }
+    val slide = remember { Animatable(0f) }
+    val lastX = remember { floatArrayOf(Float.NaN) }
+
+    val pillColor = style.tabActiveFill
+    val highlightColor = navFocusFill()
     Row(
-        Modifier.glassBox(style, CircleShape).padding(horizontal = 8.dp, vertical = 6.dp),
+        Modifier
+            .onPlaced { c ->
+                // Placed elsewhere (the hints beside it changed width): start from where it was and slide over.
+                val x = c.positionInParent().x
+                val was = lastX[0]
+                lastX[0] = x
+                if (!was.isNaN() && was != x && ms > 0) scope.launch { slide.snapTo(slide.value + (was - x)); slide.animateTo(0f, smooth(ms)) }
+            }
+            .graphicsLayer { translationX = slide.value; translationY = rise.value * riseBy; alpha = 1f - rise.value }
+            .glassBox(style, CircleShape)
+            .onPlaced { dock[0] = it; items.keys.forEach(::measure) }
+            .drawBehind {
+                with(highlight) { draw(highlightColor) }
+                with(pill) { draw(pillColor) }
+            }
+            .padding(horizontal = 8.dp, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ButtonBadge("L1")
-        Section.entries.forEach { s -> NavButton(s, s == state.section, state.heroFocus, actions, onFocused) }
-        ButtonBadge("R1")
+        ButtonBadge("L1", presses.l1)
+        Section.entries.forEach { s ->
+            val key = "nav:${s.name}"
+            NavButton(s, s == state.section, state.heroFocus, actions, onFocused, ms, Modifier.track(key)) { focus(key, it) }
+        }
+        ButtonBadge("R1", presses.r1)
         if (apps.isNotEmpty()) Box(Modifier.padding(horizontal = 4.dp).size(1.dp, 28.dp).background(style.glassText.copy(alpha = 0.18f)))
         apps.forEachIndexed { slot, app ->
+            val key = "app:$slot"
             WiisTile(
                 onClick = { actions.launchApp(app) },
                 onSecondary = { actions.openDockPicker(slot) },
                 shape = CircleShape,
                 fill = Color.Transparent,
-                fillFocused = Color.Transparent,
+                fillFocused = if (nav.focusGlide) Color.Transparent else navFocusFill(),
                 ring = false,
                 elevated = false,
+                grow = false,
                 modifier = Modifier
                     .size(40.dp)
+                    .track(key)
                     .focusTarget(HomeViewModel.dockKey(slot), state.heroFocus, actions)
-                    .onFocusChanged { if (it.isFocused) onFocused(Focused.DockApp(app)) },
+                    .onFocusChanged {
+                        focus(key, it.isFocused)
+                        if (it.isFocused) onFocused(Focused.DockApp(app))
+                    },
             ) {
                 AppIcon(app, 40)
             }
@@ -1224,43 +1296,76 @@ private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focuse
 }
 
 @Composable
-private fun NavButton(section: Section, active: Boolean, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit) {
+private fun NavButton(
+    section: Section,
+    active: Boolean,
+    target: HeroFocus?,
+    actions: HeroActions,
+    onFocused: (Focused) -> Unit,
+    ms: Int,
+    modifier: Modifier,
+    onFocus: (Boolean) -> Unit,
+) {
     val style = LocalWiis.current
-    val labels = style.spec.nav.labels
-    val showLabel = labels == "all" || (labels == "active" && active)
-    val color = if (active) style.tabActiveText else style.tabIdleText
+    val nav = style.spec.nav
+    val showLabel = nav.labels == "all" || (nav.labels == "active" && active)
+    val color by animateColorAsState(if (active) style.tabActiveText else style.tabIdleText, tween(ms), label = "navText")
+    val pad by animateDpAsState(if (showLabel) 14.dp else 10.dp, tween(ms), label = "navPad")
     WiisTile(
         onClick = { actions.selectSection(section) },
         shape = CircleShape,
-        fill = if (active) style.tabActiveFill else Color.Transparent,
-        fillFocused = if (active) style.tabActiveFill else navFocusFill(),
+        // The dock draws the dark pill and the light highlight; they glide between buttons.
+        fill = Color.Transparent,
+        fillFocused = if (nav.focusGlide || active) Color.Transparent else navFocusFill(),
         clickSound = UiEvent.Tab,
         ring = false,
         elevated = false,
-        modifier = Modifier
+        grow = false,
+        modifier = modifier
             .focusTarget(HomeViewModel.navKey(section), target, actions)
-            .onFocusChanged { if (it.isFocused) onFocused(Focused.Nav(section)) },
+            .onFocusChanged {
+                onFocus(it.isFocused)
+                if (it.isFocused) onFocused(Focused.Nav(section))
+            },
     ) {
-        Row(
-            Modifier.padding(horizontal = if (showLabel) 14.dp else 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
+        Row(Modifier.padding(horizontal = pad, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             SectionIcon(sectionIconId(section), 18.dp, color)
-            if (showLabel) Text(sectionLabel(section, style), style = style.tab.copy(color = color), maxLines = 1, softWrap = false)
+            // The label folds away on the old section and unfolds on the new one.
+            AnimatedVisibility(
+                visible = showLabel,
+                enter = fadeIn(tween(ms)) + expandHorizontally(tween(ms), expandFrom = Alignment.Start),
+                exit = fadeOut(tween(ms * 2 / 3)) + shrinkHorizontally(tween(ms), shrinkTowards = Alignment.Start),
+            ) {
+                Text(sectionLabel(section, style), style = style.tab.copy(color = color), maxLines = 1, softWrap = false, modifier = Modifier.padding(start = 7.dp))
+            }
         }
     }
 }
 
-/** The small dark key badges: L1, R1, B. */
+/** The small dark key badges: L1, R1, B. L1 and R1 dip like keys when pressed ([presses] counts them). */
 @Composable
-private fun ButtonBadge(label: String) {
+private fun ButtonBadge(label: String, presses: Int = 0) {
     val style = LocalWiis.current
+    val dip = remember { Animatable(0f) }
+    val on = style.spec.nav.badgePress && !style.spec.motion.reduceMotion
+    LaunchedEffect(presses) {
+        if (presses > 0 && on) {
+            dip.animateTo(1f, tween(70))
+            dip.animateTo(0f, tween(150))
+        }
+    }
     Text(
         label,
         style = TextStyle(fontFamily = FontFamily.Default, fontWeight = FontWeight.ExtraBold, fontSize = 10.sp, color = style.hintBadgeText),
         maxLines = 1,
-        modifier = Modifier.background(style.hintBadge, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 4.dp).lineBox(10.sp),
+        modifier = Modifier
+            .graphicsLayer {
+                val s = 1f - 0.16f * dip.value
+                scaleX = s
+                scaleY = s
+                translationY = dip.value * 1.5.dp.toPx()
+            }
+            .background(style.hintBadge, RoundedCornerShape(6.dp)).padding(horizontal = 6.dp, vertical = 4.dp).lineBox(10.sp),
     )
 }
 

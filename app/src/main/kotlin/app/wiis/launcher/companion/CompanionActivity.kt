@@ -87,6 +87,13 @@ import app.wiis.launcher.ui.HintBar
 import app.wiis.launcher.ui.SystemBadge
 import app.wiis.launcher.ui.WiisRoot
 import app.wiis.launcher.ui.formatLastPlayed
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.aspectRatio
+import app.wiis.designsystem.softShadow
+import app.wiis.launcher.ui.ConsoleMark
+import app.wiis.launcher.ui.Cover
+import app.wiis.launcher.ui.SystemRing
+import androidx.compose.foundation.shape.RoundedCornerShape
 
 /**
  * Bottom screen. On the Thor it is placed by [CompanionPlacer] (mode B); the SECONDARY_HOME filter
@@ -345,18 +352,25 @@ private fun GameDetails(game: Game, style: WiisStyle) {
     }
 }
 
+/**
+ * The cover as on the top screen's game cards: its own shape (no panel around it), the outline in
+ * the console's colour and the corner tab, with the tiles' resting shadow. Without art, a card in
+ * the console's colour with the title, at a portrait cover's shape.
+ */
 @Composable
 private fun CoverPanel(game: Game, style: WiisStyle, modifier: Modifier) {
+    val px = with(LocalDensity.current) { 320.dp.roundToPx() }
+    val art = rememberArt(game, px)
+    val ratio = art?.let { it.width.toFloat() / it.height.coerceAtLeast(1) }?.coerceIn(0.4f, 2.5f) ?: 0.75f
     val color = style.systemColor(game.systemId)
-    val px = with(LocalDensity.current) { 300.dp.roundToPx() }
-    Box(
-        modifier
-            .clip(style.cardShape)
-            .background(Brush.linearGradient(listOf(lerp(color, style.tile, 0.35f), lerp(color, Color.Black, 0.45f)))),
-        contentAlignment = Alignment.Center,
-    ) {
-        val hasArt = GameArt(game, px, ContentScale.Fit, Modifier.fillMaxSize().padding(12.dp))
-        if (!hasArt) Text(game.title, style = style.tileTitle, textAlign = TextAlign.Center, modifier = Modifier.padding(16.dp))
+    val shape = RoundedCornerShape(style.spec.shape.tileRadius.dp)
+    BoxWithConstraints(modifier, contentAlignment = Alignment.Center) {
+        val frame = if (ratio > maxWidth / maxHeight) Modifier.fillMaxWidth().aspectRatio(ratio) else Modifier.fillMaxHeight().aspectRatio(ratio)
+        Box(frame.softShadow(shape, style.shadowColor) { 0f }.clip(shape)) {
+            Cover(game, px, color, titleSize = style.spec.type.tileTitleSize)
+            SystemRing(color, shape)
+            ConsoleMark(game.systemId)
+        }
     }
 }
 

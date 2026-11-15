@@ -360,6 +360,16 @@ data class NavTokens(
      * hints beside the dock), a caption in the "header", or a caption "aboveDock".
      */
     val captionPlace: String = "nameplate",
+    /** The dark pill between Home, Apps and System: "glide" (slides and stretches) or "jump". */
+    val pillMotion: String = "glide",
+    /** The light highlight slides from item to item as focus moves along the dock. */
+    val focusGlide: Boolean = true,
+    /** The L1/R1 badges dip like keys when the shoulder buttons are pressed. */
+    val badgePress: Boolean = true,
+    /** The dock rises into place when Home opens or comes back. */
+    val riseIn: Boolean = true,
+    /** How long the dock's motion takes; it eases in and out without bouncing. */
+    val motionMs: Int = 250,
 )
 
 @Immutable @Serializable

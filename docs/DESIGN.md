@@ -119,5 +119,18 @@ Your answers: tabs on top with Stats on one screen, gold/silver/bronze by rarity
 
 New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.chartRange`, `companion.achievementsRing`, `companion.achievementsPlaytime`, `companion.statColors`, `companion.trophyGold/Silver/Bronze`. The glow settings (`colors.activeGlow`, `edgeGlow`, `frameGlow`) and the neon look stay in the workbench only, for reference: you chose calm, so the launcher doesn't draw glows.
 
+### Bottom-screen cover and dock motion (2026-11-15)
+
+| Detail | Value | Status |
+|---|---|---|
+| Bottom-screen cover | No panel around it: the cover at its own shape with the console-colour outline and corner tab, and the tiles' resting shadow. Without art, a card in the console's colour with the title | **Your answer** (outline + corner tab) |
+| Dock pill | Glides and stretches between Home, Apps and System while the labels fold and unfold (`nav.pillMotion`) | **Your answer** |
+| Dock motion | Smooth, no bounce, 250 ms (`nav.motionMs`) | **Your answer**; the duration is proposed |
+| L1/R1 badges | Dip like keys when pressed: 84% size, 1.5 dp down, 220 ms (`nav.badgePress`) | **Your answer**; the values are proposed |
+| Focus highlight | The light highlight glides along the dock; around app icons it shows as a halo 4 dp out (`nav.focusGlide`) | **Your answer**; the halo is proposed |
+| Dock rise | Rises 24 dp into place when Home opens or you come back (`nav.riseIn`) | **Your answer**; the distance is proposed |
+| Dock slide | When the hints beside it change width, the dock slides to its new place instead of jumping | Proposed |
+| Dock items | No longer grow on focus: the gliding highlight shows it | Proposed |
+
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

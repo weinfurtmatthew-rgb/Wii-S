@@ -20,7 +20,10 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.performKeyInput
+import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.text.font.Font
@@ -146,6 +149,40 @@ class HeroScreenshots {
     }
 
     // ---- Rendering --------------------------------------------------------------------------
+
+    /** R1 on Home: frames of the pill gliding to Apps while the labels fold and unfold. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun dockGlide() {
+        var state by mutableStateOf(home(focus = HomeViewModel.KEY_HERO))
+        val actions = object : HeroActions by NoActions {
+            override fun cycleSection(delta: Int) {
+                val order = Section.entries
+                state = state.copy(section = order[(order.indexOf(state.section) + delta + order.size) % order.size], heroFocus = null)
+            }
+        }
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            val inputMode = LocalInputModeManager.current
+            var ready by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { inputMode.requestInputMode(InputMode.Keyboard); ready = true }
+            if (ready) {
+                WiisTheme(spec = spec, fonts = fonts(), feedback = UiFeedback.None) {
+                    CompositionLocalProvider(LocalImageSource provides images) {
+                        HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) {}
+                    }
+                }
+            }
+        }
+        repeat(30) { compose.mainClock.advanceTimeBy(100); compose.waitForIdle(); Thread.sleep(15) }
+        compose.onRoot().captureRoboImage(File(outDir, "dock-0.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonR1) }
+        var t = 0L
+        for (at in listOf(16L, 50L, 100L, 150L, 200L, 300L, 500L)) {
+            compose.mainClock.advanceTimeBy(at - t); t = at
+            compose.waitForIdle()
+            compose.onRoot().captureRoboImage(File(outDir, "dock-$at.png").path)
+        }
+    }
 
     private fun shoot(name: String, state: HomeUiState, dark: Boolean = false) {
         val theme = spec.resolve(dark)

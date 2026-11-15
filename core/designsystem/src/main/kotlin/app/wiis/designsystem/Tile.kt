@@ -71,6 +71,8 @@ fun WiisTile(
     elevated: Boolean = true,
     /** Corner radius of the focus ring's tile; the theme's tile radius when null. */
     ringRadius: androidx.compose.ui.unit.Dp? = null,
+    /** False: no grow, lift or bob on focus (the dock shows focus with its gliding highlight). */
+    grow: Boolean = true,
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     val style = LocalWiis.current
@@ -123,10 +125,10 @@ fun WiisTile(
                 val longest = maxOf(size.width, size.height)
                 val growCap = if (longest > 0f) 1f + 2f * motion.focusGrowMax.coerceAtLeast(0).dp.toPx() / longest else motion.focusScale
                 val focusScale = minOf(motion.focusScale, growCap)
-                val scale = (1f + (focusScale - 1f) * focusProgress) * (1f - (1f - motion.pressScale) * pressProgress)
+                val scale = (if (grow) 1f + (focusScale - 1f) * focusProgress else 1f) * (1f - (1f - motion.pressScale) * pressProgress)
                 scaleX = scale
                 scaleY = scale
-                translationY = (-motion.focusLift * focusProgress + motion.idleBobAmplitude * bob).dp.toPx()
+                translationY = if (grow) (-motion.focusLift * focusProgress + motion.idleBobAmplitude * bob).dp.toPx() else 0f
             }
             .drawWithContent {
                 drawContent()

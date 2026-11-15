@@ -221,7 +221,12 @@
     "style": "dock",
     "apps": 5,
     "labels": "active",
-    "captionPlace": "nameplate"
+    "captionPlace": "nameplate",
+    "pillMotion": "glide",
+    "focusGlide": true,
+    "badgePress": true,
+    "riseIn": true,
+    "motionMs": 250
   },
   "hints": {
     "show": true,
