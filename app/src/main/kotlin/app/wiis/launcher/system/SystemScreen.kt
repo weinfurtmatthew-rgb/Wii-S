@@ -16,8 +16,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -25,6 +23,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +48,7 @@ import app.wiis.designsystem.WiisStyle
 import app.wiis.launcher.AppGraph
 import app.wiis.launcher.BuildConfigInfo
 import app.wiis.launcher.graph
+import app.wiis.launcher.ui.WholeCardsColumn
 import app.wiis.launcher.ui.ActionTile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -93,20 +93,16 @@ fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onP
                 )
             }
         }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            when (page) {
-                Page.Theme -> ThemePage(style)
-                Page.Sounds -> SoundsPage(style)
-                Page.Art -> ArtPage(style)
-                Page.Achievements -> AchievementsPage(style)
-                Page.Report -> ReportPage(style, onPickRomFolder)
+        // Whole cards only: a card that doesn't fit completely waits below until focus moves into it.
+        key(page) {
+            WholeCardsColumn(Modifier.fillMaxWidth().weight(1f), spacing = 12.dp, padding = 8.dp) {
+                when (page) {
+                    Page.Theme -> ThemePage(style)
+                    Page.Sounds -> SoundsPage(style)
+                    Page.Art -> ArtPage(style)
+                    Page.Achievements -> AchievementsPage(style)
+                    Page.Report -> ReportPage(style, onPickRomFolder)
+                }
             }
         }
     }

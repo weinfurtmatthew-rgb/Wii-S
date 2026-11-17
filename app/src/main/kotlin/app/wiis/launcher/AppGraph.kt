@@ -20,6 +20,7 @@ import app.wiis.emulator.ra.RaCredentials
 import app.wiis.emulator.ra.RaRepository
 import app.wiis.launcher.home.AppRef
 import app.wiis.launcher.home.DockApps
+import app.wiis.launcher.home.Pins
 import app.wiis.launcher.sound.SoundEngine
 import app.wiis.launcher.stats.SessionLog
 import app.wiis.launcher.theme.FontRepository
@@ -202,6 +203,21 @@ class AppGraph(val context: Application) {
         dockSaved.value = keys
     }
 
+    // ---- Pinned games (device-level: the Home screen's bottom row, X to pin or unpin) ----
+
+    private val _pins = MutableStateFlow(Pins.decode(prefs.getString(KEY_PINS, null)))
+
+    /** Pinned game URIs, newest first. */
+    val pins: StateFlow<List<String>> = _pins.asStateFlow()
+
+    /** Pins [uri], or unpins it if it was pinned. True if it is pinned now. */
+    fun togglePin(uri: String): Boolean {
+        val next = Pins.toggle(_pins.value, uri)
+        prefs.edit { putString(KEY_PINS, Pins.encode(next)) }
+        _pins.value = next
+        return uri in next
+    }
+
     private fun defaultBrowser(): String? = runCatching {
         context.packageManager
             .resolveActivity(Intent(Intent.ACTION_VIEW, "https://example.com/".toUri()), PackageManager.MATCH_DEFAULT_ONLY)
@@ -212,6 +228,7 @@ class AppGraph(val context: Application) {
 
     private companion object {
         const val KEY_DOCK = "dock_apps"
+        const val KEY_PINS = "pinned_games"
     }
 }
 

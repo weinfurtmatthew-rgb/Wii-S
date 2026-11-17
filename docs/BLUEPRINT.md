@@ -160,6 +160,20 @@ The owner confirmed the bottom screen shows with 0.5.1. Android's status bar (Wi
 | Settings | `nav.pillMotion`, `nav.focusGlide`, `nav.badgePress`, `nav.riseIn`, `nav.motionMs`, also in the workbench |
 | Test | `HeroScreenshots.dockGlide` captures R1 frame by frame (0 to 500 ms) |
 
+### 0.5.4-i5: whole rows, a fixed dock, pinned games
+
+From the owner's photos: rows cut off at the edges of the systems grid, the Apps grid and the System pages; the dock moving when the hints beside it changed; and a wish for a bottom row of games they choose.
+
+| Piece | State in 0.5.4-i5 |
+|---|---|
+| Whole rows | Systems grid, Apps, a system's games and the pinned row draw only the rows (tiles) inside their window and scroll a whole row (tile) at a time. Rows outside aren't drawn at all, shadows included; from outside a grid only its shown rows take focus (`ui/WholeRows.kt`: `WindowSpec`, `rowShown`, `itemShown`) |
+| System pages | `WholeCardsColumn`: whole cards only, focus scrolls a card to the top; a card taller than the page stays cut |
+| Dock | `DockRow` puts the dock at the content's left edge and the hints after it; a hint that doesn't fit is left out whole. The 0.5.3 slide is gone |
+| Pins | `Pins` (newest first, one URI per line in prefs `pinned_games`), `AppGraph.pins` / `togglePin`, `HomeViewModel.togglePin`; X on Jump back in, a system's games or the row. Pins of missing games are kept and come back with the game |
+| Bottom row | Pinned games only, or a hint card when there are none; `layout.showRecent` still turns the row off |
+| Workbench | Same behaviour: dock on the left, pins with X (pad button and the X key), the hint card, whole rows in the systems grid, the pinned row and a system's games |
+| Tests | `PinsTest`; `HeroScreenshots`: third systems row, last pin, no pins, many apps, X to pin and unpin; `SystemScreenshots`: Theme and Sounds walked with the controller; `LaunchSmokeTest`: pins through the real view model and prefs |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

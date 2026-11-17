@@ -138,27 +138,33 @@ fun HintBar(hints: List<Pair<String, String>>, modifier: Modifier = Modifier, fi
         else -> Arrangement.spacedBy(gap, Alignment.End)
     }
     Row(if (fill) modifier.fillMaxWidth() else modifier, horizontalArrangement = arrangement, verticalAlignment = Alignment.CenterVertically) {
-        hints.forEach { (button, label) ->
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val shape = when {
-                    tokens.badgeShape == "square" -> RoundedCornerShape(3.dp)
-                    tokens.badgeShape == "rounded" || button.length > 1 -> RoundedCornerShape(7.dp)
-                    else -> CircleShape
-                }
-                Box(
-                    Modifier
-                        .height(22.dp)
-                        .then(if (button.length == 1) Modifier.width(22.dp) else Modifier)
-                        .background(style.hintColor(button), shape)
-                        .padding(horizontal = if (button.length == 1) 0.dp else 7.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(button, style = style.label.copy(color = style.hintBadgeText), maxLines = 1, softWrap = false)
-                }
-                Spacer(Modifier.width(6.dp))
-                Text(label, style = style.label, maxLines = 1, softWrap = false)
-            }
+        hints.forEach { (button, label) -> Hint(button, label) }
+    }
+}
+
+/** One button hint: the badge, then what it does. */
+@Composable
+fun Hint(button: String, label: String, modifier: Modifier = Modifier) {
+    val style = LocalWiis.current
+    val tokens = style.spec.hints
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        val shape = when {
+            tokens.badgeShape == "square" -> RoundedCornerShape(3.dp)
+            tokens.badgeShape == "rounded" || button.length > 1 -> RoundedCornerShape(7.dp)
+            else -> CircleShape
         }
+        Box(
+            Modifier
+                .height(22.dp)
+                .then(if (button.length == 1) Modifier.width(22.dp) else Modifier)
+                .background(style.hintColor(button), shape)
+                .padding(horizontal = if (button.length == 1) 0.dp else 7.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(button, style = style.label.copy(color = style.hintBadgeText), maxLines = 1, softWrap = false)
+        }
+        Spacer(Modifier.width(6.dp))
+        Text(label, style = style.label, maxLines = 1, softWrap = false)
     }
 }
 

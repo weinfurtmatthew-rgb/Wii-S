@@ -129,8 +129,25 @@ New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.c
 | L1/R1 badges | Dip like keys when pressed: 84% size, 1.5 dp down, 220 ms (`nav.badgePress`) | **Your answer**; the values are proposed |
 | Focus highlight | The light highlight glides along the dock; around app icons it shows as a halo 4 dp out (`nav.focusGlide`) | **Your answer**; the halo is proposed |
 | Dock rise | Rises 24 dp into place when Home opens or you come back (`nav.riseIn`) | **Your answer**; the distance is proposed |
-| Dock slide | When the hints beside it change width, the dock slides to its new place instead of jumping | Proposed |
+| Dock slide | When the hints beside it change width, the dock slides to its new place instead of jumping | Replaced in 0.5.4: the dock no longer moves |
 | Dock items | No longer grow on focus: the gliding highlight shows it | Proposed |
+
+### Whole rows, a fixed dock and pinned games (2026-11-17, from your photos)
+
+| Detail | Value | Status |
+|---|---|---|
+| Overflow | Only rows that fit completely are drawn, nothing cut and no sliver (or shadow) of the next row; moving past the last row scrolls one whole row in. Systems stay 3 × 2, the third row slides in when you move down. Also the Apps grid, a system's games and the pinned row | **Your answer** (whole rows only) |
+| System pages | Whole cards only: a card that doesn't fit waits below until focus moves into it, then the page scrolls so it sits at the top. A card taller than the page (the Report text, the RetroAchievements sign-in) can't fit whole and stays cut | Proposed, how your answer applies to the settings cards |
+| Focus near hidden rows | From outside a grid, only the rows it shows take focus, so Up from the pinned row or the dock never lands on a row out of sight | Proposed |
+| A system's games | With 132 dp covers, one whole row fits above the dock; the next row scrolls in as you move down | Open: keep 132 dp (one row) or 120 dp covers (two rows)? |
+| Dock place | Its left edge lines up with the content above and never moves; the hints follow it, 18 dp after the dock and 14 dp apart | **Your answer** (dock fixed left); the gaps are proposed |
+| Hints that don't fit | Left out whole from the last one back (in a system's games, "B Back" goes first; the B badge stays in the header) | Proposed |
+| Bottom row | Games you pin, newest first; no limit (it scrolls a whole tile at a time). Jump back in still shows the last game played | **Your answer** (only pins); the order is proposed |
+| Pinning | X on any game (Jump back in, a system's games, the row itself) pins or unpins it; the hints read "X Pin" or "X Unpin". The select sound when pinning, the back sound when unpinning; no message | **Your answer** (X); the sounds are proposed |
+| Unpinning from the row | Focus moves to the game that takes its place (or the one before it), or to Jump back in when the row empties | Proposed |
+| Empty row | One glass card at the row's height: an X badge, "Pin your games here", "Press X on any game to add it to this row." | **Your answer** (a hint card); the wording and look are proposed |
+| Pinned row width | As many whole tiles as fit between the left padding and the screen edge less the focus room (7 on the Thor), always from the left: the theme's centre scroll anchor no longer applies to this row | Proposed |
+| Jump back in hint | "A Play" (was "A Jump back in"; the card's own chip still says Jump back in) so "X Pin" fits beside the dock | Proposed |
 
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

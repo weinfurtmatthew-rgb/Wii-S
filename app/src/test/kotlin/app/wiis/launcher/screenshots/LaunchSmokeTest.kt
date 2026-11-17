@@ -22,6 +22,8 @@ import app.wiis.launcher.Session
 import app.wiis.launcher.graph
 import app.wiis.launcher.companion.CompanionActivity
 import app.wiis.launcher.home.HomeActivity
+import app.wiis.launcher.home.HomeViewModel
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertFalse
 import org.junit.Test
@@ -117,13 +119,19 @@ class LaunchSmokeTest {
             run(4000)
             s.onActivity { a ->
                 draw(a, save = "home-${a.resources.configuration.screenWidthDp}")
-                // Jump back in → system tiles → recent row → dock, then back up.
+                // Jump back in → system tiles → pinned row → dock, then back up.
                 repeat(4) { press(a, KeyEvent.KEYCODE_DPAD_RIGHT) }
                 press(a, KeyEvent.KEYCODE_DPAD_DOWN)
+                press(a, KeyEvent.KEYCODE_DPAD_DOWN)
+                draw(a, save = "home-${a.resources.configuration.screenWidthDp}-rows")
                 repeat(6) { press(a, KeyEvent.KEYCODE_DPAD_RIGHT) }
+                press(a, KeyEvent.KEYCODE_DPAD_DOWN)
+                repeat(8) { press(a, KeyEvent.KEYCODE_DPAD_RIGHT) }
+                draw(a, save = "home-${a.resources.configuration.screenWidthDp}-pins")
                 press(a, KeyEvent.KEYCODE_DPAD_DOWN)
                 repeat(4) { press(a, KeyEvent.KEYCODE_DPAD_RIGHT) }
                 repeat(3) { press(a, KeyEvent.KEYCODE_DPAD_UP) }
+                draw(a, save = "home-${a.resources.configuration.screenWidthDp}-up")
                 // Open a system and move around inside it.
                 press(a, KeyEvent.KEYCODE_DPAD_RIGHT)
                 press(a, KeyEvent.KEYCODE_BUTTON_A)
@@ -135,7 +143,12 @@ class LaunchSmokeTest {
                 press(a, KeyEvent.KEYCODE_BUTTON_R1)
                 repeat(3) { press(a, KeyEvent.KEYCODE_DPAD_RIGHT) }
                 press(a, KeyEvent.KEYCODE_BUTTON_R1)
-                repeat(10) { press(a, KeyEvent.KEYCODE_DPAD_DOWN) }
+                val w = a.resources.configuration.screenWidthDp
+                draw(a, save = "system-$w-0")
+                repeat(10) { i ->
+                    press(a, KeyEvent.KEYCODE_DPAD_DOWN)
+                    if (i < 3) draw(a, save = "system-$w-${i + 1}")
+                }
                 press(a, KeyEvent.KEYCODE_BUTTON_L1)
                 press(a, KeyEvent.KEYCODE_BUTTON_L1)
                 assertFalse(a.isFinishing)
@@ -162,6 +175,40 @@ class LaunchSmokeTest {
     }
 
     @Test fun `bottom screen pages for a game, a system and everything`() = bottomPages()
+
+    /**
+     * Pins with the real graph and view model: newest first, saved for the next start, and focus
+     * moving on when a game is unpinned from the row. (HeroScreenshots.pinWithX presses X on the
+     * screen; Robolectric is too slow to walk the activity with focus.)
+     */
+    @Test fun `pins are newest first, saved, and unpinning from the row moves focus on`() {
+        seedLibrary(app, pins = 0)
+        val graph = app.graph
+        val vm = HomeViewModel(graph)
+        val watch = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch { vm.state.collect {} }
+        run(1500)
+        val games = graph.currentGames()
+        val (first, second) = games[0] to games[5]
+        vm.togglePin(first, fromRow = false)
+        vm.togglePin(second, fromRow = false)
+        run(200)
+        org.junit.Assert.assertEquals(listOf(second.uri, first.uri), graph.pins.value)
+        org.junit.Assert.assertEquals(listOf(second.uri, first.uri), vm.state.value.pinned.map { it.uri })
+        org.junit.Assert.assertEquals(
+            listOf(second.uri, first.uri),
+            app.getSharedPreferences("wiis", Context.MODE_PRIVATE).getString("pinned_games", null)?.split("\n"),
+        )
+        // X on the first tile of the row: the next pin takes its place and focus.
+        vm.togglePin(second, fromRow = true)
+        run(200)
+        org.junit.Assert.assertEquals(HomeViewModel.pinKey(first), vm.state.value.heroFocus?.key)
+        // The last one: the row shows its card and focus goes to Jump back in.
+        vm.togglePin(first, fromRow = true)
+        run(200)
+        org.junit.Assert.assertTrue(vm.state.value.pinned.isEmpty())
+        org.junit.Assert.assertEquals(HomeViewModel.KEY_HERO, vm.state.value.heroFocus?.key)
+        watch.cancel()
+    }
 
     private fun bottomPages() {
         seedLibrary(app)
@@ -294,7 +341,7 @@ class LaunchSmokeTest {
     }
 
     /** A library like a real one: every system, playtime on some games, box art on most. */
-    private fun seedLibrary(context: Context) {
+    private fun seedLibrary(context: Context, pins: Int = 9) {
         val systems = listOf("nes", "snes", "n64", "gb", "gbc", "gba", "nds", "n3ds", "gc", "wii", "wiiu", "switch", "genesis", "psx", "ps2", "psp", "xbox360", "steam")
         val titles = listOf("Star Courier", "Puzzle Parade", "Garden Days", "Sky Mail", "Tiny Tactics", "Coral Drift", "Night Lantern", "Pixel Quest (USA)", "The Lumen Island")
         val games = systems.flatMapIndexed { si, sys ->
@@ -315,6 +362,8 @@ class LaunchSmokeTest {
                 prefs.putLong("lp:${g.uri}", now - i * 3_600_000L)
             }
         }
+        // More pins than the row shows, so walking it scrolls.
+        prefs.putString("pinned_games", games.filterIndexed { i, _ -> i % 4 == 1 }.take(pins).joinToString("\n") { it.uri })
         prefs.commit()
 
         val artDir = File(context.filesDir, "art")

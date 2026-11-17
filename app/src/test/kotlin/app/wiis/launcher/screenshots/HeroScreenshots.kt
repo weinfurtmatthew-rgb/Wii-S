@@ -85,7 +85,7 @@ class HeroScreenshots {
 
     @Test fun homeSystem() = shoot("top-2-home-system", home(focus = HomeViewModel.sysKey("nds")))
 
-    @Test fun homeRecent() = shoot("top-3-home-recent", home(focus = HomeViewModel.recentKey(game("gc", "Coral Drift"))))
+    @Test fun homePinned() = shoot("top-3-home-pinned", home(focus = HomeViewModel.pinKey(game("gc", "Coral Drift"))))
 
     @Test fun homeNav() = shoot("top-4-home-nav", home(focus = HomeViewModel.navKey(Section.Apps)))
 
@@ -99,6 +99,46 @@ class HeroScreenshots {
     @Test fun homeHeroDark() = shoot("top-7-home-hero-dark", home(focus = HomeViewModel.KEY_HERO), dark = true)
 
     @Test fun homeSystemDark() = shoot("top-8-home-system-dark", home(focus = HomeViewModel.sysKey("nds")), dark = true)
+
+    /** Nothing pinned yet: the bottom row is one card that says how to pin. */
+    @Test fun homeNoPins() = shoot("top-9-home-no-pins", home(focus = HomeViewModel.KEY_HERO, pinned = emptyList()))
+
+    /** The systems grid moved down to its third row: rows 2 and 3, nothing of row 1 above them. */
+    @Test fun homeThirdRow() = shoot("top-10-home-third-row", home(focus = HomeViewModel.sysKey("ps2")))
+
+    /** The last pinned game: the row scrolls whole tiles, the first ones leave completely. */
+    @Test fun homeLastPin() = shoot("top-11-home-last-pin", home(focus = HomeViewModel.pinKey(game("ps2", "Kite Festival"))))
+
+    /** Many apps: only rows that fit completely, nothing cut off above the dock. */
+    @Test fun appsMany() = shoot(
+        "top-12-apps-many",
+        home(focus = null).copy(section = Section.Apps, apps = (1..22).map { app(appColors.keys.elementAt(it % appColors.size) + " $it") }),
+    )
+
+    /** X on the Jump back in card, then X on that game in the row: pinned, then unpinned. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun pinWithX() {
+        var state by mutableStateOf(home(focus = HomeViewModel.KEY_HERO, pinned = emptyList()))
+        val actions = object : HeroActions by NoActions {
+            override fun togglePin(game: Game, fromRow: Boolean) {
+                val pinned = if (state.pinned.any { it.uri == game.uri }) state.pinned.filter { it.uri != game.uri } else listOf(game) + state.pinned
+                state = state.copy(pinned = pinned, heroFocus = if (fromRow) HeroFocus(HomeViewModel.KEY_HERO, 9L) else state.heroFocus)
+            }
+            override fun focusApplied() { state = state.copy(heroFocus = null) }
+        }
+        render({ state }, actions)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonX) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-13-pinned-with-x.png").path)
+        check(state.pinned.map { it.title } == listOf("Star Courier")) { "pinned: ${state.pinned.map { it.title }}" }
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.DirectionDown) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-14-pin-focused.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonX) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-15-unpinned.png").path)
+        check(state.pinned.isEmpty()) { "still pinned: ${state.pinned.map { it.title }}" }
+    }
 
     // ---- Sample data (design/workbench.html: LIB, RECENT, APPS, DOCK) ------------------------
 
@@ -129,7 +169,8 @@ class HeroScreenshots {
 
     private fun app(label: String) = AppEntry(label, ComponentName("sample.${label.lowercase()}", "sample.Main"), Process.myUserHandle())
 
-    private fun home(focus: String?): HomeUiState {
+    /** [pinned]: the bottom row; by default the workbench's recent games after the first. */
+    private fun home(focus: String?, pinned: List<Game>? = null): HomeUiState {
         val played = recentOrder.mapIndexed { i, (sys, n) -> lib.first { it.first == sys }.second[n].first to (1_000L - i) }.toMap()
         val (hero, recent) = HomeModel.heroAndRecent(library, { played[it.title] ?: 0L }, spec.layout.recentCount, spec.layout.showRecent)
         val systems = HomeModel.systems(library, names, emptyMap(), spec.layout.systemOrder)
@@ -139,7 +180,7 @@ class HeroScreenshots {
             apps = listOf("Settings", "Files", "Browser", "Music", "Camera", "Store", "Clock", "Gallery").map(::app),
             hero = hero,
             heroPlayedMillis = (3 * 60 + 12) * 60_000L,
-            recent = recent,
+            pinned = pinned ?: recent,
             systems = systems,
             allPreview = HomeModel.allTilePreview(hero, recent, systems),
             systemSamples = HomeModel.systemSamples(library, { played[it.title] ?: 0L }, { ratios[it.uri] != null }, hero),
@@ -183,6 +224,25 @@ class HeroScreenshots {
             compose.onRoot().captureRoboImage(File(outDir, "dock-$at.png").path)
         }
     }
+
+    private fun render(state: () -> HomeUiState, actions: HeroActions) {
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            val inputMode = LocalInputModeManager.current
+            var ready by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { inputMode.requestInputMode(InputMode.Keyboard); ready = true }
+            if (ready) {
+                WiisTheme(spec = spec, fonts = fonts(), feedback = UiFeedback.None) {
+                    CompositionLocalProvider(LocalImageSource provides images) {
+                        HeroHomeScreen(state(), DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) {}
+                    }
+                }
+            }
+        }
+        settle()
+    }
+
+    private fun settle() = repeat(30) { compose.mainClock.advanceTimeBy(100); compose.waitForIdle(); Thread.sleep(15) }
 
     private fun shoot(name: String, state: HomeUiState, dark: Boolean = false) {
         val theme = spec.resolve(dark)
@@ -306,6 +366,7 @@ class HeroScreenshots {
         override fun focusApp(app: AppEntry) = Unit
         override fun launchGame(game: Game) = Unit
         override fun openPicker(game: Game) = Unit
+        override fun togglePin(game: Game, fromRow: Boolean) = Unit
         override fun launchApp(app: AppEntry) = Unit
         override fun openDockPicker(slot: Int) = Unit
         override fun focusApplied() = Unit

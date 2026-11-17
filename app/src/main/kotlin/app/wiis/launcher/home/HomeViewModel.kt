@@ -61,7 +61,7 @@ sealed interface HomeView {
 }
 
 /**
- * Hero layout: the element that should take focus. Keys: "hero", "sys:<id>", "recent:<uri>",
+ * Hero layout: the element that should take focus. Keys: "hero", "sys:<id>", "pin:<uri>",
  * "grid:<uri>", "nav:<section>", "dock:<slot>". [token] changes on every request.
  */
 data class HeroFocus(val key: String, val token: Long)
@@ -79,7 +79,8 @@ data class HomeUiState(
     // Hero layout
     val hero: Game? = null,
     val heroPlayedMillis: Long = 0,
-    val recent: List<Game> = emptyList(),
+    /** The bottom row: games pinned with X, newest first (only those in the library). */
+    val pinned: List<Game> = emptyList(),
     val systems: List<SystemEntry> = emptyList(),
     val allPreview: List<String> = emptyList(),
     /** Per system id ("all" included): the game whose art fills its XMB icon. */
@@ -131,6 +132,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             }
         }
         viewModelScope.launch { graph.shared.openApps.collect { selectSection(Section.Apps) } }
+        viewModelScope.launch { graph.pins.collect { pins -> local.update { it.copy(pinned = Pins.resolve(pins, games)) } } }
         viewModelScope.launch {
             graph.shared.openSystemPage.collect { page ->
                 selectSection(Section.System)
@@ -185,6 +187,25 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     fun heroFocusConsumed() = local.update { it.copy(heroFocus = null) }
+
+    /**
+     * X on a game: pins it to the bottom row, or unpins it. Unpinned from the row itself, focus
+     * moves to the game that takes its place (or the one before it), or to the Jump back in card
+     * once the row is empty.
+     */
+    fun togglePin(game: Game, fromRow: Boolean) {
+        val before = local.value.pinned
+        val pinned = graph.togglePin(game.uri)
+        val after = Pins.resolve(graph.pins.value, games)
+        val focus = if (fromRow && !pinned) {
+            val i = before.indexOfFirst { it.uri == game.uri }.coerceAtLeast(0)
+            val next = after.getOrNull(i) ?: after.lastOrNull()
+            HeroFocus(if (next != null) pinKey(next) else KEY_HERO, token())
+        } else {
+            null
+        }
+        local.update { it.copy(pinned = after, heroFocus = focus ?: it.heroFocus) }
+    }
     fun systemPageShown() = local.update { it.copy(systemPage = null) }
 
     /** Y on a dock app: choose another app for that spot. */
@@ -203,7 +224,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private fun homeFocus(s: HomeUiState): HeroFocus? = when {
         s.hero != null -> HeroFocus(KEY_HERO, token())
-        s.recent.isNotEmpty() -> HeroFocus(recentKey(s.recent.first()), token())
+        s.pinned.isNotEmpty() -> HeroFocus(pinKey(s.pinned.first()), token())
         s.systems.isNotEmpty() -> HeroFocus(sysKey(s.systems.first().id), token())
         else -> null
     }
@@ -217,7 +238,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         return s.copy(
             hero = hero,
             heroPlayedMillis = hero?.let { graph.playtime.totalMillis(it.uri) } ?: 0L,
-            recent = recent,
+            pinned = Pins.resolve(graph.pins.value, games),
             systems = systems,
             allPreview = HomeModel.allTilePreview(hero, recent, systems),
             systemSamples = HomeModel.systemSamples(games, { graph.playtime.lastPlayed(it.uri) }, graph.art::hasArt, hero),
@@ -388,7 +409,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
         const val KEY_HERO = "hero"
         fun sysKey(id: String) = "sys:$id"
-        fun recentKey(game: Game) = "recent:${game.uri}"
+        fun pinKey(game: Game) = "pin:${game.uri}"
         fun gridKey(game: Game) = "grid:${game.uri}"
         fun navKey(section: Section) = "nav:${section.name}"
         fun dockKey(slot: Int) = "dock:$slot"

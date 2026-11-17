@@ -18,7 +18,6 @@ import androidx.compose.foundation.gestures.BringIntoViewSpec
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,6 +34,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.ColorFilter
@@ -44,11 +44,16 @@ import androidx.compose.ui.graphics.graphicsLayer
 import app.wiis.designsystem.ConsoleGlyph
 import app.wiis.launcher.ui.DotsBackground
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.ui.focus.focusProperties
+import app.wiis.launcher.ui.WindowSpec
+import app.wiis.launcher.ui.itemShown
+import app.wiis.launcher.ui.rowShown
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -85,7 +90,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -117,8 +121,8 @@ import app.wiis.launcher.ui.AppIcon
 import app.wiis.launcher.ui.ArtBackground
 import app.wiis.launcher.ui.BgSubject
 import app.wiis.launcher.ui.ClockText
+import app.wiis.launcher.ui.Hint
 import app.wiis.launcher.ui.HintBar
-import app.wiis.launcher.ui.SystemBadge
 import app.wiis.launcher.ui.rememberArt
 import app.wiis.launcher.ui.ConsoleMark
 import app.wiis.launcher.ui.Cover
@@ -151,10 +155,8 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onPlaced
-import androidx.compose.ui.layout.positionInParent
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import androidx.compose.animation.core.AnimationVector1D
 import kotlinx.coroutines.CoroutineScope
@@ -179,6 +181,7 @@ interface HeroActions {
     fun focusApp(app: AppEntry)
     fun launchGame(game: Game)
     fun openPicker(game: Game)
+    fun togglePin(game: Game, fromRow: Boolean)
     fun launchApp(app: AppEntry)
     fun openDockPicker(slot: Int)
     fun focusApplied()
@@ -205,6 +208,7 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun focusApp(app: AppEntry) = vm.focusApp(app)
             override fun launchGame(game: Game) = vm.launchGame(game)
             override fun openPicker(game: Game) = vm.openPicker(game)
+            override fun togglePin(game: Game, fromRow: Boolean) = vm.togglePin(game, fromRow)
             override fun launchApp(app: AppEntry) = vm.launchApp(app)
             override fun openDockPicker(slot: Int) = vm.openDockPicker(slot)
             override fun focusApplied() = vm.heroFocusConsumed()
@@ -224,7 +228,7 @@ private sealed interface Focused {
     data object None : Focused
     data class Hero(val game: Game) : Focused
     data class System(val entry: SystemEntry) : Focused
-    data class Recent(val game: Game) : Focused
+    data class Pinned(val game: Game) : Focused
     data class InGrid(val game: Game) : Focused
     data class Nav(val section: Section) : Focused
     data class DockApp(val app: AppEntry) : Focused
@@ -256,7 +260,7 @@ fun HeroHomeScreen(
         focused = f
         when (f) {
             is Focused.Hero -> { subject = BgSubject.OfGame(f.game); actions.focusGame(f.game) }
-            is Focused.Recent -> { subject = BgSubject.OfGame(f.game); actions.focusGame(f.game) }
+            is Focused.Pinned -> { subject = BgSubject.OfGame(f.game); actions.focusGame(f.game) }
             is Focused.InGrid -> { subject = BgSubject.OfGame(f.game); actions.focusGame(f.game) }
             is Focused.System -> { subject = BgSubject.OfSystem(f.entry.id); actions.focusSystem(f.entry) }
             is Focused.DockApp -> { subject = null; actions.focusApp(f.app) }
@@ -289,6 +293,15 @@ fun HeroHomeScreen(
                     Key.ButtonR1 -> { presses.r1++; feedback.emit(UiEvent.Tab); actions.cycleSection(+1); true }
                     Key.ButtonStart -> { feedback.emit(UiEvent.Tab); actions.onStart(); true }
                     Key.ButtonSelect -> { feedback.emit(UiEvent.Tab); actions.onSelect(); true }
+                    // X pins the highlighted game to the bottom row, or unpins it.
+                    Key.ButtonX -> {
+                        val game = gameOf(focused)
+                        if (game == null || state.section != Section.Games) false else {
+                            feedback.emit(if (state.isPinned(game)) UiEvent.Back else UiEvent.Select)
+                            actions.togglePin(game, fromRow = focused is Focused.Pinned)
+                            true
+                        }
+                    }
                     else -> false
                 }
             },
@@ -329,9 +342,8 @@ fun HeroHomeScreen(
                 }
             }
             if (nameplate) {
-                DockRow(Modifier.fillMaxWidth().padding(top = 10.dp)) {
+                DockRow(info.hints, Modifier.fillMaxWidth().padding(top = 10.dp)) {
                     NavDock(state, actions, onFocused, presses)
-                    HintBar(info.hints, fill = false, gap = 14.dp)
                 }
             } else if (dockNav) {
                 Row(Modifier.fillMaxWidth().padding(top = 10.dp), horizontalArrangement = Arrangement.Center) {
@@ -343,25 +355,35 @@ fun HeroHomeScreen(
 }
 
 /**
- * The dock with the button hints to its right, laid out like the workbench's CSS grid
- * (1fr auto 1fr): the dock is centred while the hints fit beside it; longer hints keep their full
- * width and push the dock left rather than wrap.
+ * The dock with the button hints after it. The dock's left edge lines up with the content above
+ * and never moves, whatever the hints say; the hints follow its right edge. A hint that doesn't
+ * fit is left out whole, along with the ones after it.
  */
 @Composable
-private fun DockRow(modifier: Modifier, content: @Composable () -> Unit) {
-    Layout(content, modifier) { measurables, constraints ->
-        val dock = measurables[0].measure(constraints.copy(minWidth = 0))
-        val hints = measurables.getOrNull(1)?.measure(Constraints())
+private fun DockRow(hints: List<Pair<String, String>>, modifier: Modifier, dock: @Composable () -> Unit) {
+    val shown = if (LocalWiis.current.spec.hints.show) hints else emptyList()
+    Layout({ dock(); shown.forEach { (button, label) -> Hint(button, label) } }, modifier) { measurables, constraints ->
+        val dockP = measurables[0].measure(constraints.copy(minWidth = 0))
         val width = constraints.maxWidth
-        val right = maxOf(hints?.width ?: 0, (width - dock.width) / 2)
-        val left = (width - dock.width - right).coerceAtLeast(0)
-        val height = maxOf(dock.height, hints?.height ?: 0)
+        val placed = ArrayList<Pair<Placeable, Int>>()
+        var x = dockP.width + DOCK_HINTS_GAP.roundToPx()
+        for (m in measurables.drop(1)) {
+            val p = m.measure(Constraints())
+            if (x + p.width > width) break
+            placed += p to x
+            x += p.width + HINTS_GAP.roundToPx()
+        }
+        val height = maxOf(dockP.height, placed.maxOfOrNull { it.first.height } ?: 0)
         layout(width, height) {
-            dock.place(left, (height - dock.height) / 2)
-            hints?.place(width - hints.width, (height - hints.height) / 2)
+            dockP.place(0, (height - dockP.height) / 2)
+            placed.forEach { (p, px) -> p.place(px, (height - p.height) / 2) }
         }
     }
 }
+
+/** Between the dock and its first hint, and between hints. */
+private val DOCK_HINTS_GAP = 18.dp
+private val HINTS_GAP = 14.dp
 
 // ---- Header ---------------------------------------------------------------------------------
 
@@ -531,12 +553,13 @@ private fun Caption(focused: Focused, state: HomeUiState, inHeader: Boolean) {
 private fun captionFor(f: Focused, state: HomeUiState, style: WiisStyle): CaptionInfo {
     val spec = style.spec
     fun systemName(id: String) = state.systems.firstOrNull { it.id == id }?.name ?: id
-    val play = listOf("A" to "Play", "Y" to "Emulator")
+    // A, Y and X on any game; the dock leaves out whole hints from the end when they don't fit.
+    fun play(game: Game) = listOf("A" to "Play", "Y" to "Emulator", "X" to if (state.isPinned(game)) "Unpin" else "Pin")
     return when (f) {
-        is Focused.Hero -> CaptionInfo("Last played", f.game.title, systemName(f.game.systemId), style.systemColor(f.game.systemId), listOf("A" to spec.hero.prompt, "Y" to "Emulator"))
+        is Focused.Hero -> CaptionInfo("Last played", f.game.title, systemName(f.game.systemId), style.systemColor(f.game.systemId), play(f.game))
         is Focused.System -> CaptionInfo("System", f.entry.name, gamesCount(f.entry.count), systemTint(f.entry.id, style), listOf("A" to "Open"))
-        is Focused.Recent -> CaptionInfo("Recent", f.game.title, systemName(f.game.systemId), style.systemColor(f.game.systemId), play)
-        is Focused.InGrid -> CaptionInfo(systemName(f.game.systemId), f.game.title, "", style.systemColor(f.game.systemId), play + ("B" to "Back"))
+        is Focused.Pinned -> CaptionInfo("Pinned", f.game.title, systemName(f.game.systemId), style.systemColor(f.game.systemId), play(f.game))
+        is Focused.InGrid -> CaptionInfo(systemName(f.game.systemId), f.game.title, "", style.systemColor(f.game.systemId), play(f.game) + ("B" to "Back"))
         is Focused.Nav -> CaptionInfo(if (spec.nav.style == "dock") "Go to" else "Tabs", sectionLabel(f.section, style), "", style.accent, listOf("A" to "Open", "L1/R1" to "Switch"))
         is Focused.DockApp -> CaptionInfo("App", f.app.label, "", style.accent, listOf("A" to "Open", "Y" to "Change"))
         is Focused.AppTile -> CaptionInfo("App", f.app.label, "", style.accent, listOf("A" to "Open"))
@@ -632,9 +655,9 @@ private fun HomePage(hero: Game, state: HomeUiState, actions: HeroActions, onFoc
         Column(verticalArrangement = Arrangement.spacedBy(gap.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(gap.dp), verticalAlignment = Alignment.Top) {
                 HeroCard(hero, state.heroPlayedMillis, state.systems, heroW.dp, blockH.dp, state.heroFocus, actions, onFocused)
-                SystemsGrid(state, cols, gridW.dp, blockH.dp, cellW.dp, sysH.dp, roomS.dp, actions, onFocused)
+                SystemsGrid(state, cols, rows, gridW.dp, blockH.dp, cellW.dp, sysH.dp, roomS.dp, actions, onFocused)
             }
-            if (state.recent.isNotEmpty()) RecentRow(state.recent, state.heroFocus, actions, onFocused)
+            if (l.showRecent) PinnedRow(state.pinned, innerW, state.heroFocus, actions, onFocused)
         }
     }
 }
@@ -766,6 +789,7 @@ private class CenterSpec : BringIntoViewSpec {
 private fun SystemsGrid(
     state: HomeUiState,
     cols: Int,
+    rows: Int,
     width: Dp,
     height: Dp,
     cellW: Dp,
@@ -776,21 +800,41 @@ private fun SystemsGrid(
 ) {
     val style = LocalWiis.current
     val gap = style.spec.spacing.tileGap.dp
-    // The grid shows systemRows rows and scrolls just enough to keep the focused tile in them
-    // (the scroll area is larger by the focus room on every side).
-    val roomPx = with(LocalDensity.current) { room.toPx() }
+    val density = LocalDensity.current
+    // Whole rows only: the grid shows [rows] rows; moving past them scrolls one whole row in. The
+    // scroll area is larger by the focus room on every side so a growing tile isn't cut, but
+    // nothing of a row outside the window is drawn there (not even its shadow).
+    val roomPx = with(density) { room.toPx() }
+    val tilePx = with(density) { cellH.roundToPx() }
+    val pitch = tilePx + with(density) { gap.roundToPx() }
+    val windowPx = rows * pitch - (pitch - tilePx)
     val spec = remember(roomPx) { EdgeSpec(roomPx) }
+    val scroll = rememberScrollState()
+    var inside by remember { mutableStateOf(false) }
+    fun shown(row: Int): Boolean {
+        val top = row * pitch
+        return top < scroll.value + windowPx - 1 && top + tilePx > scroll.value + 1
+    }
     CompositionLocalProvider(LocalBringIntoViewSpec provides spec) {
         Column(
             Modifier
                 .size(width, height)
                 .bleed(room, room)
-                .verticalScroll(rememberScrollState())
+                .onFocusChanged { inside = it.hasFocus }
+                .verticalScroll(scroll)
                 .padding(room),
             verticalArrangement = Arrangement.spacedBy(gap),
         ) {
-            state.systems.chunked(cols).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(gap)) {
+            state.systems.chunked(cols).forEachIndexed { i, row ->
+                val targeted = row.any { HomeViewModel.sysKey(it.id) == state.heroFocus?.key }
+                Row(
+                    Modifier
+                        .graphicsLayer { alpha = if (shown(i)) 1f else 0f }
+                        // From outside the grid only the rows it shows take focus, so Up from the
+                        // pinned row or the dock never lands on a row out of sight.
+                        .focusProperties { canFocus = inside || targeted || shown(i) },
+                    horizontalArrangement = Arrangement.spacedBy(gap),
+                ) {
                     row.forEach { entry -> SystemTile(entry, state.allPreview, state.systemSamples[entry.id], cellW, cellH, state.heroFocus, actions, onFocused) }
                 }
             }
@@ -958,51 +1002,94 @@ private fun MiniCovers(systemIds: List<String>, mini: Int) {
 
 // ---- Recent row and game tiles --------------------------------------------------------------
 
+/**
+ * The bottom row: games pinned with X, newest first. Whole tiles only: as many as fit between the
+ * left padding and the screen edge (less the focus room); moving past the last one scrolls one
+ * whole tile in. With nothing pinned yet it shows one card saying how to pin.
+ */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun RecentRow(games: List<Game>, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit) {
+private fun PinnedRow(games: List<Game>, innerW: Int, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit) {
     val style = LocalWiis.current
     val spec = style.spec
     val size = spec.layout.recentTileSize
+    if (games.isEmpty()) {
+        PinHintCard(size.dp)
+        return
+    }
     val pad = spec.spacing.screenPadding
+    val gap = spec.spacing.tileGap
     val roomR = room(style, size)
-    val rowState = rememberLazyListState()
-    LaunchedEffect(target?.token) {
-        val i = target?.let { t -> games.indexOfFirst { HomeViewModel.recentKey(it) == t.key } } ?: -1
-        if (i >= 0) rowState.scrollToItem(i)
-    }
+    val fit = max(1, (innerW + pad - roomR + gap) / (size + gap))
+    val windowW = fit * (size + gap) - gap
     val density = LocalDensity.current
-    // The row spans the screen edge to edge (it scrolls under the side padding, like the workbench),
-    // so "start" and "edge" leave the padding plus a little room for the focused tile to grow.
-    val lead = with(density) {
-        val s = spec.shape
-        (pad + s.focusRingGap + s.focusRingWidth + (max(s.tileWidth, s.tileHeight) * (spec.motion.focusScale - 1f) / 2f).roundToInt() + 4).dp.toPx()
-    }
-    val anchor: BringIntoViewSpec = remember(spec.layout.scrollAnchor, lead) {
-        when (spec.layout.scrollAnchor) {
-            "center" -> CenterSpec()
-            "start" -> object : BringIntoViewSpec {
-                override fun calculateScrollDistance(offset: Float, size: Float, containerSize: Float): Float = offset - lead
-            }
-            else -> EdgeSpec(lead)
+    val padPx = with(density) { pad.dp.roundToPx() }
+    val windowPx = with(density) { fit * (size.dp.roundToPx() + gap.dp.roundToPx()) - gap.dp.roundToPx() }
+    val rowState = rememberLazyListState()
+    var inside by remember { mutableStateOf(false) }
+    LaunchedEffect(target?.token) {
+        val i = target?.let { t -> games.indexOfFirst { HomeViewModel.pinKey(it) == t.key } } ?: -1
+        if (i >= 0 && !rowState.itemShown(i, windowPx)) {
+            rowState.scrollToItem(if (i < rowState.firstVisibleItemIndex) i else max(0, i - fit + 1))
         }
     }
-    CompositionLocalProvider(LocalBringIntoViewSpec provides anchor) {
+    val window = remember(padPx, windowPx) { WindowSpec(padPx.toFloat(), windowPx.toFloat()) }
+    CompositionLocalProvider(LocalBringIntoViewSpec provides window) {
         LazyRow(
             state = rowState,
-            modifier = Modifier.fillMaxWidth().height(size.dp).bleed(pad.dp, roomR.dp),
-            contentPadding = PaddingValues(horizontal = pad.dp, vertical = roomR.dp),
-            horizontalArrangement = Arrangement.spacedBy(spec.spacing.tileGap.dp),
+            // The row spans the screen edge to edge (it scrolls under the side padding); the end
+            // padding makes its last scroll position a whole tile too.
+            modifier = Modifier.fillMaxWidth().height(size.dp).bleed(pad.dp, roomR.dp).onFocusChanged { inside = it.hasFocus },
+            contentPadding = PaddingValues(start = pad.dp, end = (innerW + 2 * pad - pad - windowW).coerceAtLeast(0).dp, top = roomR.dp, bottom = roomR.dp),
+            horizontalArrangement = Arrangement.spacedBy(gap.dp),
         ) {
-            items(games, key = { it.uri }, contentType = { "game" }) { game ->
-                ArtTile(game, size, HomeViewModel.recentKey(game), target, actions) { onFocused(Focused.Recent(game)) }
+            itemsIndexed(games, key = { _, g -> g.uri }, contentType = { _, _ -> "game" }) { i, game ->
+                val key = HomeViewModel.pinKey(game)
+                ArtTile(
+                    game, size, key, target, actions,
+                    Modifier
+                        .graphicsLayer { alpha = if (rowState.itemShown(i, windowPx)) 1f else 0f }
+                        .focusProperties { canFocus = inside || target?.key == key || rowState.itemShown(i, windowPx) },
+                ) { onFocused(Focused.Pinned(game)) }
             }
         }
     }
 }
 
+/** The bottom row before anything is pinned: one card that says how. */
 @Composable
-private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, actions: HeroActions, onFocus: () -> Unit) {
+private fun PinHintCard(height: Dp) {
+    val style = LocalWiis.current
+    val spec = style.spec
+    Row(
+        Modifier
+            .height(height)
+            .glassBox(style, RoundedCornerShape(spec.glass.radius.dp))
+            .padding(start = 22.dp, end = 28.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(Modifier.size(40.dp).background(style.hintColor("X"), CircleShape), contentAlignment = Alignment.Center) {
+            Text("X", style = TextStyle(fontFamily = style.fonts.body, fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, lineHeight = 17.sp, color = style.hintBadgeText))
+        }
+        Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Text(
+                "Pin your games here",
+                style = TextStyle(
+                    fontFamily = style.fonts.display,
+                    fontWeight = FontWeight(spec.type.tabWeight.coerceIn(100, 900)),
+                    fontSize = spec.type.tileTitleSize.sp,
+                    color = style.glassText,
+                ),
+                maxLines = 1,
+            )
+            Text("Press X on any game to add it to this row.", style = style.label.copy(color = style.glassTextMuted), maxLines = 1)
+        }
+    }
+}
+
+@Composable
+private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, actions: HeroActions, modifier: Modifier = Modifier, onFocus: () -> Unit) {
     val style = LocalWiis.current
     val radius = min(style.spec.shape.tileRadius, (size / 4f).roundToInt())
     val shape = RoundedCornerShape(radius.dp)
@@ -1014,7 +1101,7 @@ private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, acti
         clickSound = null,
         shape = shape,
         ringRadius = radius.dp,
-        modifier = Modifier
+        modifier = modifier
             .size(size.dp)
             .focusTarget(key, target, actions)
             .onFocusChanged { if (it.isFocused) onFocus() },
@@ -1045,9 +1132,6 @@ private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActio
         val i = target?.let { t -> games.indexOfFirst { HomeViewModel.gridKey(it) == t.key } } ?: -1
         if (i >= 0) gridState.scrollToItem(i)
     }
-    val leadPx = with(LocalDensity.current) { 30.dp.toPx() }
-    val edge = remember(leadPx) { EdgeSpec(leadPx) }
-
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.height(36.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             ButtonBadge("B")
@@ -1069,19 +1153,8 @@ private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActio
             Text(gamesCount(games.size), style = style.label, maxLines = 1)
         }
         Box(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
-            CompositionLocalProvider(LocalBringIntoViewSpec provides edge) {
-                LazyVerticalGrid(
-                    state = gridState,
-                    columns = GridCells.FixedSize(size.dp),
-                    contentPadding = PaddingValues(roomS.dp),
-                    horizontalArrangement = Arrangement.spacedBy(gap),
-                    verticalArrangement = Arrangement.spacedBy(gap),
-                    modifier = Modifier.fillMaxSize(),
-                ) {
-                    items(games, key = { it.uri }, contentType = { "game" }) { game ->
-                        ArtTile(game, size, HomeViewModel.gridKey(game), target, actions) { onFocused(Focused.InGrid(game)) }
-                    }
-                }
+            WholeRowsGrid(games, { it.uri }, size.dp, size.dp, roomS.dp, gridState, Modifier, { HomeViewModel.gridKey(it) == target?.key }) { game, whole ->
+                ArtTile(game, size, HomeViewModel.gridKey(game), target, actions, whole) { onFocused(Focused.InGrid(game)) }
             }
         }
     }
@@ -1103,41 +1176,89 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
         }
     }
     val shape = RoundedCornerShape(spec.glass.radius.dp)
-    LazyVerticalGrid(
-        columns = GridCells.FixedSize(136.dp),
-        // Same tile positions as the workbench, with side room so a growing tile isn't cut off.
-        modifier = Modifier.fillMaxSize().bleed(roomA.dp, 0.dp),
-        contentPadding = PaddingValues(horizontal = roomA.dp, vertical = roomA.dp),
-        horizontalArrangement = Arrangement.spacedBy(spec.spacing.tileGap.dp),
-        verticalArrangement = Arrangement.spacedBy(spec.spacing.tileGap.dp),
-    ) {
-        items(apps, key = { it.key }, contentType = { "app" }) { app ->
-            WiisTile(
-                onClick = { actions.launchApp(app) },
-                shape = shape,
-                fill = style.glassFill,
-                fillFocused = style.glassFill,
-                ringRadius = spec.glass.radius.dp,
+    val gridState = rememberLazyGridState()
+    // Same tile positions as the workbench, with side room so a growing tile isn't cut off.
+    WholeRowsGrid(apps, { it.key }, 136.dp, 120.dp, roomA.dp, gridState, Modifier.bleed(roomA.dp, 0.dp), { false }) { app, whole ->
+        WiisTile(
+            onClick = { actions.launchApp(app) },
+            shape = shape,
+            fill = style.glassFill,
+            fillFocused = style.glassFill,
+            ringRadius = spec.glass.radius.dp,
+            modifier = whole
+                .size(136.dp, 120.dp)
+                .then(if (app == apps.first()) Modifier.focusRequester(first) else Modifier)
+                .onFocusChanged { if (it.isFocused) onFocused(Focused.AppTile(app)) },
+        ) {
+            Box(Modifier.fillMaxSize()) {
+                Column(
+                    Modifier.fillMaxSize().padding(horizontal = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    AppIcon(app, 52)
+                    Text(
+                        app.label,
+                        style = TextStyle(fontFamily = style.fonts.body, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = style.glassText),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                if (spec.glass.borderWidth > 0f) Box(Modifier.matchParentSize().border(spec.glass.borderWidth.dp, style.glassBorder, shape))
+            }
+        }
+    }
+}
+
+/**
+ * A grid of [cellW]×[cellH] tiles that shows whole rows only: as many as fit completely, one more
+ * scrolling in (a whole row) when focus moves past them. Nothing of the rows outside the window is
+ * drawn, and from outside the grid only the rows it shows take focus. [tile] gets the modifier
+ * that does this for each tile; [targeted] says whether the view model asked to focus an item.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun <T> WholeRowsGrid(
+    items: List<T>,
+    key: (T) -> Any,
+    cellW: Dp,
+    cellH: Dp,
+    room: Dp,
+    state: LazyGridState,
+    modifier: Modifier,
+    targeted: (T) -> Boolean,
+    tile: @Composable (T, Modifier) -> Unit,
+) {
+    val gap = LocalWiis.current.spec.spacing.tileGap.dp
+    val density = LocalDensity.current
+    var inside by remember { mutableStateOf(false) }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val tilePx = with(density) { cellH.roundToPx() }
+        val gapPx = with(density) { gap.roundToPx() }
+        val roomPx = with(density) { room.roundToPx() }
+        val rows = max(1, (constraints.maxHeight - 2 * roomPx + gapPx) / (tilePx + gapPx))
+        val heightPx = rows * (tilePx + gapPx) - gapPx + 2 * roomPx
+        val edge = remember(roomPx) { EdgeSpec(roomPx.toFloat()) }
+        CompositionLocalProvider(LocalBringIntoViewSpec provides edge) {
+            LazyVerticalGrid(
+                state = state,
+                columns = GridCells.FixedSize(cellW),
+                contentPadding = PaddingValues(room),
+                horizontalArrangement = Arrangement.spacedBy(gap),
+                verticalArrangement = Arrangement.spacedBy(gap),
                 modifier = Modifier
-                    .size(136.dp, 120.dp)
-                    .then(if (app == apps.first()) Modifier.focusRequester(first) else Modifier)
-                    .onFocusChanged { if (it.isFocused) onFocused(Focused.AppTile(app)) },
+                    .fillMaxWidth()
+                    .height(with(density) { heightPx.toDp() })
+                    .then(modifier)
+                    .onFocusChanged { inside = it.hasFocus },
             ) {
-                Box(Modifier.fillMaxSize()) {
-                    Column(
-                        Modifier.fillMaxSize().padding(horizontal = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        AppIcon(app, 52)
-                        Text(
-                            app.label,
-                            style = TextStyle(fontFamily = style.fonts.body, fontWeight = FontWeight.Bold, fontSize = 12.sp, color = style.glassText),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                    if (spec.glass.borderWidth > 0f) Box(Modifier.matchParentSize().border(spec.glass.borderWidth.dp, style.glassBorder, shape))
+                itemsIndexed(items, key = { _, item -> key(item) }) { i, item ->
+                    tile(
+                        item,
+                        Modifier
+                            .graphicsLayer { alpha = if (state.rowShown(i)) 1f else 0f }
+                            .focusProperties { canFocus = inside || targeted(item) || state.rowShown(i) },
+                    )
                 }
             }
         }
@@ -1237,21 +1358,12 @@ private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focuse
         if (nav.riseIn && ms > 0) scope.launch { rise.snapTo(1f); rise.animateTo(0f, tween(ms * 6 / 5, easing = LinearOutSlowInEasing)) }
     }
     val riseBy = with(density) { 24.dp.toPx() }
-    val slide = remember { Animatable(0f) }
-    val lastX = remember { floatArrayOf(Float.NaN) }
 
     val pillColor = style.tabActiveFill
     val highlightColor = navFocusFill()
     Row(
         Modifier
-            .onPlaced { c ->
-                // Placed elsewhere (the hints beside it changed width): start from where it was and slide over.
-                val x = c.positionInParent().x
-                val was = lastX[0]
-                lastX[0] = x
-                if (!was.isNaN() && was != x && ms > 0) scope.launch { slide.snapTo(slide.value + (was - x)); slide.animateTo(0f, smooth(ms)) }
-            }
-            .graphicsLayer { translationX = slide.value; translationY = rise.value * riseBy; alpha = 1f - rise.value }
+            .graphicsLayer { translationY = rise.value * riseBy; alpha = 1f - rise.value }
             .glassBox(style, CircleShape)
             .onPlaced { dock[0] = it; items.keys.forEach(::measure) }
             .drawBehind {
@@ -1386,6 +1498,15 @@ private fun sectionLabel(section: Section, style: WiisStyle) = when (section) {
 private fun systemTint(id: String, style: WiisStyle): Color = if (id == HomeModel.ALL) style.accent else style.systemColor(id)
 
 private fun gamesCount(n: Int) = if (n == 1) "1 game" else "$n games"
+
+private fun HomeUiState.isPinned(game: Game) = pinned.any { it.uri == game.uri }
+
+private fun gameOf(f: Focused): Game? = when (f) {
+    is Focused.Hero -> f.game
+    is Focused.Pinned -> f.game
+    is Focused.InGrid -> f.game
+    else -> null
+}
 
 /**
  * Takes focus when the view model names [key] (a new [HeroFocus.token] each time). Programmatic
