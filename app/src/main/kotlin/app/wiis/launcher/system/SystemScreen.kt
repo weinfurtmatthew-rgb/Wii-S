@@ -33,6 +33,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -49,6 +51,7 @@ import app.wiis.launcher.AppGraph
 import app.wiis.launcher.BuildConfigInfo
 import app.wiis.launcher.graph
 import app.wiis.launcher.ui.WholeCardsColumn
+import app.wiis.launcher.ui.wholeCard
 import app.wiis.launcher.ui.ActionTile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -75,21 +78,26 @@ private val EVENT_LABELS = mapOf(
 fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onPageShown: () -> Unit = {}) {
     val style = LocalWiis.current
     var page by rememberSaveable { mutableStateOf(Page.Theme) }
-    val first = remember { FocusRequester() }
-    LaunchedEffect(Unit) { runCatching { first.requestFocus() } }
+    val tabs = remember { Page.entries.associateWith { FocusRequester() } }
+    LaunchedEffect(Unit) { runCatching { tabs.getValue(page).requestFocus() } }
     LaunchedEffect(requestedPage) {
         if (requestedPage == "ra") page = Page.Achievements
         if (requestedPage != null) onPageShown()
     }
 
     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.padding(start = 8.dp, top = 6.dp)) {
-            Page.entries.forEachIndexed { i, p ->
+        // Up from a page comes back to the tab it was opened from (the open page's tab the first
+        // time), not to whichever tab happens to be above.
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.padding(start = 8.dp, top = 6.dp).focusRestorer(tabs.getValue(page)).focusGroup(),
+        ) {
+            Page.entries.forEach { p ->
                 ActionTile(
                     label = p.label,
                     onClick = { page = p },
                     emphasized = p == page,
-                    modifier = if (i == 0) Modifier.focusRequester(first) else Modifier,
+                    modifier = Modifier.focusRequester(tabs.getValue(p)),
                 )
             }
         }
@@ -112,6 +120,7 @@ fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onP
 private fun Section(title: String, style: WiisStyle, body: @Composable () -> Unit) {
     Column(
         Modifier
+            .wholeCard()
             .fillMaxWidth()
             .background(style.surface, style.cardShape)
             .padding(18.dp),
@@ -319,7 +328,7 @@ private fun ReportPage(style: WiisStyle, onPickRomFolder: () -> Unit) {
         savedTo = withContext(Dispatchers.IO) { saveReport(context, report) }
     }
 
-    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    FlowRow(Modifier.wholeCard(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ActionTile("Refresh", onClick = { refresh++ })
         ActionTile("Share report", onClick = { share(context, report) })
         ActionTile("Re-place bottom screen", onClick = { graph.companionPlacer.ensurePlaced(force = true, from = context); refresh++ })

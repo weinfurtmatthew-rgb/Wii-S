@@ -120,30 +120,9 @@ fun WiisTile(
 
     Box(
         modifier
-            .graphicsLayer {
-                // A big card grows by at most focusGrowMax dp per side; small tiles grow by focusScale.
-                val longest = maxOf(size.width, size.height)
-                val growCap = if (longest > 0f) 1f + 2f * motion.focusGrowMax.coerceAtLeast(0).dp.toPx() / longest else motion.focusScale
-                val focusScale = minOf(motion.focusScale, growCap)
-                val scale = (if (grow) 1f + (focusScale - 1f) * focusProgress else 1f) * (1f - (1f - motion.pressScale) * pressProgress)
-                scaleX = scale
-                scaleY = scale
-                translationY = if (grow) (-motion.focusLift * focusProgress + motion.idleBobAmplitude * bob).dp.toPx() else 0f
-            }
-            .drawWithContent {
-                drawContent()
-                if (ring && ringWidth.value > 0f && focusProgress > 0.01f) {
-                    val outset = ringGap.toPx() + ringWidth.toPx() / 2
-                    val r = radius.toPx() + outset
-                    drawRoundRect(
-                        color = style.focusRing.copy(alpha = style.focusRing.alpha * focusProgress.coerceIn(0f, 1f)),
-                        topLeft = Offset(-outset, -outset),
-                        size = Size(size.width + outset * 2, size.height + outset * 2),
-                        cornerRadius = CornerRadius(r, r),
-                        style = Stroke(ringWidth.toPx()),
-                    )
-                }
-            }
+            // Keys and focus sit outside the layer that grows, lifts and bobs the focused tile, so
+            // focus search sees the tile where it is laid out. Otherwise a lifted tile's neighbours
+            // count as "below" it and holding Down bounces along the row.
             .onKeyEvent { e ->
                 when (e.key) {
                     Key.ButtonA -> {
@@ -173,6 +152,30 @@ fun WiisTile(
             .clickable(interactionSource = interaction, indication = null) {
                 clickSound?.let(feedback::emit)
                 onClick()
+            }
+            .graphicsLayer {
+                // A big card grows by at most focusGrowMax dp per side; small tiles grow by focusScale.
+                val longest = maxOf(size.width, size.height)
+                val growCap = if (longest > 0f) 1f + 2f * motion.focusGrowMax.coerceAtLeast(0).dp.toPx() / longest else motion.focusScale
+                val focusScale = minOf(motion.focusScale, growCap)
+                val scale = (if (grow) 1f + (focusScale - 1f) * focusProgress else 1f) * (1f - (1f - motion.pressScale) * pressProgress)
+                scaleX = scale
+                scaleY = scale
+                translationY = if (grow) (-motion.focusLift * focusProgress + motion.idleBobAmplitude * bob).dp.toPx() else 0f
+            }
+            .drawWithContent {
+                drawContent()
+                if (ring && ringWidth.value > 0f && focusProgress > 0.01f) {
+                    val outset = ringGap.toPx() + ringWidth.toPx() / 2
+                    val r = radius.toPx() + outset
+                    drawRoundRect(
+                        color = style.focusRing.copy(alpha = style.focusRing.alpha * focusProgress.coerceIn(0f, 1f)),
+                        topLeft = Offset(-outset, -outset),
+                        size = Size(size.width + outset * 2, size.height + outset * 2),
+                        cornerRadius = CornerRadius(r, r),
+                        style = Stroke(ringWidth.toPx()),
+                    )
+                }
             },
         // A fixed-size tile (caller sets width/height) hands its size to the content; a free-sized
         // one (a tab, a button) wraps its content.

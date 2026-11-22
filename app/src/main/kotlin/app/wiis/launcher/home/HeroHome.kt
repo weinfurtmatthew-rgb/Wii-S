@@ -63,6 +63,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.layout.findRootCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -281,7 +285,9 @@ fun HeroHomeScreen(
     val info = captionFor(focused, state, style)
     val topPad = (pad * 0.6f).roundToInt()
     val presses = remember { ShoulderPresses() }
+    val nav = remember { VerticalNav() }
 
+    CompositionLocalProvider(LocalVerticalNav provides nav) {
     Box(
         Modifier
             .fillMaxSize()
@@ -351,6 +357,7 @@ fun HeroHomeScreen(
                 }
             }
         }
+    }
     }
 }
 
@@ -635,6 +642,18 @@ private fun room(style: WiisStyle, size: Int): Int {
     return ceil(size * (m.focusScale - 1f) / 2f).toInt() + m.focusLift + m.idleBobAmplitude + 4
 }
 
+/**
+ * Cover size inside a system: the theme's (layout.gridTileSize), or smaller so that two whole rows
+ * and their focus room fit in [heightPx]. 132 dp covers leave room for one row on the Thor.
+ */
+private fun twoRowCover(style: WiisStyle, heightPx: Int, density: Float): Int {
+    fun px(dp: Int) = (dp * density).roundToInt()
+    val gap = style.spec.spacing.tileGap
+    var size = style.spec.layout.gridTileSize
+    while (size > 72 && 2 * px(size) + px(gap) + 2 * px(room(style, size)) > heightPx) size--
+    return size
+}
+
 @Composable
 private fun HomePage(hero: Game, state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
     val style = LocalWiis.current
@@ -690,6 +709,7 @@ private fun HeroCard(
         modifier = Modifier
             .size(width, height)
             .focusTarget(HomeViewModel.KEY_HERO, target, actions)
+            .navSpot(HomeViewModel.KEY_HERO, "hero")
             .onFocusChanged { if (it.isFocused) onFocused(Focused.Hero(game)) },
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -827,15 +847,19 @@ private fun SystemsGrid(
         ) {
             state.systems.chunked(cols).forEachIndexed { i, row ->
                 val targeted = row.any { HomeViewModel.sysKey(it.id) == state.heroFocus?.key }
+                val enabled = { inside || targeted || shown(i) }
                 Row(
                     Modifier
                         .graphicsLayer { alpha = if (shown(i)) 1f else 0f }
                         // From outside the grid only the rows it shows take focus, so Up from the
                         // pinned row or the dock never lands on a row out of sight.
-                        .focusProperties { canFocus = inside || targeted || shown(i) },
+                        .focusProperties { canFocus = enabled() },
                     horizontalArrangement = Arrangement.spacedBy(gap),
                 ) {
-                    row.forEach { entry -> SystemTile(entry, state.allPreview, state.systemSamples[entry.id], cellW, cellH, state.heroFocus, actions, onFocused) }
+                    row.forEachIndexed { c, entry ->
+                        val spot = Modifier.navSpot(HomeViewModel.sysKey(entry.id), "systems", enabled) { i to c }
+                        SystemTile(entry, state.allPreview, state.systemSamples[entry.id], cellW, cellH, state.heroFocus, actions, onFocused, spot)
+                    }
                 }
             }
         }
@@ -852,6 +876,7 @@ private fun SystemTile(
     target: HeroFocus?,
     actions: HeroActions,
     onFocused: (Focused) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val style = LocalWiis.current
     val spec = style.spec
@@ -861,7 +886,7 @@ private fun SystemTile(
     val shape = RoundedCornerShape(g.radius.dp)
     val tint = st.tint.coerceIn(0f, 1f)
     if (st.style == "xmb") {
-        XmbTile(entry, sample, w, h, target, actions, onFocused)
+        XmbTile(entry, sample, w, h, target, actions, onFocused, modifier)
         return
     }
     WiisTile(
@@ -870,7 +895,7 @@ private fun SystemTile(
         fill = style.glassFill,
         fillFocused = style.glassFill,
         ringRadius = g.radius.dp,
-        modifier = Modifier
+        modifier = modifier
             .size(w, h)
             .focusTarget(HomeViewModel.sysKey(entry.id), target, actions)
             .onFocusChanged { if (it.isFocused) onFocused(Focused.System(entry)) },
@@ -932,7 +957,7 @@ private val FadedArt = ColorFilter.colorMatrix(
  * and a gradient edge. No text: the nameplate names the focused system.
  */
 @Composable
-private fun XmbTile(entry: SystemEntry, sample: Game?, w: Dp, h: Dp, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit) {
+private fun XmbTile(entry: SystemEntry, sample: Game?, w: Dp, h: Dp, target: HeroFocus?, actions: HeroActions, onFocused: (Focused) -> Unit, modifier: Modifier = Modifier) {
     val style = LocalWiis.current
     val g = style.spec.glass
     val color = systemTint(entry.id, style)
@@ -947,7 +972,7 @@ private fun XmbTile(entry: SystemEntry, sample: Game?, w: Dp, h: Dp, target: Her
         fill = style.glassFill,
         fillFocused = style.glassFill,
         ringRadius = g.radius.dp,
-        modifier = Modifier
+        modifier = modifier
             .size(w, h)
             .focusTarget(HomeViewModel.sysKey(entry.id), target, actions)
             .onFocusChanged { if (it.isFocused) onFocused(Focused.System(entry)) },
@@ -1045,11 +1070,13 @@ private fun PinnedRow(games: List<Game>, innerW: Int, target: HeroFocus?, action
         ) {
             itemsIndexed(games, key = { _, g -> g.uri }, contentType = { _, _ -> "game" }) { i, game ->
                 val key = HomeViewModel.pinKey(game)
+                val enabled = { inside || target?.key == key || rowState.itemShown(i, windowPx) }
                 ArtTile(
                     game, size, key, target, actions,
                     Modifier
                         .graphicsLayer { alpha = if (rowState.itemShown(i, windowPx)) 1f else 0f }
-                        .focusProperties { canFocus = inside || target?.key == key || rowState.itemShown(i, windowPx) },
+                        .focusProperties { canFocus = enabled() }
+                        .navSpot(key, "pins", enabled),
                 ) { onFocused(Focused.Pinned(game)) }
             }
         }
@@ -1121,9 +1148,6 @@ private fun ArtTile(game: Game, size: Int, key: String, target: HeroFocus?, acti
 private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
     val style = LocalWiis.current
     val spec = style.spec
-    val size = spec.layout.gridTileSize
-    val gap = spec.spacing.tileGap.dp
-    val roomS = room(style, size)
     val games = state.viewGames
     val name = state.systems.firstOrNull { it.id == systemId }?.name ?: if (systemId == HomeModel.ALL) HomeModel.ALL_NAME else systemId
     val gridState = rememberLazyGridState()
@@ -1152,8 +1176,10 @@ private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActio
             )
             Text(gamesCount(games.size), style = style.label, maxLines = 1)
         }
-        Box(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
-            WholeRowsGrid(games, { it.uri }, size.dp, size.dp, roomS.dp, gridState, Modifier, { HomeViewModel.gridKey(it) == target?.key }) { game, whole ->
+        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
+            // Whole rows only, and at least two of them: the covers shrink from the theme's size just enough.
+            val size = twoRowCover(style, constraints.maxHeight, LocalDensity.current.density)
+            WholeRowsGrid(games, { HomeViewModel.gridKey(it) }, "games", size.dp, size.dp, room(style, size).dp, gridState, Modifier, { HomeViewModel.gridKey(it) == target?.key }) { game, whole ->
                 ArtTile(game, size, HomeViewModel.gridKey(game), target, actions, whole) { onFocused(Focused.InGrid(game)) }
             }
         }
@@ -1178,7 +1204,7 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
     val shape = RoundedCornerShape(spec.glass.radius.dp)
     val gridState = rememberLazyGridState()
     // Same tile positions as the workbench, with side room so a growing tile isn't cut off.
-    WholeRowsGrid(apps, { it.key }, 136.dp, 120.dp, roomA.dp, gridState, Modifier.bleed(roomA.dp, 0.dp), { false }) { app, whole ->
+    WholeRowsGrid(apps, { "app:${it.key}" }, "apps", 136.dp, 120.dp, roomA.dp, gridState, Modifier.bleed(roomA.dp, 0.dp), { false }) { app, whole ->
         WiisTile(
             onClick = { actions.launchApp(app) },
             shape = shape,
@@ -1220,7 +1246,8 @@ private fun GlassApps(apps: List<AppEntry>, actions: HeroActions, onFocused: (Fo
 @Composable
 private fun <T> WholeRowsGrid(
     items: List<T>,
-    key: (T) -> Any,
+    key: (T) -> String,
+    group: String,
     cellW: Dp,
     cellH: Dp,
     room: Dp,
@@ -1238,26 +1265,34 @@ private fun <T> WholeRowsGrid(
         val roomPx = with(density) { room.roundToPx() }
         val rows = max(1, (constraints.maxHeight - 2 * roomPx + gapPx) / (tilePx + gapPx))
         val heightPx = rows * (tilePx + gapPx) - gapPx + 2 * roomPx
-        val edge = remember(roomPx) { EdgeSpec(roomPx.toFloat()) }
+        // The rows just outside the window reach 1 px into the grid's area, so they are laid out
+        // (still not drawn): Up and Down find the tile in the same column there instead of the one
+        // Compose lays out first (the end of the row above).
+        val padPx = max(roomPx, gapPx + 1)
+        val edge = remember(padPx) { EdgeSpec(padPx.toFloat()) }
+        val pad = with(density) { padPx.toDp() }
         CompositionLocalProvider(LocalBringIntoViewSpec provides edge) {
             LazyVerticalGrid(
                 state = state,
                 columns = GridCells.FixedSize(cellW),
-                contentPadding = PaddingValues(room),
+                contentPadding = PaddingValues(start = room, end = room, top = pad, bottom = pad),
                 horizontalArrangement = Arrangement.spacedBy(gap),
                 verticalArrangement = Arrangement.spacedBy(gap),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(with(density) { heightPx.toDp() })
                     .then(modifier)
+                    .bleed(0.dp, with(density) { (padPx - roomPx).toDp() })
                     .onFocusChanged { inside = it.hasFocus },
             ) {
                 itemsIndexed(items, key = { _, item -> key(item) }) { i, item ->
+                    val enabled = { inside || targeted(item) || state.rowShown(i) }
                     tile(
                         item,
                         Modifier
                             .graphicsLayer { alpha = if (state.rowShown(i)) 1f else 0f }
-                            .focusProperties { canFocus = inside || targeted(item) || state.rowShown(i) },
+                            .focusProperties { canFocus = enabled() }
+                            .navSpot(key(item), group, enabled) { state.cellOf(i) },
                     )
                 }
             }
@@ -1265,7 +1300,88 @@ private fun <T> WholeRowsGrid(
     }
 }
 
+/** (row, column) of lazy-grid item [index] while it is laid out. */
+private fun LazyGridState.cellOf(index: Int): Pair<Int, Int>? =
+    layoutInfo.visibleItemsInfo.firstOrNull { it.index == index }?.let { it.row to it.column }
+
 // ---- Navigation dock ------------------------------------------------------------------------
+
+// ---- Up and Down ----------------------------------------------------------------------------
+
+/**
+ * Up and Down on the top screen. Inside a grid, focus goes to the next row: the same column, or
+ * the row's last tile when it is shorter, so a row out of sight slides in from any column.
+ * Otherwise it goes to the nearest element above or below that overlaps the focused one sideways,
+ * the most overlap first, then the leftmost. Compose's own search would rather take a closer
+ * element off to the side: from the right end of the pinned row, Up went to the far-left column.
+ * Left and Right keep Compose's search. Elements join with [navSpot].
+ */
+@Stable
+private class VerticalNav {
+    class Spot(val key: String, val group: String, val requester: FocusRequester) {
+        var bounds = Rect.Zero
+        var enabled: () -> Boolean = { true }
+        var cell: () -> Pair<Int, Int>? = { null }
+    }
+
+    private val spots = HashMap<String, Spot>()
+
+    fun add(spot: Spot) { spots[spot.key] = spot }
+    fun remove(spot: Spot) { if (spots[spot.key] === spot) spots.remove(spot.key) }
+
+    fun next(from: Spot, down: Boolean): FocusRequester {
+        from.cell()?.let { (row, column) ->
+            val want = row + if (down) 1 else -1
+            val inRow = spots.values.mapNotNull { s -> s.takeIf { it !== from && it.group == from.group }?.cell()?.takeIf { it.first == want }?.let { s to it.second } }
+            if (inRow.isNotEmpty()) {
+                return (inRow.firstOrNull { it.second == column } ?: inRow.filter { it.second < column }.maxByOrNull { it.second } ?: inRow.minBy { it.second }).first.requester
+            }
+        }
+        val f = from.bounds
+        var best: Spot? = null
+        var bestGap = 0f
+        var bestOverlap = 0f
+        for (s in spots.values) {
+            if (s === from || s.group == from.group || !s.enabled()) continue
+            val b = s.bounds
+            val overlap = min(b.right, f.right) - max(b.left, f.left)
+            if (overlap < 1f) continue
+            val gap = if (down) b.top - f.bottom else f.top - b.bottom
+            if (gap < -1f) continue
+            val better = best == null || gap < bestGap - 1f ||
+                (gap <= bestGap + 1f && (overlap > bestOverlap + 1f || (overlap >= bestOverlap - 1f && b.left < best.bounds.left)))
+            if (better) { best = s; bestGap = gap; bestOverlap = overlap }
+        }
+        return best?.requester ?: FocusRequester.Default
+    }
+}
+
+private val LocalVerticalNav = staticCompositionLocalOf<VerticalNav?> { null }
+
+/**
+ * Joins [VerticalNav] as [key] in [group]. [enabled]: may focus come here from another group (a
+ * hidden row may not); [cell]: (row, column) inside a grid.
+ */
+@Composable
+private fun Modifier.navSpot(key: String, group: String, enabled: () -> Boolean = { true }, cell: () -> Pair<Int, Int>? = { null }): Modifier {
+    val nav = LocalVerticalNav.current ?: return this
+    val requester = remember(nav, key) { FocusRequester() }
+    val spot = remember(nav, key, group) { VerticalNav.Spot(key, group, requester) }
+    spot.enabled = enabled
+    spot.cell = cell
+    DisposableEffect(nav, spot) {
+        nav.add(spot)
+        onDispose { nav.remove(spot) }
+    }
+    return this
+        .focusRequester(requester)
+        // Where it is laid out, not where a scroll clips it or a lift moves it.
+        .onGloballyPositioned { spot.bounds = it.findRootCoordinates().localBoundingBoxOf(it, clipBounds = false) }
+        .focusProperties {
+            up = nav.next(spot, down = false)
+            down = nav.next(spot, down = true)
+        }
+}
 
 /** The text colour at 12%: fill of a focused, inactive navigation button (light and dark). */
 @Composable
@@ -1377,7 +1493,7 @@ private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focuse
         ButtonBadge("L1", presses.l1)
         Section.entries.forEach { s ->
             val key = "nav:${s.name}"
-            NavButton(s, s == state.section, state.heroFocus, actions, onFocused, ms, Modifier.track(key)) { focus(key, it) }
+            NavButton(s, s == state.section, state.heroFocus, actions, onFocused, ms, Modifier.track(key).navSpot(key, "dock")) { focus(key, it) }
         }
         ButtonBadge("R1", presses.r1)
         if (apps.isNotEmpty()) Box(Modifier.padding(horizontal = 4.dp).size(1.dp, 28.dp).background(style.glassText.copy(alpha = 0.18f)))
@@ -1395,6 +1511,7 @@ private fun NavDock(state: HomeUiState, actions: HeroActions, onFocused: (Focuse
                 modifier = Modifier
                     .size(40.dp)
                     .track(key)
+                    .navSpot(HomeViewModel.dockKey(slot), "dock")
                     .focusTarget(HomeViewModel.dockKey(slot), state.heroFocus, actions)
                     .onFocusChanged {
                         focus(key, it.isFocused)

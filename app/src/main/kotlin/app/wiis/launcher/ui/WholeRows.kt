@@ -16,6 +16,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.layout.onPlaced
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.Constraints
@@ -84,8 +89,8 @@ fun WholeCardsColumn(modifier: Modifier = Modifier, spacing: Dp = 12.dp, padding
         cards.viewport = constraints.maxHeight
         CompositionLocalProvider(LocalBringIntoViewSpec provides cards) {
             Layout(
-                content = { CompositionLocalProvider(LocalBringIntoViewSpec provides inner) { content() } },
-                modifier = Modifier.fillMaxWidth().verticalScroll(scroll),
+                content = { CompositionLocalProvider(LocalBringIntoViewSpec provides inner, LocalWholeCards provides cards) { content() } },
+                modifier = Modifier.fillMaxWidth().onFocusChanged { cards.inside = it.hasFocus }.verticalScroll(scroll),
             ) { measurables, constraints ->
                 val pad = padding.roundToPx()
                 val gap = spacing.roundToPx()
@@ -113,11 +118,26 @@ fun WholeCardsColumn(modifier: Modifier = Modifier, spacing: Dp = 12.dp, padding
     }
 }
 
+/**
+ * For a card in a [WholeCardsColumn] (a settings section): from outside the column, focus only
+ * comes to a card that shows, so Up from the dock never lands in a card waiting below.
+ */
+@Composable
+fun Modifier.wholeCard(): Modifier {
+    val cards = LocalWholeCards.current ?: return this
+    val top = remember { intArrayOf(-1) }
+    return onPlaced { top[0] = it.positionInParent().y.roundToInt() }.focusProperties { canFocus = cards.canFocusAt(top[0]) }
+}
+
+private val LocalWholeCards = staticCompositionLocalOf<WholeCards?> { null }
+
 /** Where the cards are, which of them show, and where focus should scroll (see [WholeCardsColumn]). */
 @OptIn(ExperimentalFoundationApi::class)
 @Stable
 private class WholeCards(private val scroll: ScrollState) : BringIntoViewSpec {
     var viewport = 0
+    /** Focus is in the column: every card may take it. */
+    var inside = false
     /** The scroll before the one running now; cards whole there stay drawn while they slide away. */
     var rest = 0
     private var target = 0
@@ -136,6 +156,12 @@ private class WholeCards(private val scroll: ScrollState) : BringIntoViewSpec {
     private fun snapFor(i: Int): Int = tops.firstOrNull { it >= bottoms[i] - viewport } ?: tops[i]
 
     fun lastSnap(): Int = if (tops.isEmpty() || tall(tops.lastIndex)) 0 else snapFor(tops.lastIndex)
+
+    fun canFocusAt(top: Int): Boolean {
+        if (inside) return true
+        val i = tops.indexOf(top)
+        return i < 0 || shows(i)
+    }
 
     fun shows(i: Int): Boolean {
         if (i !in tops.indices || tall(i)) return true

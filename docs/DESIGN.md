@@ -139,7 +139,7 @@ New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.c
 | Overflow | Only rows that fit completely are drawn, nothing cut and no sliver (or shadow) of the next row; moving past the last row scrolls one whole row in. Systems stay 3 × 2, the third row slides in when you move down. Also the Apps grid, a system's games and the pinned row | **Your answer** (whole rows only) |
 | System pages | Whole cards only: a card that doesn't fit waits below until focus moves into it, then the page scrolls so it sits at the top. A card taller than the page (the Report text, the RetroAchievements sign-in) can't fit whole and stays cut | Proposed, how your answer applies to the settings cards |
 | Focus near hidden rows | From outside a grid, only the rows it shows take focus, so Up from the pinned row or the dock never lands on a row out of sight | Proposed |
-| A system's games | With 132 dp covers, one whole row fits above the dock; the next row scrolls in as you move down | Open: keep 132 dp (one row) or 120 dp covers (two rows)? |
+| A system's games | Covers shrink from the theme's 132 dp just enough for two whole rows: about 121 dp on the Thor (`layout.gridTileSize` stays the largest size) | **Your report** (one row was an issue); the size rule is proposed |
 | Dock place | Its left edge lines up with the content above and never moves; the hints follow it, 18 dp after the dock and 14 dp apart | **Your answer** (dock fixed left); the gaps are proposed |
 | Hints that don't fit | Left out whole from the last one back (in a system's games, "B Back" goes first; the B badge stays in the header) | Proposed |
 | Bottom row | Games you pin, newest first; no limit (it scrolls a whole tile at a time). Jump back in still shows the last game played | **Your answer** (only pins); the order is proposed |
@@ -148,6 +148,18 @@ New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.c
 | Empty row | One glass card at the row's height: an X badge, "Pin your games here", "Press X on any game to add it to this row." | **Your answer** (a hint card); the wording and look are proposed |
 | Pinned row width | As many whole tiles as fit between the left padding and the screen edge less the focus room (7 on the Thor), always from the left: the theme's centre scroll anchor no longer applies to this row | Proposed |
 | Jump back in hint | "A Play" (was "A Jump back in"; the card's own chip still says Jump back in) so "X Pin" fits beside the dock | Proposed |
+
+### Navigation audit (2026-11-22, from your report)
+
+| Detail | Value | Status |
+|---|---|---|
+| Holding a direction | One step per repeat. The focused tile's lift and bob no longer move where focus search thinks it is, so holding Down goes card, pinned row, dock and stops (0.5.4 bounced left and right along the row) | Fix |
+| Up and Down in a grid | The next row: the same column, or the row's last tile when it is shorter, so a row out of sight slides in from any column. In a system's games the column stays the same (0.5.4 could jump to the end of the row above) | Proposed |
+| Up and Down elsewhere | The nearest element directly above or below (the most overlap, then the leftmost). From the right end of the pinned row, Up goes to the tile above it (0.5.4 went to the far-left column) | Proposed |
+| Down from Jump back in | The first pinned game (was the one under the card's centre) | Proposed |
+| Up from a System page | Back to the tab it was opened from (the open page's tab the first time), not the nearest tab | Proposed |
+| Cards waiting below | From outside a System page (Up from the dock) only a card that shows takes focus | Proposed |
+| Left and Right | Unchanged: Android's search, no wrap at the ends | Unchanged |
 
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

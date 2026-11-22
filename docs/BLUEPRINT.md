@@ -174,6 +174,20 @@ From the owner's photos: rows cut off at the edges of the systems grid, the Apps
 | Workbench | Same behaviour: dock on the left, pins with X (pad button and the X key), the hint card, whole rows in the systems grid, the pinned row and a system's games |
 | Tests | `PinsTest`; `HeroScreenshots`: third systems row, last pin, no pins, many apps, X to pin and unpin; `SystemScreenshots`: Theme and Sounds walked with the controller; `LaunchSmokeTest`: pins through the real view model and prefs |
 
+### 0.5.5-i5: two rows inside a system, a navigation audit
+
+The owner found one row of covers inside a console and All games, and holding Down on Home bouncing left and right in the pinned row.
+
+| Piece | State in 0.5.5-i5 |
+|---|---|
+| Covers inside a system | `twoRowCover`: the theme's size or smaller, so two whole rows and their focus room fit (about 121 dp on the Thor) |
+| Held buttons | `WiisTile` puts its key handling and focus target outside the layer that grows, lifts and bobs the focused tile. Focus search used the lifted rectangle, which put the row's other tiles "below" it |
+| Up and Down | `VerticalNav` on the top screen: the next row inside a grid (same column, or the row's last tile), else the nearest element above or below that overlaps sideways. Left and Right keep Compose's search |
+| Lazy grids | The rows just outside the window reach 1 px into the grid, so they are laid out (not drawn) and Up and Down find the same column there |
+| System pages | Cards that don't show take no focus from outside (`Modifier.wholeCard`); the page tabs restore the tab Up came from (`focusRestorer`) |
+| Workbench | Two rows inside a system; Up and Down inside a grid go to the next row |
+| Tests | `HeroScreenshots`: hold Down from the card, Up from the end of the pinned row, hold Up from the dock, Up and Down in All games keep the column, a printed audit of Home and Apps; `SystemScreenshots.navigation`: down and up through a page and Up from the dock |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

@@ -74,6 +74,56 @@ class SystemScreenshots {
 
     private fun settle() = repeat(20) { compose.mainClock.advanceTimeBy(100); compose.waitForIdle(); Thread.sleep(10) }
 
+    /** What has focus: its text, or "nothing". */
+    private fun focusedText(): String {
+        val nodes = compose.onAllNodes(isFocused()).fetchSemanticsNodes()
+        if (nodes.isEmpty()) return "nothing"
+        val n = nodes.first()
+        val texts = n.config.getOrElseNullable(androidx.compose.ui.semantics.SemanticsProperties.Text) { null }?.joinToString { it.text }
+        val d = compose.density.density
+        return (texts ?: "?") + " @ " + (n.boundsInRoot.left / d).toInt() + "," + (n.boundsInRoot.top / d).toInt()
+    }
+
+    /**
+     * Down through the Theme page to the dock and back up; then, with the page at its top and
+     * focus on the dock, Up goes to the card that shows, not to the one waiting below.
+     */
+    @OptIn(ExperimentalTestApi::class)
+    @Test fun navigation() {
+        var state by mutableStateOf(HomeUiState(section = Section.System, library = LibraryStatus.Ready))
+        compose.mainClock.autoAdvance = false
+        compose.setContent {
+            val inputMode = LocalInputModeManager.current
+            var ready by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { inputMode.requestInputMode(InputMode.Keyboard); ready = true }
+            if (ready) {
+                WiisRoot {
+                    HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), NoActions) { SystemScreen(onPickRomFolder = {}) }
+                }
+            }
+        }
+        settle()
+        fun go(key: Key, times: Int) = List(times) {
+            compose.onNode(isFocused()).performKeyInput { pressKey(key) }
+            compose.mainClock.advanceTimeBy(60)
+            compose.waitForIdle()
+            focusedText()
+        }
+        val down = go(Key.DirectionDown, 4)
+        val up = go(Key.DirectionUp, 4)
+        println("NAV system: down ${down.joinToString(" | ")} | up ${up.joinToString(" | ")}")
+        check(down[0].startsWith("Import") && down[1].startsWith("As the theme says")) { "down: $down" }
+        check(up[2].startsWith("Theme")) { "up to the tabs: $up" }
+        // Back to the top of the page, then focus on the dock (as after choosing System there).
+        settle()
+        state = state.copy(heroFocus = app.wiis.launcher.home.HeroFocus(app.wiis.launcher.home.HomeViewModel.navKey(Section.System), 7L))
+        settle()
+        val fromDock = go(Key.DirectionUp, 1)
+        println("NAV system: up from the dock with the page at its top: ${fromDock.first()}")
+        compose.onRoot().captureRoboImage(File(outDir, "system-3-up-from-dock.png").path)
+        check(fromDock.first().startsWith("Import")) { "up from the dock: $fromDock" }
+    }
+
     /** Theme, then Import, then the Appearance card, which only shows once focus moves into it. */
     @Test fun themePage() = walk("system-1-theme", downs = 3)
 

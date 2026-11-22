@@ -1711,13 +1711,13 @@ function updateHeroChrome() {
 function systemViewHtml(next, room) {
   const t = theme, L = t.layout, gap = t.spacing.tileGap, id = mock.view;
   const games = id === "all" ? allGames() : (libById(id)?.games || []).map((g) => mkGame(id, g));
-  const size = L.gridTileSize, rS = room(size), color = sysColor(id);
+  const size = mock.coverSize || L.gridTileSize, rS = room(size), color = sysColor(id);
   const back = `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">B</span>`;
   const title = `<div style="display:flex;align-items:center;gap:10px;height:36px;flex:none">${back}
       ${id !== "all" ? `<span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;${glassCss("border-radius:99px;")}">${consoleIcon(id, 20, mix(color, "#000000", 0.15))}</span>` : ""}
       <span style="font-family:${fontStack(t.type.displayFont)};font-size:${Math.round(t.type.wordmarkSize * 0.8)}px;font-weight:${t.type.wordmarkWeight};color:${css(t.colors.text)}">${esc(id === "all" ? "All games" : SYSTEMS[id])}</span>
       <span style="${labelStyle()}">${games.length} games</span></div>`;
-  return `<div style="display:flex;flex-direction:column;height:100%">${title}<div style="position:relative;flex:1;min-height:0;overflow:hidden"><div class="m-scroll" id="vscroll" data-whole="1" data-room="${rS}" style="padding:${rS}px"><div class="m-grid" style="gap:${gap}px">${games.map((g) => artTileHtml(g, size, next())).join("")}</div></div></div></div>`;
+  return `<div id="sysView" style="display:flex;flex-direction:column;height:100%">${title}<div style="position:relative;flex:1;min-height:0;overflow:hidden"><div class="m-scroll" id="vscroll" data-whole="1" data-room="${rS}" style="padding:${rS}px"><div class="m-grid" style="gap:${gap}px">${games.map((g) => artTileHtml(g, size, next())).join("")}</div></div></div></div>`;
 }
 function renderHeroTop() {
   const t = theme, L = t.layout, pad = t.spacing.screenPadding, gap = t.spacing.tileGap, innerW = 833 - 2 * pad;
@@ -1788,8 +1788,19 @@ function renderDockBottom() {
   $("#bottomScreen").innerHTML = `<div class="mock" style="${vars()}"><div class="bg-layer" style="background:${css(t.colors.background)}"></div>${art}${now}${clock}${hints}${dock}${frameGlowHtml()}</div>`;
 }
 
+/** Cover size inside a system: the theme's, or smaller so that two whole rows and their focus room fit. */
+function twoRowCover(avail) {
+  const t = theme, gap = t.spacing.tileGap;
+  const room = (s) => Math.ceil((s * (t.motion.focusScale - 1)) / 2) + t.motion.focusLift + Math.ceil(t.motion.idleBobAmplitude) + 4;
+  let size = t.layout.gridTileSize;
+  while (size > 72 && 2 * size + gap + 2 * room(size) > avail) size--;
+  return size;
+}
 function renderAll() {
+  const anim = mock.animate;
   renderTop();
+  const sv = document.getElementById("sysView");
+  if (sv) { const want = twoRowCover(sv.clientHeight - 36); if (want !== mock.coverSize) { mock.coverSize = want; mock.animate = anim; renderTop(); } }
   bindFocusables();
   restoreFocus();
   applyWhole();
@@ -1959,8 +1970,22 @@ function paint(el, p, press, bob) {
   const scrim = el.querySelector("[data-scrim='focused']"); if (scrim) scrim.style.opacity = pc;
 }
 
+/** Up/Down inside a grid: the next row, in the same column or at the row's last tile (as on the Thor). */
+function gridStep(cur, dir) {
+  if (dir !== "up" && dir !== "down") return null;
+  const grid = cur.parentElement; if (!grid || !(grid.classList.contains("m-vgrid-inner") || grid.classList.contains("m-grid"))) return null;
+  const rows = [];
+  for (const el of grid.children) { if (!el.classList.contains("focusable")) continue; const r = rows.find((x) => Math.abs(x.top - el.offsetTop) < 2); if (r) r.items.push(el); else rows.push({ top: el.offsetTop, items: [el] }); }
+  rows.sort((a, b) => a.top - b.top);
+  const ri = rows.findIndex((r) => r.items.includes(cur)), ci = rows[ri]?.items.indexOf(cur);
+  const next = rows[ri + (dir === "down" ? 1 : -1)];
+  if (!next) return null;
+  return next.items[Math.min(ci, next.items.length - 1)];
+}
 function navigate(dir) {
   const cur = focusables[focusIdx]; if (!cur) return;
+  const step = gridStep(cur, dir);
+  if (step) { setFocus(focusables.indexOf(step), true); return; }
   const a = cur.getBoundingClientRect(); const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
   let best = -1, bestScore = Infinity;
   focusables.forEach((el, i) => {

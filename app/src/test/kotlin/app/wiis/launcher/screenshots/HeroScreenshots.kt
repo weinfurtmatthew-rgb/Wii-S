@@ -140,6 +140,128 @@ class HeroScreenshots {
         check(state.pinned.isEmpty()) { "still pinned: ${state.pinned.map { it.title }}" }
     }
 
+    // ---- Navigation audit: the controller paths, as fast as a held button repeats ---------------
+
+    /** The home screen driven like the view model drives it, with a trail of what took focus. */
+    private inner class Live(initial: HomeUiState) : HeroActions by NoActions {
+        var state by mutableStateOf(initial)
+        var last = ""
+        private var token = 100L
+        override fun selectSection(section: Section) {
+            state = state.copy(section = section, view = HomeView.Home, viewGames = emptyList(), heroFocus = if (section == Section.Games) HeroFocus(HomeViewModel.KEY_HERO, token++) else null)
+        }
+        override fun cycleSection(delta: Int) { val o = Section.entries; selectSection(o[(o.indexOf(state.section) + delta).mod(o.size)]) }
+        override fun openSystem(id: String) {
+            val list = HomeModel.gamesFor(id, library)
+            state = state.copy(view = HomeView.InSystem(id), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(HomeViewModel.gridKey(it), token++) })
+        }
+        override fun closeSystem(): Boolean {
+            val v = state.view as? HomeView.InSystem ?: return false
+            state = state.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(HomeViewModel.sysKey(v.systemId), token++))
+            return true
+        }
+        override fun focusGame(game: Game) { last = game.title }
+        override fun focusSystem(entry: SystemEntry) { last = entry.name }
+        override fun focusApp(app: AppEntry) { last = app.label }
+        override fun focusApplied() { state = state.copy(heroFocus = null) }
+    }
+
+    /** "title @ x,y" of the focused element, in dp. */
+    private fun where(live: Live): String {
+        val nodes = compose.onAllNodes(isFocused()).fetchSemanticsNodes()
+        if (nodes.isEmpty()) return "nothing"
+        val b = nodes.first().boundsInRoot
+        val d = compose.density.density
+        val y = (b.top / d).roundToInt()
+        val label = if (y > 390) "dock" else live.last
+        return "$label @ ${(b.left / d).roundToInt()},$y"
+    }
+
+    /** [times] presses of [key], [gapMs] apart (a held button repeats about every 50 ms). */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    private fun walk(live: Live, key: Key, times: Int, gapMs: Long = 50): List<String> = List(times) {
+        compose.onNode(isFocused()).performKeyInput { pressKey(key) }
+        compose.mainClock.advanceTimeBy(gapMs)
+        compose.waitForIdle()
+        where(live)
+    }
+
+    /** Hold Down from Jump back in: the first pinned game, then the dock, and it stays there (0.5.4 bounced along the row). */
+    @Test fun navHoldDown() {
+        val live = Live(home(focus = HomeViewModel.KEY_HERO))
+        render({ live.state }, live)
+        val trail = walk(live, Key.DirectionDown, 16)
+        println("NAV hold down from the card: " + trail.joinToString(" | "))
+        check(trail.first().startsWith("Tiny Kingdom")) { "card down: ${trail.first()}" }
+        check(trail.drop(1).all { it.startsWith("dock") }) { "held down: $trail" }
+        compose.onRoot().captureRoboImage(File(outDir, "nav-1-hold-down.png").path)
+    }
+
+    /** Up from the right end of the pinned row goes to what is above it, not to the far-left column. */
+    @Test fun navUpFromRowEnd() {
+        val live = Live(home(focus = HomeViewModel.sysKey("ps2")))
+        render({ live.state }, live)
+        println("NAV start: " + where(live))
+        val down = walk(live, Key.DirectionDown, 1)
+        val right = walk(live, Key.DirectionRight, 9)
+        val up = walk(live, Key.DirectionUp, 4)
+        println("NAV row end: down ${down.joinToString()} | right ${right.joinToString(" | ")} | up ${up.joinToString(" | ")}")
+        check(up.first().startsWith("Nintendo DS")) { "up from the row's end: ${up.first()}" }
+    }
+
+    /** Hold Up from the dock: the pinned row, then the card or a system above it, then it stays. */
+    @Test fun navHoldUpFromDock() {
+        val live = Live(home(focus = HomeViewModel.navKey(Section.System)))
+        render({ live.state }, live)
+        val trail = walk(live, Key.DirectionUp, 10)
+        println("NAV hold up from the dock: " + trail.joinToString(" | "))
+        check(!trail.last().startsWith("dock") && trail.takeLast(4).toSet().size == 1) { "held up: $trail" }
+    }
+
+    /** Inside All games: two rows; holding Down and Up keeps the column, then the dock. */
+    @Test fun navAllGames() {
+        val live = Live(home(focus = HomeViewModel.KEY_HERO))
+        render({ live.state }, live)
+        live.openSystem(HomeModel.ALL)
+        settle()
+        walk(live, Key.DirectionRight, 2)
+        val down = walk(live, Key.DirectionDown, 8)
+        val up = walk(live, Key.DirectionUp, 8)
+        println("NAV all games: down ${down.joinToString(" | ")} || up ${up.joinToString(" | ")}")
+        val column = { t: String -> t.substringAfter("@ ").substringBefore(",") }
+        val inGrid = (down + up).filter { !it.startsWith("dock") }
+        check(inGrid.map(column).toSet().size == 1) { "column changed: $inGrid" }
+        compose.onRoot().captureRoboImage(File(outDir, "nav-2-all-games.png").path)
+    }
+
+    /** Everything else on Home and Apps, printed for review (NAV lines in the test log). */
+    @Test fun navAudit() {
+        val live = Live(home(focus = HomeViewModel.KEY_HERO))
+        render({ live.state }, live)
+        fun log(name: String, key: Key, times: Int, gap: Long = 50) = println("NAV $name: " + walk(live, key, times, gap).joinToString(" | "))
+        log("card right", Key.DirectionRight, 5)
+        log("grid down", Key.DirectionDown, 4)
+        log("up from below", Key.DirectionUp, 5)
+        log("left to the card", Key.DirectionLeft, 4)
+        log("down to the row", Key.DirectionDown, 1)
+        log("row right", Key.DirectionRight, 10)
+        log("row left", Key.DirectionLeft, 10)
+        log("to the dock", Key.DirectionDown, 2)
+        log("dock right", Key.DirectionRight, 10)
+        log("dock up", Key.DirectionUp, 4)
+        log("back down", Key.DirectionDown, 4)
+        log("dock left", Key.DirectionLeft, 10)
+        log("dock up from the left", Key.DirectionUp, 4)
+        live.selectSection(Section.Apps)
+        settle()
+        println("NAV opened apps: " + where(live))
+        log("apps down", Key.DirectionDown, 4)
+        log("apps up", Key.DirectionUp, 4)
+        log("apps right", Key.DirectionRight, 6)
+        log("apps down again", Key.DirectionDown, 3)
+        log("apps up from the dock", Key.DirectionUp, 3)
+    }
+
     // ---- Sample data (design/workbench.html: LIB, RECENT, APPS, DOCK) ------------------------
 
     private val lib = listOf(
