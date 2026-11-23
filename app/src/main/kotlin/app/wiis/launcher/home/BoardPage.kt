@@ -62,6 +62,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.wiis.designsystem.LocalUiFeedback
@@ -255,11 +256,12 @@ private fun glide(ms: Int): AnimationSpec<Dp> {
 /** A tile's place on the page; when it moves or changes size it glides there. */
 @Composable
 private fun Modifier.boardPlace(x: Dp, y: Dp, w: Dp, h: Dp, ms: Int): Modifier {
-    val ax by animateDpAsState(x, glide(ms), label = "tileX")
-    val ay by animateDpAsState(y, glide(ms), label = "tileY")
+    val ax = animateDpAsState(x, glide(ms), label = "tileX")
+    val ay = animateDpAsState(y, glide(ms), label = "tileY")
     val aw by animateDpAsState(w, glide(ms), label = "tileW")
     val ah by animateDpAsState(h, glide(ms), label = "tileH")
-    return offset(ax, ay).size(aw, ah)
+    // Read while placing, so a glide moves the tile without recomposing it every frame.
+    return offset { IntOffset(ax.value.roundToPx(), ay.value.roundToPx()) }.size(aw, ah)
 }
 
 @Composable
