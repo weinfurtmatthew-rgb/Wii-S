@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -35,6 +36,15 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.unit.Dp
+import app.wiis.launcher.home.MenuRow
+import app.wiis.launcher.home.PopupTitle
+import app.wiis.launcher.ui.Hint
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -61,7 +71,9 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-private enum class Page(val label: String) { Theme("Theme"), Sounds("Sounds"), Art("Box art"), Achievements("RetroAchievements"), Report("Report") }
+private enum class Page(val id: String, val label: String) {
+    Theme("theme", "Theme"), Sounds("sounds", "Sounds"), Art("art", "Box art"), Achievements("ra", "RetroAchievements"), Report("report", "Report"),
+}
 
 private val EVENT_LABELS = mapOf(
     "move" to "Move",
@@ -73,7 +85,51 @@ private val EVENT_LABELS = mapOf(
     "bump" to "End of row",
 )
 
-/** Settings and diagnostics. Everything here is operable with the controller. */
+/**
+ * The settings popup's contents (Select → Wii-S settings, or Start): categories on the left, and
+ * the page of the one focus is on to the right. [height]: what the popup leaves for it.
+ */
+@Composable
+fun SettingsPanel(page: String, onPage: (String) -> Unit, onPickRomFolder: () -> Unit, height: Dp) {
+    val style = LocalWiis.current
+    val current = Page.entries.firstOrNull { it.id == page } ?: Page.Theme
+    val rows = remember { Page.entries.associateWith { FocusRequester() } }
+    LaunchedEffect(Unit) { withFrameNanos { }; runCatching { rows.getValue(current).requestFocus() } }
+    Column(Modifier.height(height)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.weight(1f)) { PopupTitle("Settings", "") }
+            Hint("B", "Close")
+        }
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+            // Moving through the categories shows each page; Right goes into it, Left comes back here.
+            Column(
+                Modifier.width(196.dp).focusRestorer(rows.getValue(current)).focusGroup(),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Page.entries.forEach { p ->
+                    MenuRow(
+                        p.label, null,
+                        Modifier.focusRequester(rows.getValue(p)).onFocusChanged { if (it.isFocused && p != current) onPage(p.id) },
+                        selected = p == current,
+                    ) { onPage(p.id) }
+                }
+            }
+            key(current) {
+                WholeCardsColumn(Modifier.weight(1f).fillMaxHeight(), spacing = 12.dp, padding = 4.dp) {
+                    when (current) {
+                        Page.Theme -> ThemePage(style)
+                        Page.Sounds -> SoundsPage(style)
+                        Page.Art -> ArtPage(style)
+                        Page.Achievements -> AchievementsPage(style)
+                        Page.Report -> ReportPage(style, onPickRomFolder)
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** Settings and diagnostics as a page of its own (the shelves and grid layouts). */
 @Composable
 fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onPageShown: () -> Unit = {}) {
     val style = LocalWiis.current

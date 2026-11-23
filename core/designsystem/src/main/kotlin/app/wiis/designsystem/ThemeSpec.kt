@@ -339,7 +339,8 @@ data class HeaderTokens(
     val showDate: Boolean = false,
     val tabGames: String = "Home",
     val tabApps: String = "Apps",
-    val tabSystem: String = "System",
+    /** The third section (System until 0.6.0, when the settings moved into a popup). */
+    val tabCollections: String = "Collections",
     /** Clock, Wi-Fi and battery together in a pill at the top right. */
     val statusPill: Boolean = true,
     /** Small icons in the tabs. */

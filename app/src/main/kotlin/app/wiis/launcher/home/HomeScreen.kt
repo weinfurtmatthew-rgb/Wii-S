@@ -114,8 +114,9 @@ private fun ClassicHome(vm: HomeViewModel, onPickFolder: () -> Unit) {
                     when (e.key) {
                         Key.ButtonL1 -> { feedback.emit(UiEvent.Tab); vm.cycleSection(-1); true }
                         Key.ButtonR1 -> { feedback.emit(UiEvent.Tab); vm.cycleSection(+1); true }
-                        Key.ButtonStart -> { feedback.emit(UiEvent.Tab); vm.onStart(); true }
-                        Key.ButtonSelect -> { feedback.emit(UiEvent.Tab); vm.onSelect(); true }
+                        // These older layouts keep their settings as the third page (the hero layout has the popup).
+                        Key.ButtonStart -> { feedback.emit(UiEvent.Tab); vm.selectSection(Section.Collections); true }
+                        Key.ButtonSelect -> { feedback.emit(UiEvent.Tab); vm.selectSection(if (state.section == Section.Apps) Section.Games else Section.Apps); true }
                         else -> false
                     }
                 },
@@ -134,7 +135,7 @@ private fun ClassicHome(vm: HomeViewModel, onPickFolder: () -> Unit) {
 private fun hintsFor(section: Section): List<Pair<String, String>> = when (section) {
     Section.Games -> listOf("A" to "Play", "Y" to "Emulator", "L1/R1" to "Tabs", "Select" to "Apps", "Start" to "System")
     Section.Apps -> listOf("A" to "Open", "B" to "Games", "L1/R1" to "Tabs", "Select" to "Games", "Start" to "System")
-    Section.System -> listOf("A" to "Select", "B" to "Games", "L1/R1" to "Tabs")
+    Section.Collections -> listOf("A" to "Select", "B" to "Games", "L1/R1" to "Tabs")
 }
 
 @Composable
@@ -159,7 +160,7 @@ private fun SectionContent(state: HomeUiState, vm: HomeViewModel, onPickFolder: 
         when (section) {
             Section.Games -> GamesPane(state, vm, onPickFolder)
             Section.Apps -> AppsPane(state.apps, vm)
-            Section.System -> SystemScreen(onPickRomFolder = onPickFolder, requestedPage = state.systemPage, onPageShown = vm::systemPageShown)
+            Section.Collections -> SystemScreen(onPickRomFolder = onPickFolder)
         }
     }
 }
@@ -180,7 +181,7 @@ private fun Header(current: Section, onSelect: (Section) -> Unit) {
             val label = when (section) {
                 Section.Games -> header.tabGames
                 Section.Apps -> header.tabApps
-                Section.System -> header.tabSystem
+                Section.Collections -> "Settings"
             }
             TabChip(label, active = section == current, onClick = { onSelect(section) }, modifier = if (i == 0) Modifier.focusRequester(first) else Modifier)
         }

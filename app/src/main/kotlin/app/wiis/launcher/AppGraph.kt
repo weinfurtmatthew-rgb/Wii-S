@@ -19,6 +19,7 @@ import app.wiis.emulator.art.LocalArtFolder
 import app.wiis.emulator.ra.RaCredentials
 import app.wiis.emulator.ra.RaRepository
 import app.wiis.launcher.home.AppRef
+import app.wiis.launcher.home.CollectionsFile
 import app.wiis.launcher.home.DockApps
 import app.wiis.launcher.home.Pins
 import app.wiis.launcher.sound.SoundEngine
@@ -218,6 +219,23 @@ class AppGraph(val context: Application) {
         return uri in next
     }
 
+    // ---- Collections (device-level: the series you kept, renamed or hid, and your own) ----
+
+    private val collectionsJson = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    private val collectionsFile = File(context.filesDir, "collections.json")
+    private val _collections = MutableStateFlow(
+        runCatching { collectionsJson.decodeFromString(CollectionsFile.serializer(), collectionsFile.readText()) }.getOrDefault(CollectionsFile()),
+    )
+
+    /** What you did with collections; the series themselves are found in the library's titles. */
+    val collections: StateFlow<CollectionsFile> = _collections.asStateFlow()
+
+    fun editCollections(change: (CollectionsFile) -> CollectionsFile) {
+        val next = change(_collections.value)
+        _collections.value = next
+        runCatching { collectionsFile.writeText(collectionsJson.encodeToString(CollectionsFile.serializer(), next)) }
+    }
+
     private fun defaultBrowser(): String? = runCatching {
         context.packageManager
             .resolveActivity(Intent(Intent.ACTION_VIEW, "https://example.com/".toUri()), PackageManager.MATCH_DEFAULT_ONLY)
@@ -238,6 +256,7 @@ sealed interface Focus {
     data class OnGame(val game: Game) : Focus
     data class OnApp(val app: AppEntry) : Focus
     data class OnSystem(val id: String, val name: String, val count: Int) : Focus
+    data class OnCollection(val id: String, val name: String, val games: List<Game>) : Focus
 }
 
 data class Session(val game: Game, val emulatorName: String, val usesBothScreens: Boolean, val startedAtMillis: Long)

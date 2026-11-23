@@ -161,5 +161,26 @@ New settings the launcher draws from 0.5.0: `companion.sparklines`, `companion.c
 | Cards waiting below | From outside a System page (Up from the dock) only a card that shows takes focus | Proposed |
 | Left and Right | Unchanged: Android's search, no wrap at the ends | Unchanged |
 
+### Collections, the Select menu and the settings popup (2026-11-23)
+
+Your answers: a page below Home reached with Down, a grid of sized tiles, holding apps, HTML widgets (your own files), collections, built-in and Android widgets, single games and shortcuts; both edit modes to try. Those come in 0.6.1 and 0.6.2. 0.6.0 brings:
+
+| Detail | Value | Status |
+|---|---|---|
+| Third section | Collections replaces System in the dock and L1/R1 (stacked-cards icon, `header.tabCollections`) | **Your answer** |
+| Finding series | About 60 well-known series by name anywhere in the title (Pokémon, Mario, Zelda, Sonic, Grand Theft Auto…), and titles that start alike (two shared words in two games, or one uncommon word in three). One game on two consoles is not a series. Named without "collection" | **Your answer** (suggested from titles); the rules and list are proposed |
+| Suggestions | After your collections, with a "Suggested" badge. Select → Keep, Rename…, Hide; adding or removing a game keeps it; a hidden series is never offered again | Proposed |
+| Order | Yours A to Z, then suggestions, largest first | Proposed |
+| Collection card | Its covers by count (one fills it, two side by side, three as one tall and two stacked, four in a square, 2 dp apart), name and count below; four across, two whole rows | **Your answer** (cover mosaic); the layouts are proposed |
+| Inside a collection | Its games A to Z in the two-row grid; B goes back to its card | Proposed |
+| Select | A menu for whatever is highlighted, "Wii-S settings" last; Select no longer switches Games and Apps | **Your answer** (like iiSU) |
+| Menu look | Glass panel 380 dp wide over the screen dimmed 40% (55% in dark), the item's name and console or count on top, each row showing the button that does it directly (X, Y, A, Start), a line above Wii-S settings. B or Select closes; focus goes back where it was | Proposed |
+| On a game | Pin / Unpin (X), Add to collection…, Remove from the collection (inside one), Emulator… (Y) | **Your answer**; Add to collection lists New collection…, yours, then suggestions |
+| On a collection | Open (A), Keep (suggestions), Rename…, Hide (series) or Delete (yours) | Proposed |
+| Naming | A popup with the Android keyboard; Save or the keyboard's Done | Proposed |
+| Settings popup | Start, or the menu's last row. 785 × 412 dp: categories on the left (the page follows focus), the page on the right, B closes, focus stays inside | **Your answers** (centred popup, Start); the details are proposed |
+| Bottom screen | A highlighted collection: its covers, name, games, played and consoles; Stats for its games together; Achievements ask you to highlight a game | Proposed |
+| Older layouts | The shelves and grid layouts keep the settings as their third page | Proposed |
+
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

@@ -210,6 +210,9 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 .dock-row { display: flex; align-items: center; gap: 18px; flex: none; padding-top: 10px; }
 .dock-hints { flex: 1; min-width: 0; overflow: hidden; }
 .dock-hints .m-hints { padding-top: 0; gap: 14px; justify-content: flex-start !important; }
+.m-scrim { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; }
+.m-popup { padding: 18px; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; }
+.m-popup .m-line { height: 1px; margin: 6px 0; flex: none; }
 .pin-card { display: flex; align-items: center; gap: 14px; padding: 0 28px 0 22px; flex: none; align-self: flex-start; box-sizing: border-box; }
 .look { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; }
 .page-tabs { display: inline-flex; gap: 2px; padding: 3px; flex: none; }
@@ -280,7 +283,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script type="application/json" id="proposal">{"schema":4,"name":"Draft 4","appearance":"system","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#FFFFFF","tile":"#F1F0F5","tileFocused":"#E4E2EC","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#FFFFFF","opacity":1.0,"blur":24,"border":"#DCDAE5","borderOpacity":1.0,"borderWidth":1.0,"text":"#23212D","textMuted":"#625F72","radius":18},"dark":{"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#15141C","backgroundTop":"#1D1C26","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.14,"surface":"#22212C","tile":"#2A2935","tileFocused":"#35343F","text":"#ECEAF3","textMuted":"#A9A5B9","accent":"#ECEAF3","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#ECEAF3","tabActiveText":"#15141C","tabIdleText":"#B6B2C6","hintBadge":"#ECEAF3","hintBadgeText":"#15141C","messageBar":"#22212C","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#23222D","opacity":1.0,"blur":24,"border":"#383645","borderOpacity":1.0,"borderWidth":1.0,"text":"#ECEAF3","textMuted":"#A9A5B9","radius":18},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#ECEAF3","colorB":"#ECEAF3","colorX":"#ECEAF3","colorY":"#ECEAF3","colorOther":"#ECEAF3"},"shadowColor":"#000000"},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":3,"focusRingGap":1,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":24,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0.0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.08,"focusGrowMax":8,"pressScale":0.94,"stiffness":400.0,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabSystem":"System","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate","pillMotion":"glide","focusGlide":true,"badgePress":true,"riseIn":true,"motionMs":250},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true,"showStats":true,"showAchievements":true,"pageStyle":"tabs","sparklines":true,"chartRange":"12w","achievementsRing":true,"achievementsPlaytime":true,"statColors":["#2F86F6","#1FA968","#8A5CF6","#F28C28"],"trophyGold":"#E9AE25","trophySilver":"#A3AEBE","trophyBronze":"#C9773D"},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880.0,988.0],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0.0,"lowpass":7000.0,"noise":0.0,"volume":0.32},"select":{"wave":"triangle","notes":[659.0,988.0],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0.0,"lowpass":8000.0,"noise":0.0,"volume":0.5},"back":{"wave":"triangle","notes":[740.0,494.0],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0.0,"lowpass":6000.0,"noise":0.0,"volume":0.45},"tab":{"wave":"square","notes":[523.0,784.0],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0.0,"lowpass":3200.0,"noise":0.0,"volume":0.28},"launch":{"wave":"triangle","notes":[523.0,659.0,784.0,1047.0],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0.0,"lowpass":9000.0,"noise":0.0,"volume":0.55},"error":{"wave":"square","notes":[233.0,196.0],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0.0,"lowpass":2200.0,"noise":0.0,"volume":0.35},"bump":{"wave":"sine","notes":[150.0],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6.0,"lowpass":2000.0,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
+<script type="application/json" id="proposal">{"schema":4,"name":"Draft 4","appearance":"system","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#FFFFFF","tile":"#F1F0F5","tileFocused":"#E4E2EC","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#FFFFFF","opacity":1.0,"blur":24,"border":"#DCDAE5","borderOpacity":1.0,"borderWidth":1.0,"text":"#23212D","textMuted":"#625F72","radius":18},"dark":{"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#15141C","backgroundTop":"#1D1C26","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.14,"surface":"#22212C","tile":"#2A2935","tileFocused":"#35343F","text":"#ECEAF3","textMuted":"#A9A5B9","accent":"#ECEAF3","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#ECEAF3","tabActiveText":"#15141C","tabIdleText":"#B6B2C6","hintBadge":"#ECEAF3","hintBadgeText":"#15141C","messageBar":"#22212C","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#23222D","opacity":1.0,"blur":24,"border":"#383645","borderOpacity":1.0,"borderWidth":1.0,"text":"#ECEAF3","textMuted":"#A9A5B9","radius":18},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#ECEAF3","colorB":"#ECEAF3","colorX":"#ECEAF3","colorY":"#ECEAF3","colorOther":"#ECEAF3"},"shadowColor":"#000000"},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":3,"focusRingGap":1,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":24,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0.0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.08,"focusGrowMax":8,"pressScale":0.94,"stiffness":400.0,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabCollections":"Collections","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate","pillMotion":"glide","focusGlide":true,"badgePress":true,"riseIn":true,"motionMs":250},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true,"showStats":true,"showAchievements":true,"pageStyle":"tabs","sparklines":true,"chartRange":"12w","achievementsRing":true,"achievementsPlaytime":true,"statColors":["#2F86F6","#1FA968","#8A5CF6","#F28C28"],"trophyGold":"#E9AE25","trophySilver":"#A3AEBE","trophyBronze":"#C9773D"},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880.0,988.0],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0.0,"lowpass":7000.0,"noise":0.0,"volume":0.32},"select":{"wave":"triangle","notes":[659.0,988.0],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0.0,"lowpass":8000.0,"noise":0.0,"volume":0.5},"back":{"wave":"triangle","notes":[740.0,494.0],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0.0,"lowpass":6000.0,"noise":0.0,"volume":0.45},"tab":{"wave":"square","notes":[523.0,784.0],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0.0,"lowpass":3200.0,"noise":0.0,"volume":0.28},"launch":{"wave":"triangle","notes":[523.0,659.0,784.0,1047.0],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0.0,"lowpass":9000.0,"noise":0.0,"volume":0.55},"error":{"wave":"square","notes":[233.0,196.0],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0.0,"lowpass":2200.0,"noise":0.0,"volume":0.35},"bump":{"wave":"sine","notes":[150.0],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6.0,"lowpass":2000.0,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
 <script>
 "use strict";
 // ======================================================================================
@@ -477,7 +480,7 @@ const GROUPS = [
     T("header.showDate", "Show the date"),
     X("header.tabGames", "Games tab label"),
     X("header.tabApps", "Apps tab label"),
-    X("header.tabSystem", "System tab label"),
+    X("header.tabCollections", "Collections tab label"),
     T("header.statusPill", "Status pill: clock, Wi-Fi, battery"),
     T("header.tabIcons", "Icons in the tabs"),
     S("nav.style", "Navigation", [["dock", "Dock along the bottom"], ["tabs", "Tabs in the header"]]),
@@ -932,7 +935,7 @@ function hintsHtml(list) {
 function renderTop() {
   if (theme.layout.games === "hero") return renderHeroTop();
   const t = theme, pad = t.spacing.screenPadding;
-  const tabs = [["games", t.header.tabGames], ["apps", t.header.tabApps], ["system", t.header.tabSystem]];
+  const tabs = [["games", t.header.tabGames], ["apps", t.header.tabApps], ["collections", t.header.tabCollections]];
   let idx = 0;
   const tabHtml = tabs.map(([id, label]) => {
     const active = mock.section === id, pill = t.shape.tabStyle === "pill" && active;
@@ -1463,6 +1466,7 @@ function lineSvg(inner, size, color, sw = 1.8) { return `<svg viewBox="0 0 24 24
 function tabIcon(id, size, color) {
   if (id === "games") return lineSvg(`<path d="M4 11.5 12 4.5l8 7V20h-5.5v-5.5h-5V20H4z"/>`, size, color);
   if (id === "apps") return lineSvg(`<rect x="4" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.6"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.6"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.6"/>`, size, color);
+  if (id === "collections") return lineSvg(`<rect x="3.5" y="8.5" width="12.5" height="12" rx="2"/><path d="M7.5 8.5V6.2Q7.5 4 9.7 4h8.6q2.2 0 2.2 2.2v8.1q0 2.2-2.2 2.2H16"/>`, size, color);
   return lineSvg(`<path d="M5 7h14M5 12h14M5 17h14"/><circle cx="9" cy="7" r="2" fill="${color}"/><circle cx="15" cy="12" r="2" fill="${color}"/><circle cx="10" cy="17" r="2" fill="${color}"/>`, size, color);
 }
 // Dark mode: the same colour controls again, stored under "dark". Layout, type and motion are shared.
@@ -1563,7 +1567,7 @@ function navDockHtml(next) {
   const t = theme, nav = t.nav, h = t.header, ms = dockMs(), sw = mock.dockSwitch;
   const pressed = (s) => nav.badgePress && ms > 0 && mock.badgePress && mock.badgePress.label === s && performance.now() - mock.badgePress.at < 400;
   const lb = (s) => `<span class="lb${pressed(s) ? " pressed" : ""}" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">${s}</span>`;
-  const items = [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
+  const items = [["games", h.tabGames], ["apps", h.tabApps], ["collections", h.tabCollections]].map(([id, label]) => {
     const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
     const showLabel = nav.labels === "all" || (nav.labels === "active" && active);
     // The label folds away on the old section and unfolds on the new one.
@@ -1616,7 +1620,7 @@ function placeDockHighlight(instant) {
 }
 function heroHeaderHtml(next) {
   const t = theme, h = t.header;
-  const tabs = t.nav.style === "dock" ? "" : [["games", h.tabGames], ["apps", h.tabApps], ["system", h.tabSystem]].map(([id, label]) => {
+  const tabs = t.nav.style === "dock" ? "" : [["games", h.tabGames], ["apps", h.tabApps], ["collections", h.tabCollections]].map(([id, label]) => {
     const active = mock.section === id, color = active ? t.colors.tabActiveText : t.colors.tabIdleText;
     const inner = `<div class="m-tab" style="flex-direction:row;gap:7px;padding:7px 14px;font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(color)}">${h.tabIcons ? tabIcon(id, 16, css(color)) : ""}${esc(label)}</div>`;
     return focusableHtml({ w: 0, h: 0, rad: Math.min(t.shape.tabRadius, 40), idx: next(), data: `data-tab="${id}"`, inner, elevated: false, ring: false, fill: active ? t.colors.tabActiveFill : "#00000000", fillFocused: active ? t.colors.tabActiveFill : `#1F${String(t.colors.text).replace("#", "").slice(-6)}` });
@@ -1669,8 +1673,10 @@ function captionParts() {
   if (el.dataset.hero) { const g = findGame(el.dataset.hero); kind = "hero"; label = "Last played"; title = g.title; meta = SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"], pinHint(g.key)]; }
   else if (el.dataset.system) { const s = systemsList().find((x) => x.id === el.dataset.system); kind = "system"; label = "System"; title = s.id === "all" ? "All games" : SYSTEMS[s.id]; meta = `${s.count} games`; color = sysColor(s.id); hints = [["A", "Open"]]; }
   else if (el.dataset.game) { const g = findGame(el.dataset.game); const inside = mock.view !== "home"; kind = "game"; label = inside ? SYSTEMS[g.sys] : "Pinned"; title = g.title; meta = inside ? "" : SYSTEMS[g.sys]; color = sysColor(g.sys); hints = [["A", "Play"], ["Y", "Emulator"], pinHint(g.key)]; if (inside) hints.push(["B", "Back"]); }
-  else if (el.dataset.tab) { kind = "tab"; label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, system: t.header.tabSystem }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
-  else if (el.dataset.app) { kind = "app"; label = "App"; title = el.dataset.app; hints = [["A", "Open"]]; }
+  else if (el.dataset.tab) { kind = "tab"; label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, collections: t.header.tabCollections }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
+  else if (el.dataset.app) { kind = "app"; label = "App"; title = el.dataset.app; hints = [["A", "Open"], ["Select", "Menu"]]; }
+  else if (el.dataset.col) { const c = collections().find((x) => x.id === el.dataset.col); kind = "collection"; label = "Collection"; title = c.name; meta = `${c.games.length} games${c.suggested ? " · suggested" : ""}`; hints = [["A", "Open"], ["Select", "Menu"]]; }
+  else if (el.dataset.menu || el.dataset.setcat) { return null; }
   else { hints = [["A", "Select"], ["B", "Home"]]; }
   return { kind, label, title, meta, color, hints };
 }
@@ -1708,14 +1714,51 @@ function updateHeroChrome() {
   }
   const bg = document.getElementById("topBg"); if (bg) bg.innerHTML = artBgHtml(currentSubject(), 833, 468);
 }
+/** Sample collections (invented titles, as everywhere here): yours first, then the series Wii-S offers. */
+let COLLECTIONS = null;
+function collections() {
+  if (!COLLECTIONS) {
+    const pick = (...titles) => titles.map((t) => allGames().find((g) => g.title === t)).filter(Boolean);
+    COLLECTIONS = [
+      { id: "c:1", name: "Favourites", games: pick("Star Courier", "Coral Drift", "Night Market", "Pixel Quest"), suggested: false },
+      { id: "s:tiny", name: "Tiny", games: pick("Tiny Kingdom", "Tiny Tactics"), suggested: false },
+      { id: "s:paper", name: "Paper", games: pick("Paper Pilots", "Paper Planets"), suggested: true },
+      { id: "s:sky", name: "Sky", games: pick("Sky Garden", "Sky Mail"), suggested: true },
+      { id: "s:island", name: "Island and Lantern", games: pick("Lumen Island", "Lantern Keep", "Hover Cup"), suggested: true },
+    ];
+  }
+  return COLLECTIONS;
+}
+/** Covers laid out by count: one fills it, two side by side, three as one tall and two stacked, four in a square. */
+function mosaicHtml(games, w, h) {
+  const g = games.slice(0, 4), cell = (x, cw, ch) => `<div style="width:${cw}px;height:${ch}px;overflow:hidden;flex:none">${coverHtml(x.title, x.sys, x.ratio, cw, ch, "cover")}</div>`;
+  const hw = (w - 2) / 2, hh = (h - 2) / 2;
+  if (g.length === 0) return `<div style="width:${w}px;height:${h}px;display:flex;align-items:center;justify-content:center;background:rgba(${rgb(theme.glass.text)},.06)">${tabIcon("collections", 28, css(theme.glass.textMuted))}</div>`;
+  if (g.length === 1) return cell(g[0], w, h);
+  if (g.length === 2) return `<div style="display:flex;gap:2px">${cell(g[0], hw, h)}${cell(g[1], hw, h)}</div>`;
+  if (g.length === 3) return `<div style="display:flex;gap:2px">${cell(g[0], hw, h)}<div style="display:flex;flex-direction:column;gap:2px">${cell(g[1], hw, hh)}${cell(g[2], hw, hh)}</div></div>`;
+  return `<div style="display:flex;flex-direction:column;gap:2px"><div style="display:flex;gap:2px">${cell(g[0], hw, hh)}${cell(g[1], hw, hh)}</div><div style="display:flex;gap:2px">${cell(g[2], hw, hh)}${cell(g[3], hw, hh)}</div></div>`;
+}
+function collectionCardHtml(c, idx, w, h) {
+  const t = theme, nameH = 46;
+  const badge = c.suggested ? `<span style="position:absolute;left:8px;top:8px;z-index:4;padding:3px 8px;border-radius:99px;font:800 10px/1.2 ${fontStack(t.type.bodyFont)};background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">Suggested</span>` : "";
+  const inner = `<div style="position:absolute;inset:0;display:flex;flex-direction:column">${mosaicHtml(c.games, w, h - nameH)}<div style="padding:7px 12px;height:${nameH}px;box-sizing:border-box"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:14px;color:${css(t.glass.text)};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.name)}</div><div style="${labelStyle()};font-size:11px;color:${css(t.glass.textMuted)}">${c.games.length} games</div></div></div>${badge}${edgeOverlay(t.glass.radius)}`;
+  return focusableHtml({ w, h, rad: t.glass.radius, idx, data: `data-col="${esc(c.id)}"`, inner, elevated: true, ring: true, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
+}
+function collectionsHtml(next, room, innerW) {
+  const t = theme, gap = t.spacing.tileGap, list = collections();
+  if (!list.length) return `<div style="${glassCss(`border-radius:${t.glass.radius}px;`)}padding:20px 24px;max-width:520px;margin-top:8px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tileTitleSize}px">No collections yet</div><div style="${labelStyle()};margin-top:6px">Wii-S looks for series in your games' titles, like Sonic or Pokémon, and offers them here. To make your own, press Select on a game and choose Add to collection.</div></div>`;
+  const rC = room(160), w = Math.floor((innerW - 2 * rC - 3 * gap) / 4), h = 136;
+  return `<div class="m-grid" style="gap:${gap}px;padding:${rC}px">${list.map((c) => collectionCardHtml(c, next(), w, h)).join("")}</div>`;
+}
 function systemViewHtml(next, room) {
-  const t = theme, L = t.layout, gap = t.spacing.tileGap, id = mock.view;
-  const games = id === "all" ? allGames() : (libById(id)?.games || []).map((g) => mkGame(id, g));
+  const t = theme, L = t.layout, gap = t.spacing.tileGap, col = mock.view.startsWith("col:") ? collections().find((c) => `col:${c.id}` === mock.view) : null, id = col ? "all" : mock.view;
+  const games = col ? col.games : id === "all" ? allGames() : (libById(id)?.games || []).map((g) => mkGame(id, g));
   const size = mock.coverSize || L.gridTileSize, rS = room(size), color = sysColor(id);
   const back = `<span class="lb" style="background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)}">B</span>`;
   const title = `<div style="display:flex;align-items:center;gap:10px;height:36px;flex:none">${back}
-      ${id !== "all" ? `<span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;${glassCss("border-radius:99px;")}">${consoleIcon(id, 20, mix(color, "#000000", 0.15))}</span>` : ""}
-      <span style="font-family:${fontStack(t.type.displayFont)};font-size:${Math.round(t.type.wordmarkSize * 0.8)}px;font-weight:${t.type.wordmarkWeight};color:${css(t.colors.text)}">${esc(id === "all" ? "All games" : SYSTEMS[id])}</span>
+      ${col ? `<span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;${glassCss("border-radius:99px;")}">${tabIcon("collections", 20, css(t.glass.text))}</span>` : id !== "all" ? `<span style="display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;${glassCss("border-radius:99px;")}">${consoleIcon(id, 20, mix(color, "#000000", 0.15))}</span>` : ""}
+      <span style="font-family:${fontStack(t.type.displayFont)};font-size:${Math.round(t.type.wordmarkSize * 0.8)}px;font-weight:${t.type.wordmarkWeight};color:${css(t.colors.text)}">${esc(col ? col.name : id === "all" ? "All games" : SYSTEMS[id])}</span>
       <span style="${labelStyle()}">${games.length} games</span></div>`;
   return `<div id="sysView" style="display:flex;flex-direction:column;height:100%">${title}<div style="position:relative;flex:1;min-height:0;overflow:hidden"><div class="m-scroll" id="vscroll" data-whole="1" data-room="${rS}" style="padding:${rS}px"><div class="m-grid" style="gap:${gap}px">${games.map((g) => artTileHtml(g, size, next())).join("")}</div></div></div></div>`;
 }
@@ -1748,11 +1791,10 @@ function renderHeroTop() {
     const rA = room(136);
     body = `<div class="m-grid" style="gap:${gap}px;padding:${rA}px 0">${APPS.map(([name, col]) => focusableHtml({ w: 136, h: 120, rad: t.glass.radius, idx: next(), data: `data-app="${esc(name)}"`, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur(),
       inner: `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;z-index:3"><div style="width:52px;height:52px;border-radius:16px;background:${col}"></div><span style="font-family:${fontStack(t.type.bodyFont)};font-weight:700;font-size:12px;color:${css(t.glass.text)}">${esc(name)}</span></div>${edgeOverlay(t.glass.radius)}` })).join("")}</div>`;
+  } else if (mock.view !== "home") {
+    body = systemViewHtml(next, room);
   } else {
-    const chips = ["Theme", "Sounds", "Box art", "Report"].map((name, i) => focusableHtml({ w: 0, h: 0, rad: 99, idx: next(), data: `data-sys="${i}"`, elevated: false, fill: i === 0 ? t.colors.accent : glassHex(), fillFocused: i === 0 ? t.colors.accent : glassHex(), surface: i === 0 ? "" : glassBlur(), inner: `<span style="display:block;padding:10px 18px;font-weight:700;color:${css(i === 0 ? t.colors.tabActiveText : t.glass.text)}">${name}</span>` })).join("");
-    body = `<div style="padding:6px 0;display:flex;flex-direction:column;gap:14px"><div style="display:flex;gap:10px">${chips}</div>
-      <div style="${glassCss("padding:18px;")}"><div style="font-family:${fontStack(t.type.displayFont)};font-size:${t.type.tabSize}px;font-weight:${t.type.tabWeight}">Theme</div>
-      <div style="margin-top:8px">Active: ${esc(t.name)} (imported)</div><div style="font-size:${t.type.labelSize}px;color:${css(t.glass.textMuted)};margin-top:6px">Fonts: ${esc(t.type.displayFont)} · ${esc(t.type.bodyFont)}</div></div></div>`;
+    body = collectionsHtml(next, room, innerW);
   }
   const bgLayer = ["art", "artLight", "dots"].includes(t.colors.backgroundStyle) ? `<div class="bg-layer" id="topBg"></div>` : `<div class="bg-layer" style="${backgroundCss(false)}"></div>`;
   const msg = mock.message ? `<div class="m-msg" style="${glassCss()}">${esc(mock.message)}</div>` : "";
@@ -1767,8 +1809,69 @@ function renderHeroTop() {
   const top = Math.round(pad * 0.6), bottom = dockNav ? 10 : top;
   const clip = dockNav && t.nav.captionPlace === "aboveDock" ? "overflow:hidden" : visible ? "overflow:visible" : "";
   $("#topScreen").innerHTML = `<div class="mock" style="${vars()}">${bgLayer}<div class="content" style="padding:${top}px ${pad}px ${bottom}px">${header}<div style="height:${Math.round(t.spacing.headerGap * 0.75)}px;flex:none"></div>
-    <div class="m-body ${anim}" style="${clip}">${body}</div>${msg}${captionRow}${dockRow}</div>${frameGlowHtml()}</div>`;
+    <div class="m-body ${anim}" style="${clip}">${body}</div>${msg}${captionRow}${dockRow}</div>${popupHtml()}${frameGlowHtml()}</div>`;
 }
+// ---- Popups: the Select menu and the settings (0.6.0) ----
+const SETTINGS_PAGES = [["theme", "Theme"], ["sounds", "Sounds"], ["art", "Box art"], ["ra", "RetroAchievements"], ["report", "Report"]];
+function popupRowHtml(idx, data, label, button, w, selected) {
+  const t = theme, text = String(t.glass.text).replace("#", "").slice(-6);
+  const badge = button ? `<i style="margin-left:auto;font-style:normal;height:22px;min-width:22px;padding:0 7px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:${button.length === 1 ? 11 : 7}px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};${labelStyle()}">${esc(button)}</i>` : "";
+  const inner = `<div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 14px;font-family:${fontStack(t.type.bodyFont)};font-weight:${selected ? 700 : 600};font-size:15px;color:${css(t.glass.text)};z-index:3"><span>${esc(label)}</span>${badge}</div>`;
+  return focusableHtml({ w, h: 44, rad: 14, idx, data, inner, elevated: false, ring: false, grow: false, fill: selected ? `#14${text}` : "#00000000", fillFocused: `#24${text}` });
+}
+function popupHtml() {
+  const t = theme, scrim = `background:rgba(0,0,0,${t.colors.background && isDark() ? 0.55 : 0.4})`;
+  const titleHtml = (title, sub) => `<div style="padding:0 6px 10px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tileTitleSize + 2}px;color:${css(t.glass.text)}">${esc(title)}</div>${sub ? `<div style="${labelStyle()};color:${css(t.glass.textMuted)}">${esc(sub)}</div>` : ""}</div>`;
+  let n = 1000;
+  if (mock.menu) {
+    const m = mock.menu, rows = m.items.map((it, i) => (it.line ? `<div class="m-line" style="background:rgba(${rgb(t.glass.text)},.12)"></div>` : "") + popupRowHtml(n++, `data-menu="${i}"`, it.label, it.button, 344, false)).join("");
+    return `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:380px">${titleHtml(m.title, m.sub)}${rows}</div></div>`;
+  }
+  if (mock.settings) {
+    const cats = SETTINGS_PAGES.map(([id, label]) => popupRowHtml(n++, `data-setcat="${id}"`, label, null, 196, id === mock.settings)).join("");
+    const card = (title, body) => `<div style="background:${css(t.colors.surface)};border-radius:${t.shape.cardRadius}px;padding:16px;margin-bottom:12px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(t.colors.text)}">${title}</div><div style="${labelStyle()};margin-top:8px">${body}</div></div>`;
+    const page = { theme: card("Theme", `Active: ${esc(t.name)} (built-in)<br>Make or change a theme in the Design Workbench, export theme.json, then import it here.`) + card("Appearance", "As the theme says · Follow Android · Light · Dark"),
+      sounds: card("Sounds", "Sounds: On. Each sound comes from the theme unless you choose your own file."), art: card("Box art", "Art for most games, from your art folder and libretro thumbnails."),
+      ra: card("RetroAchievements", "Your username and Web API key; they stay on this device."), report: card("Report", "Displays, the bottom screen, emulators and the library, to share when something is wrong.") }[mock.settings] || "";
+    return `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:785px;height:412px"><div style="display:flex;align-items:center">${titleHtml("Settings", "")}<span style="margin-left:auto">${hintsHtml([["B", "Close"]])}</span></div><div style="display:flex;gap:14px;flex:1;min-height:0"><div style="display:flex;flex-direction:column;gap:4px;width:196px;flex:none">${cats}</div><div style="flex:1;min-width:0;overflow:hidden">${page}</div></div></div></div>`;
+  }
+  return "";
+}
+function isDark() { return $("#previewDark")?.checked; }
+/** Select: what you can do with the highlighted item, and the settings at the bottom (as on the Thor). */
+function openMenu() {
+  const el = focusables[focusIdx];
+  const key = el ? keyOf(el) : null;
+  const game = el?.dataset.game ? findAnyGame(el.dataset.game) : el?.dataset.hero ? findAnyGame(el.dataset.hero) : null;
+  const col = el?.dataset.col ? collections().find((c) => c.id === el.dataset.col) : null;
+  const items = [];
+  if (game) {
+    items.push({ label: isPinned(game.key) ? "Unpin from Home" : "Pin to Home", button: "X", run: () => { closePopups(); togglePin(); } });
+    items.push({ label: "Add to collection…", run: () => { closePopups(); toast("On the Thor this lists your collections and New collection…"); } });
+    items.push({ label: "Emulator…", button: "Y", run: () => { closePopups(); press("Y"); } });
+  } else if (col) {
+    items.push({ label: "Open", button: "A", run: () => { closePopups(); activate(); } });
+    if (col.suggested) items.push({ label: "Keep", run: () => { col.suggested = false; closePopups(); } });
+    items.push({ label: "Rename…", run: () => { closePopups(); toast("On the Thor the keyboard opens to rename it"); } });
+    items.push({ label: col.id.startsWith("s:") ? "Hide" : "Delete", run: () => { COLLECTIONS = collections().filter((c) => c !== col); mock.savedFocus = null; closePopups(); } });
+  } else if (el?.dataset.system) {
+    items.push({ label: "Open", button: "A", run: () => { closePopups(); activate(); } });
+  } else if (el?.dataset.app) {
+    items.push({ label: "Open", button: "A", run: () => { closePopups(); activate(); } });
+  }
+  if (!items.length) { openSettings(); return; }
+  items.push({ label: "Wii-S settings", button: "Start", line: true, run: () => { mock.menu = null; openSettings(true); } });
+  const title = game ? game.title : col ? col.name : el?.dataset.system ? (el.dataset.system === "all" ? "All games" : SYSTEMS[el.dataset.system]) : el?.dataset.app || "Wii-S";
+  const sub = game ? SYSTEMS[game.sys] : col ? `${col.games.length} games${col.suggested ? " · suggested" : ""}` : "";
+  mock.savedFocus = key; mock.menu = { title, sub, items }; mock.focus = "menu:0";
+  playSound("select"); renderAll();
+}
+function openSettings(keepSaved) {
+  if (!keepSaved && !mock.menu) mock.savedFocus = focusables[focusIdx] ? keyOf(focusables[focusIdx]) : null;
+  mock.menu = null; mock.settings = mock.settings || "theme"; mock.focus = `setcat:${mock.settings}`;
+  playSound("select"); renderAll();
+}
+function closePopups() { mock.menu = null; mock.settings = null; mock.focus = mock.savedFocus; renderAll(); }
 function renderDockBottom() {
   const t = theme, c = t.companion, sub = currentSubject();
   let art = "";
@@ -1814,7 +1917,8 @@ function renderAll() {
 let focusables = [], focusIdx = 0;
 const springs = new Map(); // element -> {p, v, target, press, pv, ptarget}
 function bindFocusables() {
-  focusables = Array.from(document.querySelectorAll("#topScreen .focusable"));
+  const popup = document.querySelector("#topScreen .m-popup");
+  focusables = Array.from((popup || document.querySelector("#topScreen")).querySelectorAll(".focusable"));
   focusables.forEach((el, i) => {
     el.addEventListener("click", () => { setFocus(i, true); activate(); });
   });
@@ -1825,12 +1929,13 @@ function restoreFocus() {
   else { let i = focusables.findIndex((el) => el.dataset.hero); if (i < 0) i = focusables.findIndex((el) => el.dataset.game); if (i >= 0) target = i; }
   setFocus(target, false, true);
 }
-function keyOf(el) { return el.dataset.hero ? "hero" : el.dataset.system ? `sys:${el.dataset.system}` : el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
+function keyOf(el) { return el.dataset.hero ? "hero" : el.dataset.system ? `sys:${el.dataset.system}` : el.dataset.col ? `col:${el.dataset.col}` : el.dataset.menu ? `menu:${el.dataset.menu}` : el.dataset.setcat ? `setcat:${el.dataset.setcat}` : el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
 function setFocus(i, sound, instant) {
   const prev = focusables[focusIdx];
   focusIdx = i;
   const el = focusables[i]; if (!el) return;
   mock.focus = keyOf(el);
+  if (el.dataset.setcat && mock.settings !== el.dataset.setcat) { mock.settings = el.dataset.setcat; renderAll(); return; }
   for (const f of focusables) {
     const s = springs.get(f) || { p: 0, v: 0, target: 0, press: 0, pv: 0, ptarget: 0 };
     s.target = f === el ? 1 : 0;
@@ -2005,6 +2110,9 @@ function navigate(dir) {
 }
 function activate() {
   const el = focusables[focusIdx]; if (!el) return;
+  if (el.dataset.menu) { mock.menu.items[Number(el.dataset.menu)].run(); return; }
+  if (el.dataset.setcat) return;
+  if (el.dataset.col) { playSound("select"); mock.prevFocus = keyOf(el); mock.view = `col:${el.dataset.col}`; mock.focus = null; mock.animate = true; mock.lastDir = 1; renderAll(); return; }
   const s = springs.get(el); if (s) { s.ptarget = 1; kick(); setTimeout(() => { s.ptarget = 0; kick(); }, 120); }
   if (el.dataset.tab) { switchSection(el.dataset.tab); return; }
   if (el.dataset.system) {
@@ -2022,30 +2130,31 @@ function activate() {
 }
 function switchSection(id, sound = true) {
   if (mock.section === id) return;
-  const order = ["games", "apps", "system"];
+  const order = ["games", "apps", "collections"];
   mock.lastDir = order.indexOf(id) > order.indexOf(mock.section) ? 1 : -1;
   mock.dockSwitch = { from: mock.section, to: id };
   mock.section = id; mock.view = "home"; mock.focus = null; mock.animate = true;
   if (sound) playSound("tab");
-  $("#topSection").textContent = { games: "Games", apps: "Apps", system: "System" }[id];
+  $("#topSection").textContent = { games: "Games", apps: "Apps", collections: "Collections" }[id];
   renderAll();
 }
 function press(key) {
-  const order = ["games", "apps", "system"];
+  const order = ["games", "apps", "collections"];
   switch (key) {
     case "left": case "right": case "up": case "down": navigate(key); break;
     case "A": activate(); break;
     case "B":
       playSound("back");
-      if (mock.section === "games" && mock.view !== "home") { mock.view = "home"; mock.focus = mock.prevFocus || null; mock.animate = true; mock.lastDir = -1; renderAll(); }
+      if (mock.menu || mock.settings) { closePopups(); break; }
+      if (mock.section !== "apps" && mock.view !== "home") { mock.view = "home"; mock.focus = mock.prevFocus || null; mock.animate = true; mock.lastDir = -1; renderAll(); }
       else if (mock.section !== "games") switchSection("games", false);
       break;
     case "Y": if (focusables[focusIdx]?.dataset.game || focusables[focusIdx]?.dataset.hero) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); } break;
-    case "X": togglePin(); break;
+    case "X": if (!mock.menu && !mock.settings) togglePin(); break;
     case "L1": mock.badgePress = { label: "L1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 2) % 3]); break;
     case "R1": mock.badgePress = { label: "R1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 1) % 3]); break;
-    case "Start": switchSection("system"); break;
-    case "Select": switchSection(mock.section === "apps" ? "games" : "apps"); break;
+    case "Start": if (mock.settings) { playSound("back"); closePopups(); } else openSettings(); break;
+    case "Select": if (mock.menu) { playSound("back"); closePopups(); } else if (!mock.settings) openMenu(); break;
   }
 }
 

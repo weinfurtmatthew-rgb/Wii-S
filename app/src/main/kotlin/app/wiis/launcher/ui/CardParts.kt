@@ -1,6 +1,12 @@
 package app.wiis.launcher.ui
 
 import androidx.compose.foundation.Image
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -102,6 +108,43 @@ internal fun BoxScope.ConsoleMark(systemId: String) {
             contentAlignment = Alignment.Center,
         ) {
             ConsoleIcon(systemId, tile.consoleIconSize.dp, mix(color, Color.Black, 0.15f))
+        }
+    }
+}
+
+/**
+ * A collection's covers in one box, laid out by how many there are: one fills it, two side by
+ * side, three as one tall and two stacked, four in a square. 2 dp lines between them.
+ */
+@Composable
+internal fun CoverMosaic(games: List<Game>, sizePx: Int, modifier: Modifier = Modifier) {
+    val style = LocalWiis.current
+    @Composable
+    fun Cell(game: Game, m: Modifier) = Box(m.clipToBounds()) { Cover(game, sizePx, style.systemColor(game.systemId), titleSize = 11) }
+    val gap = Arrangement.spacedBy(2.dp)
+    val g = games.take(4)
+    Box(modifier) {
+        when (g.size) {
+            0 -> Box(Modifier.matchParentSize().background(style.glassText.copy(alpha = 0.06f)), contentAlignment = Alignment.Center) {
+                app.wiis.designsystem.SectionIcon("collections", 28.dp, style.glassTextMuted)
+            }
+            1 -> Cell(g[0], Modifier.matchParentSize())
+            2 -> Row(Modifier.matchParentSize(), horizontalArrangement = gap) { g.forEach { Cell(it, Modifier.weight(1f).fillMaxHeight()) } }
+            3 -> Row(Modifier.matchParentSize(), horizontalArrangement = gap) {
+                Cell(g[0], Modifier.weight(1f).fillMaxHeight())
+                Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = gap) {
+                    Cell(g[1], Modifier.weight(1f).fillMaxWidth())
+                    Cell(g[2], Modifier.weight(1f).fillMaxWidth())
+                }
+            }
+            else -> Column(Modifier.matchParentSize(), verticalArrangement = gap) {
+                for (r in 0..1) {
+                    Row(Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = gap) {
+                        Cell(g[r * 2], Modifier.weight(1f).fillMaxHeight())
+                        Cell(g[r * 2 + 1], Modifier.weight(1f).fillMaxHeight())
+                    }
+                }
+            }
         }
     }
 }

@@ -36,6 +36,7 @@ import app.wiis.designsystem.WiisFonts
 import app.wiis.designsystem.WiisTheme
 import app.wiis.designsystem.mix
 import app.wiis.emulator.Game
+import app.wiis.launcher.home.CollectionEntry
 import app.wiis.launcher.home.HeroActions
 import app.wiis.launcher.home.HeroFocus
 import app.wiis.launcher.home.HeroHomeScreen
@@ -115,6 +116,60 @@ class HeroScreenshots {
         home(focus = null).copy(section = Section.Apps, apps = (1..22).map { app(appColors.keys.elementAt(it % appColors.size) + " $it") }),
     )
 
+    // ---- Collections and the Select menu (0.6.0) -------------------------------------------------
+
+    private val sampleCollections: List<CollectionEntry> by lazy {
+        fun pick(vararg titles: String) = titles.map { t -> library.first { it.title == t } }
+        listOf(
+            CollectionEntry("c:1", "Favourites", pick("Star Courier", "Coral Drift", "Night Market", "Pixel Quest"), suggested = false),
+            CollectionEntry("s:k:tiny", "Tiny", pick("Tiny Kingdom", "Tiny Tactics"), suggested = false),
+            CollectionEntry("s:t:paper", "Paper", pick("Paper Pilots", "Paper Planets"), suggested = true),
+            CollectionEntry("s:t:sky", "Sky", pick("Sky Garden", "Sky Mail"), suggested = true),
+            CollectionEntry("s:t:lantern", "Island and Lantern", pick("Lumen Island", "Lantern Keep", "Hover Cup"), suggested = true),
+        )
+    }
+
+    private fun collectionsHome(focus: String?) = home(focus = focus).copy(section = Section.Collections, collections = sampleCollections)
+
+    @Test fun collections() = shoot("top-16-collections", collectionsHome(HomeViewModel.colKey("c:1")))
+
+    @Test fun collectionsSuggested() = shoot("top-17-collections-suggested", collectionsHome(HomeViewModel.colKey("s:t:paper")))
+
+    @Test fun collectionsEmpty() = shoot("top-18-collections-empty", home(focus = null).copy(section = Section.Collections))
+
+    @Test fun collectionView() {
+        val c = sampleCollections.first()
+        shoot("top-19-collection-open", collectionsHome(HomeViewModel.gridKey(c.games.first())).copy(view = HomeView.InCollection(c.id), viewGames = c.games))
+    }
+
+    /** Select on a game, on a collection, then Add to collection from the game's menu. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun selectMenus() {
+        val live = Live(home(focus = HomeViewModel.KEY_HERO).copy(collections = sampleCollections))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonSelect) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-20-menu-game.png").path)
+        // Down to Add to collection, A.
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.DirectionDown) }
+        settle()
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-21-add-to-collection.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonB) }
+        settle()
+        check(where(live) == "Star Courier @ 28,68") { "focus after closing: ${where(live)}" }
+        live.selectSection(Section.Collections)
+        live.state = live.state.copy(heroFocus = HeroFocus(HomeViewModel.colKey("s:t:paper"), 77L))
+        settle()
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonSelect) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-22-menu-collection.png").path)
+    }
+
+    /** Start: the settings popup over Home (its pages come from the app; the test shows the frame). */
+    @Test fun settingsPopup() = shoot("top-23-settings-frame", home(focus = HomeViewModel.KEY_HERO).copy(settings = "theme"))
+
     /** X on the Jump back in card, then X on that game in the row: pinned, then unpinned. */
     @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
     @Test fun pinWithX() {
@@ -155,11 +210,13 @@ class HeroScreenshots {
             val list = HomeModel.gamesFor(id, library)
             state = state.copy(view = HomeView.InSystem(id), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(HomeViewModel.gridKey(it), token++) })
         }
-        override fun closeSystem(): Boolean {
+        override fun closeView(): Boolean {
             val v = state.view as? HomeView.InSystem ?: return false
             state = state.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(HomeViewModel.sysKey(v.systemId), token++))
             return true
         }
+        override fun openSettings(page: String?) { state = state.copy(settings = page ?: "theme") }
+        override fun closeSettings() { state = state.copy(settings = null) }
         override fun focusGame(game: Game) { last = game.title }
         override fun focusSystem(entry: SystemEntry) { last = entry.name }
         override fun focusApp(app: AppEntry) { last = app.label }
@@ -211,7 +268,7 @@ class HeroScreenshots {
 
     /** Hold Up from the dock: the pinned row, then the card or a system above it, then it stays. */
     @Test fun navHoldUpFromDock() {
-        val live = Live(home(focus = HomeViewModel.navKey(Section.System)))
+        val live = Live(home(focus = HomeViewModel.navKey(Section.Collections)))
         render({ live.state }, live)
         val trail = walk(live, Key.DirectionUp, 10)
         println("NAV hold up from the dock: " + trail.joinToString(" | "))
@@ -331,7 +388,7 @@ class HeroScreenshots {
             if (ready) {
                 WiisTheme(spec = spec, fonts = fonts(), feedback = UiFeedback.None) {
                     CompositionLocalProvider(LocalImageSource provides images) {
-                        HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) {}
+                        HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) { _, _ -> }
                     }
                 }
             }
@@ -356,7 +413,7 @@ class HeroScreenshots {
             if (ready) {
                 WiisTheme(spec = spec, fonts = fonts(), feedback = UiFeedback.None) {
                     CompositionLocalProvider(LocalImageSource provides images) {
-                        HeroHomeScreen(state(), DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) {}
+                        HeroHomeScreen(state(), DeviceStatus(batteryPercent = 76, online = true, wifi = true), actions) { _, _ -> }
                     }
                 }
             }
@@ -381,7 +438,7 @@ class HeroScreenshots {
             if (ready) {
                 WiisTheme(spec = theme, fonts = fonts(), feedback = UiFeedback.None) {
                     CompositionLocalProvider(LocalImageSource provides images) {
-                        HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), NoActions) {}
+                        HeroHomeScreen(state, DeviceStatus(batteryPercent = 76, online = true, wifi = true), NoActions) { _, _ -> }
                     }
                 }
             }
@@ -480,9 +537,19 @@ class HeroScreenshots {
         override fun selectSection(section: Section) = Unit
         override fun cycleSection(delta: Int) = Unit
         override fun onStart() = Unit
-        override fun onSelect() = Unit
         override fun openSystem(id: String) = Unit
-        override fun closeSystem() = false
+        override fun closeView() = false
+        override fun openCollection(id: String) = Unit
+        override fun focusCollection(entry: CollectionEntry) = Unit
+        override fun keepCollection(id: String) = Unit
+        override fun renameCollection(id: String, name: String) = Unit
+        override fun hideCollection(id: String) = Unit
+        override fun addToCollection(id: String, game: Game) = Unit
+        override fun removeFromCollection(id: String, game: Game) = Unit
+        override fun createCollection(name: String, game: Game) = Unit
+        override fun openSettings(page: String?) = Unit
+        override fun closeSettings() = Unit
+        override fun settingsPage(page: String) = Unit
         override fun focusGame(game: Game) = Unit
         override fun focusSystem(entry: SystemEntry) = Unit
         override fun focusApp(app: AppEntry) = Unit

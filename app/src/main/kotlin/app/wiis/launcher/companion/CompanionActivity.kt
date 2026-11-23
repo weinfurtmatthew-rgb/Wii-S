@@ -189,6 +189,7 @@ internal fun CompanionScreen() {
         else -> when (val f = focus) {
             is Focus.OnGame -> CompanionSubject.OfGame(f.game, null)
             is Focus.OnSystem -> CompanionSubject.OfSystem(f.id, f.name, f.count)
+            is Focus.OnCollection -> CompanionSubject.OfCollection(f.id, f.name, f.games)
             else -> null
         }
     }
@@ -244,6 +245,7 @@ private fun DetailsFor(subject: CompanionSubject, style: WiisStyle) {
             val emulator = graph.launcher.choicesFor(subject.id).firstOrNull()?.let { graph.registry.emulator(it.emulator)?.name }
             SystemDetailsPage(subject.id, subject.name, games.size, played, if (subject.id == "all") null else emulator ?: "None set up")
         }
+        is CompanionSubject.OfCollection -> CollectionDetailsPage(subject.name, subject.games, subject.games.count { graph.playtime.lastPlayed(it.uri) > 0 })
     }
 }
 
@@ -269,6 +271,15 @@ private fun StatsFor(subject: CompanionSubject, style: WiisStyle) {
             val color = if (subject.id == "all") style.accent else style.systemColor(subject.id)
             stats?.let { SystemStatsPage(it, if (subject.id == "all") "all systems" else subject.name, color) }
         }
+        // A collection's numbers are its games' together, like a console's.
+        is CompanionSubject.OfCollection -> {
+            val stats by produceState<SystemStats?>(null, subject) {
+                value = withContext(Dispatchers.IO) {
+                    Stats.system("all", subject.games, graph.sessions.all(), graph.playtime::totalMillis, System.currentTimeMillis(), storedLast = graph.playtime::lastPlayed)
+                }
+            }
+            stats?.let { SystemStatsPage(it, subject.name, style.accent) }
+        }
     }
 }
 
@@ -276,6 +287,10 @@ private fun StatsFor(subject: CompanionSubject, style: WiisStyle) {
 @Composable
 private fun AchievementsFor(subject: CompanionSubject, style: WiisStyle, visible: Boolean) {
     val graph = LocalContext.current.graph
+    if (subject is CompanionSubject.OfCollection) {
+        EmptyPage("Achievements are per game", "Highlight a game in ${subject.name} to see its achievements.")
+        return
+    }
     var retry by remember { mutableIntStateOf(0) }
     var result by remember(subject) { mutableStateOf<RaResult?>(null) }
     LaunchedEffect(subject, visible, retry) {
@@ -285,11 +300,13 @@ private fun AchievementsFor(subject: CompanionSubject, style: WiisStyle, visible
         result = when (subject) {
             is CompanionSubject.OfGame -> graph.ra.forGame(subject.game)
             is CompanionSubject.OfSystem -> graph.ra.forSystem(subject.id)
+            is CompanionSubject.OfCollection -> null
         }
     }
     val color = when (subject) {
         is CompanionSubject.OfGame -> style.systemColor(subject.game.systemId)
         is CompanionSubject.OfSystem -> if (subject.id == "all") style.accent else style.systemColor(subject.id)
+        is CompanionSubject.OfCollection -> style.accent
     }
     // Play time beside the list: the same numbers as the Stats page.
     val facts by produceState(emptyList<PlayFact>(), subject, result) {
@@ -312,6 +329,7 @@ private fun AchievementsFor(subject: CompanionSubject, style: WiisStyle, visible
                         PlayFact(PageIcon.Calendar, 3, "Last played", s.lastPlayed?.let(::formatLastPlayed) ?: "Never"),
                     )
                 }
+                is CompanionSubject.OfCollection -> emptyList()
             }
         }
     }

@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.wiis.android.compose)
 }
 
@@ -14,8 +15,8 @@ android {
         applicationId = "app.wiis.launcher"
         minSdk = WiisSdk.MIN
         targetSdk = WiisSdk.TARGET
-        versionCode = 16
-        versionName = "0.5.5-i5"
+        versionCode = 17
+        versionName = "0.6.0-i6"
     }
 
     signingConfigs {

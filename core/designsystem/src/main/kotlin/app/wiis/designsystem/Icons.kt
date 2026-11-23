@@ -94,6 +94,17 @@ fun SectionIcon(sectionId: String, size: Dp, color: Color, modifier: Modifier = 
                     scope.drawPath(p, color, style = stroke)
                 }
                 "apps" -> { rect(4f, 4f, 6.5f, 6.5f, 1.6f); rect(13.5f, 4f, 6.5f, 6.5f, 1.6f); rect(4f, 13.5f, 6.5f, 6.5f, 1.6f); rect(13.5f, 13.5f, 6.5f, 6.5f, 1.6f) }
+                // Collections: a card in front of another, the back one's edge showing above and to the right.
+                "collections" -> {
+                    rect(3.5f, 8.5f, 12.5f, 12f, 2f)
+                    val back = Path().apply {
+                        moveTo(7.5f * u, 8.5f * u); lineTo(7.5f * u, 6.2f * u)
+                        quadraticTo(7.5f * u, 4f * u, 9.7f * u, 4f * u); lineTo(18.3f * u, 4f * u)
+                        quadraticTo(20.5f * u, 4f * u, 20.5f * u, 6.2f * u); lineTo(20.5f * u, 14.3f * u)
+                        quadraticTo(20.5f * u, 16.5f * u, 18.3f * u, 16.5f * u); lineTo(16f * u, 16.5f * u)
+                    }
+                    scope.drawPath(back, color, style = stroke)
+                }
                 else -> { line(5f, 7f, 19f, 7f); line(5f, 12f, 19f, 12f); line(5f, 17f, 19f, 17f); dot(9f, 7f, 2f); dot(15f, 12f, 2f); dot(10f, 17f, 2f) }
             }
         }

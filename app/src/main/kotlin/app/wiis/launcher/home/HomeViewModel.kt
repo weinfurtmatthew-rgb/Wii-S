@@ -34,7 +34,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-enum class Section { Games, Apps, System }
+enum class Section { Games, Apps, Collections }
 
 sealed interface LibraryStatus {
     data object NoFolder : LibraryStatus
@@ -54,15 +54,16 @@ data class FocusTarget(val shelfId: String, val gameUri: String, val token: Long
 data class EmulatorOption(val choice: EmulatorChoice, val name: String, val installed: Boolean)
 data class EmulatorPicker(val game: Game, val options: List<EmulatorOption>)
 
-/** Hero layout: the home page, or one system's games after A on its tile. */
+/** Hero layout: a section's first page, one system's games (A on its tile) or one collection's (A on its card). */
 sealed interface HomeView {
     data object Home : HomeView
     data class InSystem(val systemId: String) : HomeView
+    data class InCollection(val id: String) : HomeView
 }
 
 /**
  * Hero layout: the element that should take focus. Keys: "hero", "sys:<id>", "pin:<uri>",
- * "grid:<uri>", "nav:<section>", "dock:<slot>". [token] changes on every request.
+ * "grid:<uri>", "col:<id>", "nav:<section>", "dock:<slot>". [token] changes on every request.
  */
 data class HeroFocus(val key: String, val token: Long)
 
@@ -90,8 +91,10 @@ data class HomeUiState(
     val heroFocus: HeroFocus? = null,
     val dock: List<AppEntry> = emptyList(),
     val dockPicker: DockPicker? = null,
-    /** A System page to open once (from the bottom screen), e.g. "ra". */
-    val systemPage: String? = null,
+    /** Collections: yours, then the series Wii-S offers. */
+    val collections: List<CollectionEntry> = emptyList(),
+    /** The settings popup is open on this page ("theme", "sounds", "art", "ra", "report"); null: closed. */
+    val settings: String? = null,
 )
 
 /** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
@@ -102,6 +105,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     private val local = MutableStateFlow(HomeUiState())
     private var games: List<Game> = emptyList()
+    /** The series found in the library's titles (worked out when the library changes). Before init: collected there. */
+    private var series: List<SeriesFinder.Series> = emptyList()
     private var layout: LayoutTokens = graph.themes.spec.value.layout
     private var scanning = false
     private var lastScanAt = 0L
@@ -133,12 +138,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         }
         viewModelScope.launch { graph.shared.openApps.collect { selectSection(Section.Apps) } }
         viewModelScope.launch { graph.pins.collect { pins -> local.update { it.copy(pinned = Pins.resolve(pins, games)) } } }
-        viewModelScope.launch {
-            graph.shared.openSystemPage.collect { page ->
-                selectSection(Section.System)
-                local.update { it.copy(systemPage = page) }
-            }
-        }
+        viewModelScope.launch { graph.shared.openSystemPage.collect { page -> openSettings(page) } }
+        viewModelScope.launch { graph.collections.collect { file -> local.update { it.copy(collections = CollectionsModel.resolve(file, series, games)).withCollectionView() } } }
     }
 
     // ---- Navigation -------------------------------------------------------------------------
@@ -147,7 +148,11 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         if (s.section == section) return@update s
         val target = if (section == Section.Games) restoreTarget(s.shelves) else null
         // Hero layout, as in the workbench: a section always opens on its first item (Home: the card).
-        val heroTarget = if (section == Section.Games) homeFocus(s) else null
+        val heroTarget = when (section) {
+            Section.Games -> homeFocus(s)
+            Section.Collections -> s.collections.firstOrNull()?.let { HeroFocus(colKey(it.id), token()) }
+            Section.Apps -> null
+        }
         s.copy(section = section, focusTarget = target ?: s.focusTarget, view = HomeView.Home, viewGames = emptyList(), heroFocus = heroTarget)
     }
 
@@ -156,9 +161,13 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         selectSection(all[(all.indexOf(local.value.section) + delta).mod(all.size)])
     }
 
-    /** Start: System screen. Select: flip between Games and Apps. */
-    fun onStart() = selectSection(Section.System)
-    fun onSelect() = selectSection(if (local.value.section == Section.Apps) Section.Games else Section.Apps)
+    /** Start: the settings popup, from anywhere (again to close it). Select opens the highlighted item's menu (the screen does that). */
+    fun onStart() = if (local.value.settings == null) openSettings(null) else closeSettings()
+
+    /** The settings popup, on [page] or the last one. */
+    fun openSettings(page: String?) = local.update { it.copy(settings = page ?: it.settings ?: "theme") }
+    fun closeSettings() = local.update { it.copy(settings = null) }
+    fun settingsPage(page: String) = local.update { if (it.settings == null) it else it.copy(settings = page) }
 
     fun focusGame(shelfId: String, game: Game) {
         lastFocused = shelfId to game.uri
@@ -166,6 +175,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     fun focusApp(app: AppEntry) = graph.shared.setFocus(Focus.OnApp(app))
+    fun focusCollection(entry: CollectionEntry) = graph.shared.setFocus(Focus.OnCollection(entry.id, entry.name, entry.games))
     fun focusSystem(entry: SystemEntry) = graph.shared.setFocus(Focus.OnSystem(entry.id, entry.name, entry.count))
     fun focusConsumed() = local.update { it.copy(focusTarget = null) }
 
@@ -179,11 +189,73 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         }
     }
 
-    /** B inside a system: back to the home page, focus on that system's tile. False if not inside one. */
-    fun closeSystem(): Boolean {
-        val view = local.value.view as? HomeView.InSystem ?: return false
-        local.update { it.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(sysKey(view.systemId), token())) }
+    /** B inside a system or a collection: back to its tile or card. False if not inside one. */
+    fun closeView(): Boolean {
+        val back = when (val view = local.value.view) {
+            is HomeView.InSystem -> sysKey(view.systemId)
+            is HomeView.InCollection -> colKey(view.id)
+            HomeView.Home -> return false
+        }
+        local.update { it.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(back, token())) }
         return true
+    }
+
+    // ---- Collections ----------------------------------------------------------------------------
+
+    /** A on a collection's card: its games, A to Z, focus on the first. */
+    fun openCollection(id: String) {
+        val list = local.value.collections.firstOrNull { it.id == id }?.games.orEmpty()
+        local.update { s ->
+            s.copy(view = HomeView.InCollection(id), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(gridKey(it), token()) })
+        }
+    }
+
+    /** Saves a change and shows it at once (the collector would only catch up on the next dispatch). */
+    private fun editCollections(change: (CollectionsFile) -> CollectionsFile) {
+        graph.editCollections(change)
+        local.update { it.copy(collections = CollectionsModel.resolve(graph.collections.value, series, games)).withCollectionView() }
+    }
+
+    fun keepCollection(id: String) = editCollections { CollectionsModel.keep(it, id.removePrefix("s:")) }
+    fun renameCollection(id: String, name: String) { if (name.isNotBlank()) editCollections { CollectionsModel.rename(it, id, name.trim()) } }
+
+    /** Hide (a series) or delete (one of yours); focus moves to the next card. */
+    fun hideCollection(id: String) {
+        val i = local.value.collections.indexOfFirst { it.id == id }
+        editCollections { CollectionsModel.hide(it, id) }
+        val now = local.value.collections
+        val next = now.getOrNull(i) ?: now.lastOrNull()
+        local.update { it.copy(heroFocus = next?.let { n -> HeroFocus(colKey(n.id), token()) }) }
+    }
+
+    fun addToCollection(id: String, game: Game) = editCollections { CollectionsModel.add(it, id, game.uri) }
+
+    /** Remove [game] from collection [id]; inside that collection, focus moves to the game that takes its place. */
+    fun removeFromCollection(id: String, game: Game) {
+        val before = local.value.viewGames
+        editCollections { CollectionsModel.remove(it, id, game.uri) }
+        val view = local.value.view
+        if (view is HomeView.InCollection && view.id == id) {
+            val i = before.indexOfFirst { it.uri == game.uri }
+            val after = local.value.viewGames
+            val next = after.getOrNull(i) ?: after.lastOrNull()
+            local.update {
+                if (next != null) it.copy(heroFocus = HeroFocus(gridKey(next), token()))
+                else it.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(colKey(id), token()))
+            }
+        }
+    }
+
+    fun createCollection(name: String, game: Game) {
+        if (name.isBlank()) return
+        editCollections { CollectionsModel.create(it, name.trim(), game.uri).first }
+    }
+
+    /** Inside a collection: its games follow the collection as it changes. */
+    private fun HomeUiState.withCollectionView(): HomeUiState {
+        val view = view as? HomeView.InCollection ?: return this
+        val entry = collections.firstOrNull { it.id == view.id } ?: return copy(view = HomeView.Home, viewGames = emptyList())
+        return copy(viewGames = entry.games)
     }
 
     fun heroFocusConsumed() = local.update { it.copy(heroFocus = null) }
@@ -206,7 +278,6 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         }
         local.update { it.copy(pinned = after, heroFocus = focus ?: it.heroFocus) }
     }
-    fun systemPageShown() = local.update { it.copy(systemPage = null) }
 
     /** Y on a dock app: choose another app for that spot. */
     fun openDockPicker(slot: Int) = local.update { it.copy(dockPicker = DockPicker(slot, graph.apps.apps.value)) }
@@ -235,7 +306,9 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         graph.shared.setHero(hero)
         val view = s.view
         val stillThere = view !is HomeView.InSystem || systems.any { it.id == view.systemId }
+        series = SeriesFinder.find(games)
         return s.copy(
+            collections = CollectionsModel.resolve(graph.collections.value, series, games),
             hero = hero,
             heroPlayedMillis = hero?.let { graph.playtime.totalMillis(it.uri) } ?: 0L,
             pinned = Pins.resolve(graph.pins.value, games),
@@ -243,8 +316,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             allPreview = HomeModel.allTilePreview(hero, recent, systems),
             systemSamples = HomeModel.systemSamples(games, { graph.playtime.lastPlayed(it.uri) }, graph.art::hasArt, hero),
             view = if (stillThere) view else HomeView.Home,
-            viewGames = if (stillThere && view is HomeView.InSystem) HomeModel.gamesFor(view.systemId, games) else emptyList(),
-        )
+            viewGames = if (stillThere && view is HomeView.InSystem) HomeModel.gamesFor(view.systemId, games) else s.viewGames,
+        ).withCollectionView()
     }
 
     fun launchApp(app: AppEntry) = graph.apps.launch(app)
@@ -413,5 +486,6 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         fun gridKey(game: Game) = "grid:${game.uri}"
         fun navKey(section: Section) = "nav:${section.name}"
         fun dockKey(slot: Int) = "dock:$slot"
+        fun colKey(id: String) = "col:$id"
     }
 }

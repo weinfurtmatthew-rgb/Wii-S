@@ -44,6 +44,10 @@ import androidx.compose.ui.graphics.graphicsLayer
 import app.wiis.designsystem.ConsoleGlyph
 import app.wiis.launcher.ui.DotsBackground
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import app.wiis.launcher.system.SettingsPanel
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -130,6 +134,7 @@ import app.wiis.launcher.ui.HintBar
 import app.wiis.launcher.ui.rememberArt
 import app.wiis.launcher.ui.ConsoleMark
 import app.wiis.launcher.ui.Cover
+import app.wiis.launcher.ui.CoverMosaic
 import app.wiis.launcher.ui.SystemRing
 import app.wiis.system.AppEntry
 import app.wiis.system.DeviceStatus
@@ -177,9 +182,19 @@ interface HeroActions {
     fun selectSection(section: Section)
     fun cycleSection(delta: Int)
     fun onStart()
-    fun onSelect()
     fun openSystem(id: String)
-    fun closeSystem(): Boolean
+    fun closeView(): Boolean
+    fun openCollection(id: String)
+    fun focusCollection(entry: CollectionEntry)
+    fun keepCollection(id: String)
+    fun renameCollection(id: String, name: String)
+    fun hideCollection(id: String)
+    fun addToCollection(id: String, game: Game)
+    fun removeFromCollection(id: String, game: Game)
+    fun createCollection(name: String, game: Game)
+    fun openSettings(page: String?)
+    fun closeSettings()
+    fun settingsPage(page: String)
     fun focusGame(game: Game)
     fun focusSystem(entry: SystemEntry)
     fun focusApp(app: AppEntry)
@@ -204,9 +219,19 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun selectSection(section: Section) = vm.selectSection(section)
             override fun cycleSection(delta: Int) = vm.cycleSection(delta)
             override fun onStart() = vm.onStart()
-            override fun onSelect() = vm.onSelect()
             override fun openSystem(id: String) = vm.openSystem(id)
-            override fun closeSystem() = vm.closeSystem()
+            override fun closeView() = vm.closeView()
+            override fun openCollection(id: String) = vm.openCollection(id)
+            override fun focusCollection(entry: CollectionEntry) = vm.focusCollection(entry)
+            override fun keepCollection(id: String) = vm.keepCollection(id)
+            override fun renameCollection(id: String, name: String) = vm.renameCollection(id, name)
+            override fun hideCollection(id: String) = vm.hideCollection(id)
+            override fun addToCollection(id: String, game: Game) = vm.addToCollection(id, game)
+            override fun removeFromCollection(id: String, game: Game) = vm.removeFromCollection(id, game)
+            override fun createCollection(name: String, game: Game) = vm.createCollection(name, game)
+            override fun openSettings(page: String?) = vm.openSettings(page)
+            override fun closeSettings() = vm.closeSettings()
+            override fun settingsPage(page: String) = vm.settingsPage(page)
             override fun focusGame(game: Game) = vm.focusGame(game.systemId, game)
             override fun focusSystem(entry: SystemEntry) = vm.focusSystem(entry)
             override fun focusApp(app: AppEntry) = vm.focusApp(app)
@@ -221,7 +246,7 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun rescan() = vm.rescan()
         }
     }
-    HeroHomeScreen(state, status, actions) { SystemScreen(onPickRomFolder = onPickFolder, requestedPage = state.systemPage, onPageShown = vm::systemPageShown) }
+    HeroHomeScreen(state, status, actions) { page, height -> SettingsPanel(page, vm::settingsPage, onPickRomFolder = onPickFolder, height = height) }
 
     state.picker?.let { p -> EmulatorPickerDialog(p, onPick = { vm.launchGame(p.game, it) }, onDismiss = vm::dismissPicker) }
     state.dockPicker?.let { p -> DockPickerDialog(p, state.dock.getOrNull(p.slot), onPick = vm::chooseDockApp, onDismiss = vm::dismissDockPicker) }
@@ -237,6 +262,7 @@ private sealed interface Focused {
     data class Nav(val section: Section) : Focused
     data class DockApp(val app: AppEntry) : Focused
     data class AppTile(val app: AppEntry) : Focused
+    data class Collection(val entry: CollectionEntry) : Focused
     data object Other : Focused
 }
 
@@ -250,11 +276,30 @@ fun HeroHomeScreen(
     state: HomeUiState,
     status: DeviceStatus,
     actions: HeroActions,
-    systemContent: @Composable () -> Unit,
+    settingsContent: @Composable (page: String, height: Dp) -> Unit,
 ) {
     val style = LocalWiis.current
     val spec = style.spec
     val feedback = LocalUiFeedback.current
+    // Popups over the screen: the Select menu, Add to collection, naming a collection. The settings
+    // popup is the view model's (Start, or the bottom screen asking for a page).
+    var menu by remember { mutableStateOf<Focused?>(null) }
+    var picking by remember { mutableStateOf<Game?>(null) }
+    var naming by remember { mutableStateOf<Naming?>(null) }
+    val popup = menu != null || picking != null || naming != null || state.settings != null
+    val content = remember { FocusRequester() }
+    // Focus goes back where it was when the last popup closes.
+    var hadPopup by remember { mutableStateOf(false) }
+    LaunchedEffect(popup) {
+        if (popup) { hadPopup = true; return@LaunchedEffect }
+        if (!hadPopup) return@LaunchedEffect
+        withFrameNanos { }
+        if (!content.restoreFocusedChild()) runCatching { content.requestFocus() }
+    }
+    fun openPopup(open: () -> Unit) {
+        if (!popup) content.saveFocusedChild()
+        open()
+    }
 
     var focused by remember { mutableStateOf<Focused>(Focused.None) }
     // null = follow the Jump back in game, as the workbench does when an app has focus.
@@ -269,13 +314,14 @@ fun HeroHomeScreen(
             is Focused.System -> { subject = BgSubject.OfSystem(f.entry.id); actions.focusSystem(f.entry) }
             is Focused.DockApp -> { subject = null; actions.focusApp(f.app) }
             is Focused.AppTile -> { subject = null; actions.focusApp(f.app) }
+            is Focused.Collection -> { subject = f.entry.games.firstOrNull()?.let { BgSubject.OfGame(it) }; actions.focusCollection(f.entry) }
             else -> Unit
         }
     }
 
-    BackHandler(enabled = state.view is HomeView.InSystem || state.section != Section.Games) {
+    BackHandler(enabled = !popup && (state.view != HomeView.Home || state.section != Section.Games)) {
         feedback.emit(UiEvent.Back)
-        if (!actions.closeSystem()) actions.selectSection(Section.Games)
+        if (!actions.closeView()) actions.selectSection(Section.Games)
     }
 
     val pad = spec.spacing.screenPadding
@@ -294,11 +340,28 @@ fun HeroHomeScreen(
             // Global buttons work from anywhere on the top screen.
             .onPreviewKeyEvent { e ->
                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                if (popup) {
+                    // In a popup: Start toggles the settings, Select closes the menu; the rest stays inside.
+                    return@onPreviewKeyEvent when (e.key) {
+                        Key.ButtonStart -> { feedback.emit(UiEvent.Tab); menu = null; picking = null; naming = null; actions.onStart(); true }
+                        Key.ButtonSelect -> { if (menu != null) { feedback.emit(UiEvent.Back); menu = null }; true }
+                        Key.ButtonL1, Key.ButtonR1, Key.ButtonX -> true
+                        else -> false
+                    }
+                }
                 when (e.key) {
                     Key.ButtonL1 -> { presses.l1++; feedback.emit(UiEvent.Tab); actions.cycleSection(-1); true }
                     Key.ButtonR1 -> { presses.r1++; feedback.emit(UiEvent.Tab); actions.cycleSection(+1); true }
-                    Key.ButtonStart -> { feedback.emit(UiEvent.Tab); actions.onStart(); true }
-                    Key.ButtonSelect -> { feedback.emit(UiEvent.Tab); actions.onSelect(); true }
+                    Key.ButtonStart -> { feedback.emit(UiEvent.Tab); openPopup { actions.onStart() }; true }
+                    // Select: what you can do with the highlighted item, and the settings at the bottom.
+                    Key.ButtonSelect -> {
+                        feedback.emit(UiEvent.Select)
+                        when (focused) {
+                            is Focused.Nav, Focused.Other, Focused.None -> openPopup { actions.openSettings(null) }
+                            else -> openPopup { menu = focused }
+                        }
+                        true
+                    }
                     // X pins the highlighted game to the bottom row, or unpins it.
                     Key.ButtonX -> {
                         val game = gameOf(focused)
@@ -322,7 +385,9 @@ fun HeroHomeScreen(
             Modifier
                 .fillMaxSize()
                 .safeDrawingPadding()
-                .padding(start = pad.dp, end = pad.dp, top = topPad.dp, bottom = (if (dockNav) 10 else topPad).dp),
+                .padding(start = pad.dp, end = pad.dp, top = topPad.dp, bottom = (if (dockNav) 10 else topPad).dp)
+                .focusRequester(content)
+                .focusGroup(),
         ) {
             HeroHeader(
                 state = state,
@@ -334,7 +399,7 @@ fun HeroHomeScreen(
                 nameplate = if (nameplate) ({ Nameplate(info, focused, it) }) else null,
             )
             Spacer(Modifier.height((spec.spacing.headerGap * 0.75f).roundToInt().dp))
-            HeroBody(state, actions, onFocused, systemContent, Modifier.weight(1f).fillMaxWidth())
+            HeroBody(state, actions, onFocused, Modifier.weight(1f).fillMaxWidth())
             state.message?.let { text ->
                 Text(
                     text,
@@ -357,8 +422,100 @@ fun HeroHomeScreen(
                 }
             }
         }
+
+        menu?.let { target ->
+            val (title, subtitle) = menuTitle(target, state)
+            QuickMenu(
+                title, subtitle,
+                menuFor(
+                    target, state, actions,
+                    close = { menu = null },
+                    pick = { g -> menu = null; picking = g },
+                    name = { n -> menu = null; naming = n },
+                    pin = { g -> feedback.emit(if (state.isPinned(g)) UiEvent.Back else UiEvent.Select); actions.togglePin(g, fromRow = target is Focused.Pinned) },
+                ),
+                onDismiss = { feedback.emit(UiEvent.Back); menu = null },
+            )
+        }
+        picking?.let { game ->
+            CollectionPicker(
+                game.title,
+                state.collections,
+                onPick = { c -> feedback.emit(UiEvent.Select); actions.addToCollection(c.id, game); picking = null },
+                onNew = { picking = null; naming = Naming("New collection", "") { name -> actions.createCollection(name, game) } },
+                onDismiss = { feedback.emit(UiEvent.Back); picking = null },
+            )
+        }
+        naming?.let { n ->
+            NameEntry(n.title, n.initial, onSave = { name -> feedback.emit(UiEvent.Select); n.save(name); naming = null }, onDismiss = { feedback.emit(UiEvent.Back); naming = null })
+        }
+        state.settings?.let { page ->
+            BoxWithConstraints(Modifier.fillMaxSize()) {
+                val height = (maxHeight.value - 56 - 36).toInt().coerceAtLeast(240)
+                PopupLayer(onDismiss = { feedback.emit(UiEvent.Back); actions.closeSettings() }, width = (maxWidth - 48.dp).coerceAtMost(800.dp)) {
+                    settingsContent(page, height.dp)
+                }
+            }
+        }
     }
     }
+}
+
+/** Naming a collection: the popup's title, the name to start from, and what keeps it. */
+private class Naming(val title: String, val initial: String, val save: (String) -> Unit)
+
+private fun menuTitle(f: Focused, state: HomeUiState): Pair<String, String> {
+    fun systemName(id: String) = state.systems.firstOrNull { it.id == id }?.name ?: id
+    return when (f) {
+        is Focused.Hero -> f.game.title to systemName(f.game.systemId)
+        is Focused.Pinned -> f.game.title to systemName(f.game.systemId)
+        is Focused.InGrid -> f.game.title to systemName(f.game.systemId)
+        is Focused.System -> f.entry.name to gamesCount(f.entry.count)
+        is Focused.Collection -> f.entry.name to (gamesCount(f.entry.games.size) + if (f.entry.suggested) " · suggested" else "")
+        is Focused.DockApp -> f.app.label to "App in the dock"
+        is Focused.AppTile -> f.app.label to "App"
+        else -> "Wii-S" to ""
+    }
+}
+
+/** What Select offers for [f], with the button that does it directly; "Wii-S settings" always last. */
+private fun menuFor(
+    f: Focused,
+    state: HomeUiState,
+    actions: HeroActions,
+    close: () -> Unit,
+    pick: (Game) -> Unit,
+    name: (Naming) -> Unit,
+    pin: (Game) -> Unit,
+): List<MenuEntry> {
+    val game = gameOf(f)
+    val inCollection = (state.view as? HomeView.InCollection)?.let { v -> state.collections.firstOrNull { it.id == v.id } }
+    val items = buildList {
+        if (game != null) {
+            add(MenuEntry(if (state.isPinned(game)) "Unpin from Home" else "Pin to Home", "X") { close(); pin(game) })
+            add(MenuEntry("Add to collection…") { pick(game) })
+            if (inCollection != null && f is Focused.InGrid) add(MenuEntry("Remove from ${inCollection.name}") { close(); actions.removeFromCollection(inCollection.id, game) })
+            add(MenuEntry("Emulator…", "Y") { close(); actions.openPicker(game) })
+        }
+        when (f) {
+            is Focused.System -> add(MenuEntry("Open", "A") { close(); actions.openSystem(f.entry.id) })
+            is Focused.Collection -> {
+                val c = f.entry
+                add(MenuEntry("Open", "A") { close(); actions.openCollection(c.id) })
+                if (c.suggested) add(MenuEntry("Keep") { close(); actions.keepCollection(c.id) })
+                add(MenuEntry("Rename…") { name(Naming("Rename collection", c.name) { n -> actions.renameCollection(c.id, n) }) })
+                add(MenuEntry(if (c.id.startsWith("s:")) "Hide" else "Delete") { close(); actions.hideCollection(c.id) })
+            }
+            is Focused.DockApp -> {
+                add(MenuEntry("Open", "A") { close(); actions.launchApp(f.app) })
+                val slot = state.dock.indexOf(f.app)
+                if (slot >= 0) add(MenuEntry("Change app…", "Y") { close(); actions.openDockPicker(slot) })
+            }
+            is Focused.AppTile -> add(MenuEntry("Open", "A") { close(); actions.launchApp(f.app) })
+            else -> Unit
+        }
+    }
+    return items + MenuEntry("Wii-S settings", "Start", lineAbove = items.isNotEmpty()) { close(); actions.openSettings(null) }
 }
 
 /**
@@ -569,7 +726,11 @@ private fun captionFor(f: Focused, state: HomeUiState, style: WiisStyle): Captio
         is Focused.InGrid -> CaptionInfo(systemName(f.game.systemId), f.game.title, "", style.systemColor(f.game.systemId), play(f.game) + ("B" to "Back"))
         is Focused.Nav -> CaptionInfo(if (spec.nav.style == "dock") "Go to" else "Tabs", sectionLabel(f.section, style), "", style.accent, listOf("A" to "Open", "L1/R1" to "Switch"))
         is Focused.DockApp -> CaptionInfo("App", f.app.label, "", style.accent, listOf("A" to "Open", "Y" to "Change"))
-        is Focused.AppTile -> CaptionInfo("App", f.app.label, "", style.accent, listOf("A" to "Open"))
+        is Focused.AppTile -> CaptionInfo("App", f.app.label, "", style.accent, listOf("A" to "Open", "Select" to "Menu"))
+        is Focused.Collection -> CaptionInfo(
+            "Collection", f.entry.name, gamesCount(f.entry.games.size) + if (f.entry.suggested) " · suggested" else "",
+            style.accent, listOf("A" to "Open", "Select" to "Menu"),
+        )
         Focused.Other, Focused.None -> CaptionInfo("", "", "", style.accent, listOf("A" to "Select", "B" to "Home"))
     }
 }
@@ -581,19 +742,18 @@ private fun HeroBody(
     state: HomeUiState,
     actions: HeroActions,
     onFocused: (Focused) -> Unit,
-    systemContent: @Composable () -> Unit,
     modifier: Modifier,
 ) {
     val motion = LocalWiis.current.spec.motion
     AnimatedContent(
-        targetState = BodyKey(state.section, if (state.section == Section.Games) state.view else HomeView.Home),
+        targetState = BodyKey(state.section, if (state.section == Section.Apps) HomeView.Home else state.view),
         modifier = modifier,
         transitionSpec = {
             val ms = motion.tabTransitionMs.coerceIn(0, 2_000)
             val forward = if (targetState.section != initialState.section) {
                 targetState.section.ordinal > initialState.section.ordinal
             } else {
-                targetState.view is HomeView.InSystem
+                targetState.view != HomeView.Home
             }
             // As in the workbench: the new page slides in 16% and fades up; the old one goes at once.
             val enter = when {
@@ -608,11 +768,14 @@ private fun HeroBody(
     ) { key ->
         when (key.section) {
             Section.Games -> when (val view = key.view) {
-                HomeView.Home -> GamesHome(state, actions, onFocused)
                 is HomeView.InSystem -> SystemGames(view.systemId, state, actions, onFocused)
+                else -> GamesHome(state, actions, onFocused)
             }
             Section.Apps -> GlassApps(state.apps, actions, onFocused)
-            Section.System -> Box(Modifier.fillMaxSize().onFocusEvent { if (it.hasFocus) onFocused(Focused.Other) }) { systemContent() }
+            Section.Collections -> when (val view = key.view) {
+                is HomeView.InCollection -> CollectionGames(view.id, state, actions, onFocused)
+                else -> CollectionsHome(state, actions, onFocused)
+            }
         }
     }
 }
@@ -1150,12 +1313,6 @@ private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActio
     val spec = style.spec
     val games = state.viewGames
     val name = state.systems.firstOrNull { it.id == systemId }?.name ?: if (systemId == HomeModel.ALL) HomeModel.ALL_NAME else systemId
-    val gridState = rememberLazyGridState()
-    val target = state.heroFocus
-    LaunchedEffect(target?.token) {
-        val i = target?.let { t -> games.indexOfFirst { HomeViewModel.gridKey(it) == t.key } } ?: -1
-        if (i >= 0) gridState.scrollToItem(i)
-    }
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.height(36.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
             ButtonBadge("B")
@@ -1176,12 +1333,144 @@ private fun SystemGames(systemId: String, state: HomeUiState, actions: HeroActio
             )
             Text(gamesCount(games.size), style = style.label, maxLines = 1)
         }
-        BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
-            // Whole rows only, and at least two of them: the covers shrink from the theme's size just enough.
-            val size = twoRowCover(style, constraints.maxHeight, LocalDensity.current.density)
-            WholeRowsGrid(games, { HomeViewModel.gridKey(it) }, "games", size.dp, size.dp, room(style, size).dp, gridState, Modifier, { HomeViewModel.gridKey(it) == target?.key }) { game, whole ->
-                ArtTile(game, size, HomeViewModel.gridKey(game), target, actions, whole) { onFocused(Focused.InGrid(game)) }
+        GamesGrid(games, state, actions, onFocused)
+    }
+}
+
+/** A collection's games, like a system's: the two-row grid, B back to its card. */
+@Composable
+private fun CollectionGames(id: String, state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
+    val style = LocalWiis.current
+    val spec = style.spec
+    val entry = state.collections.firstOrNull { it.id == id }
+    val games = state.viewGames
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.height(36.dp), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+            ButtonBadge("B")
+            Box(Modifier.size(32.dp).glass(style, CircleShape), contentAlignment = Alignment.Center) {
+                SectionIcon("collections", 20.dp, style.glassText)
             }
+            Text(
+                entry?.name.orEmpty(),
+                style = TextStyle(
+                    fontFamily = style.fonts.display,
+                    fontWeight = FontWeight(spec.type.wordmarkWeight.coerceIn(100, 900)),
+                    fontSize = (spec.type.wordmarkSize * 0.8f).roundToInt().sp,
+                    color = style.text,
+                ),
+                maxLines = 1,
+            )
+            Text(gamesCount(games.size), style = style.label, maxLines = 1)
+        }
+        GamesGrid(games, state, actions, onFocused)
+    }
+}
+
+/** The two-row grid of covers under a system's or a collection's header. */
+@Composable
+private fun ColumnScope.GamesGrid(games: List<Game>, state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
+    val style = LocalWiis.current
+    val gridState = rememberLazyGridState()
+    val target = state.heroFocus
+    LaunchedEffect(target?.token) {
+        val i = target?.let { t -> games.indexOfFirst { HomeViewModel.gridKey(it) == t.key } } ?: -1
+        if (i >= 0) gridState.scrollToItem(i)
+    }
+    BoxWithConstraints(Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
+        // Whole rows only, and at least two of them: the covers shrink from the theme's size just enough.
+        val size = twoRowCover(style, constraints.maxHeight, LocalDensity.current.density)
+        WholeRowsGrid(games, { HomeViewModel.gridKey(it) }, "games", size.dp, size.dp, room(style, size).dp, gridState, Modifier, { HomeViewModel.gridKey(it) == target?.key }) { game, whole ->
+            ArtTile(game, size, HomeViewModel.gridKey(game), target, actions, whole) { onFocused(Focused.InGrid(game)) }
+        }
+    }
+}
+
+// ---- Collections --------------------------------------------------------------------------
+
+/**
+ * The Collections section: a card per collection (four of its covers, its name and count), yours
+ * first, then the series Wii-S offers, marked "Suggested". Two whole rows, like the other grids.
+ */
+@Composable
+private fun CollectionsHome(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
+    val style = LocalWiis.current
+    val spec = style.spec
+    if (state.collections.isEmpty()) {
+        Box(Modifier.fillMaxSize().onFocusEvent { if (it.hasFocus) onFocused(Focused.Other) }, contentAlignment = Alignment.TopStart) {
+            Column(
+                Modifier.padding(top = 8.dp).widthIn(max = 520.dp).glassBox(style, RoundedCornerShape(spec.glass.radius.dp)).padding(horizontal = 24.dp, vertical = 20.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text("No collections yet", style = TextStyle(fontFamily = style.fonts.display, fontWeight = FontWeight(spec.type.tabWeight.coerceIn(100, 900)), fontSize = spec.type.tileTitleSize.sp, color = style.glassText))
+                Text(
+                    "Wii-S looks for series in your games' titles, like Sonic or Pokémon, and offers them here. To make your own, press Select on a game and choose Add to collection.",
+                    style = style.label.copy(color = style.glassTextMuted),
+                )
+            }
+        }
+        return
+    }
+    val gridState = rememberLazyGridState()
+    val target = state.heroFocus
+    LaunchedEffect(target?.token) {
+        val i = target?.let { t -> state.collections.indexOfFirst { HomeViewModel.colKey(it.id) == t.key } } ?: -1
+        if (i >= 0) gridState.scrollToItem(i)
+    }
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val gap = spec.spacing.tileGap
+        val density = LocalDensity.current.density
+        // Four cards across; two rows of them fit with their focus room.
+        val width = ((maxWidth.value - 2 * room(style, 160) - 3 * gap) / 4f).toInt().coerceAtLeast(120)
+        val pad = max(room(style, width), gap + 1)
+        val height = ((constraints.maxHeight / density - gap - 2 * pad) / 2f).toInt().coerceIn(96, 160)
+        WholeRowsGrid(state.collections, { HomeViewModel.colKey(it.id) }, "collections", width.dp, height.dp, room(style, width).dp, gridState, Modifier, { HomeViewModel.colKey(it.id) == target?.key }) { entry, whole ->
+            CollectionCard(entry, width.dp, height.dp, target, actions, whole) { onFocused(Focused.Collection(entry)) }
+        }
+    }
+}
+
+/** A collection: four covers edge to edge, a glass strip with its name and count; "Suggested" until you keep it. */
+@Composable
+private fun CollectionCard(entry: CollectionEntry, w: Dp, h: Dp, target: HeroFocus?, actions: HeroActions, modifier: Modifier, onFocus: () -> Unit) {
+    val style = LocalWiis.current
+    val spec = style.spec
+    val radius = spec.glass.radius
+    val shape = RoundedCornerShape(radius.dp)
+    val key = HomeViewModel.colKey(entry.id)
+    val px = with(LocalDensity.current) { w.roundToPx() }
+    WiisTile(
+        onClick = { actions.openCollection(entry.id) },
+        shape = shape,
+        fill = style.glassFill,
+        fillFocused = style.glassFill,
+        ringRadius = radius.dp,
+        modifier = modifier
+            .size(w, h)
+            .focusTarget(key, target, actions)
+            .onFocusChanged { if (it.isFocused) onFocus() },
+    ) {
+        Column(Modifier.fillMaxSize()) {
+            // Its covers above, the name and count below; nothing overlaps.
+            CoverMosaic(entry.games, px, Modifier.weight(1f).fillMaxWidth())
+            Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 7.dp)) {
+                Text(
+                    entry.name,
+                    style = TextStyle(fontFamily = style.fonts.display, fontWeight = FontWeight(spec.type.tabWeight.coerceIn(100, 900)), fontSize = 14.sp, color = style.glassText),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(gamesCount(entry.games.size), style = style.label.copy(color = style.glassTextMuted, fontSize = 11.sp), maxLines = 1)
+            }
+        }
+        Box(Modifier.fillMaxSize()) {
+            if (entry.suggested) {
+                Text(
+                    "Suggested",
+                    style = TextStyle(fontFamily = style.fonts.body, fontWeight = FontWeight.ExtraBold, fontSize = 10.sp, color = style.hintBadgeText),
+                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp).background(style.hintBadge, CircleShape).padding(horizontal = 8.dp, vertical = 3.dp),
+                )
+            }
+            if (spec.glass.borderWidth > 0f) Box(Modifier.matchParentSize().border(spec.glass.borderWidth.dp, style.glassBorder, shape))
         }
     }
 }
@@ -1603,13 +1892,13 @@ private fun ButtonBadge(label: String, presses: Int = 0) {
 private fun sectionIconId(section: Section) = when (section) {
     Section.Games -> "games"
     Section.Apps -> "apps"
-    Section.System -> "system"
+    Section.Collections -> "collections"
 }
 
 private fun sectionLabel(section: Section, style: WiisStyle) = when (section) {
     Section.Games -> style.spec.header.tabGames
     Section.Apps -> style.spec.header.tabApps
-    Section.System -> style.spec.header.tabSystem
+    Section.Collections -> style.spec.header.tabCollections
 }
 
 private fun systemTint(id: String, style: WiisStyle): Color = if (id == HomeModel.ALL) style.accent else style.systemColor(id)

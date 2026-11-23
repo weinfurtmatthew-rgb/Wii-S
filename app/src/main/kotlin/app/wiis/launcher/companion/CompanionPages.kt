@@ -1,5 +1,7 @@
 package app.wiis.launcher.companion
 
+import app.wiis.launcher.ui.CoverMosaic
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -97,6 +99,7 @@ import kotlin.math.roundToInt
 sealed interface CompanionSubject {
     data class OfGame(val game: Game, val session: Session?) : CompanionSubject
     data class OfSystem(val id: String, val name: String, val count: Int) : CompanionSubject
+    data class OfCollection(val id: String, val name: String, val games: List<Game>) : CompanionSubject
 }
 
 enum class CompanionPage(val label: String, val icon: PageIcon) {
@@ -198,6 +201,23 @@ fun SystemDetailsPage(id: String, name: String, games: Int, played: Int, emulato
             Fact("Games", "$games", style)
             Fact("Played", "$played", style)
             if (emulator != null) Fact("Emulator", emulator, style)
+        }
+    }
+}
+
+/** A collection on the bottom screen: four of its covers, its name, how many games and how many played. */
+@Composable
+fun CollectionDetailsPage(name: String, games: List<Game>, played: Int) {
+    val style = LocalWiis.current
+    val shape = RoundedCornerShape(style.spec.shape.cardRadius.dp)
+    val px = with(LocalDensity.current) { 200.dp.roundToPx() }
+    Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+        CoverMosaic(games, px, Modifier.fillMaxHeight().width(200.dp).clip(shape).glassBox(style, shape))
+        Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically)) {
+            Text(name, style = style.heading, maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Fact("Games", "${games.size}", style)
+            Fact("Played", "$played", style)
+            Fact("Consoles", "${games.map { it.systemId }.distinct().size}", style)
         }
     }
 }

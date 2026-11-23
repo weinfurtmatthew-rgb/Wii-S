@@ -188,6 +188,28 @@ The owner found one row of covers inside a console and All games, and holding Do
 | Workbench | Two rows inside a system; Up and Down inside a grid go to the next row |
 | Tests | `HeroScreenshots`: hold Down from the card, Up from the end of the pinned row, hold Up from the dock, Up and Down in All games keep the column, a printed audit of Home and Apps; `SystemScreenshots.navigation`: down and up through a page and Up from the dock |
 
+## Iteration 6: collections, the Select menu, a page below Home (0.6.x)
+
+The owner asked for a page under Home for apps, HTML widgets and collections, a Collections section instead of System, and the settings in a popup like iiSU's. Their answers are in DESIGN.md. Built in three steps, each a testable APK:
+
+| Step | Scope |
+|---|---|
+| 0.6.0 | Collections section (series found in titles, your own, a game's menu), the Select menu, the settings popup |
+| 0.6.1 | The page below Home: a grid of 1×1, 2×1 and 2×2 tiles (apps, collections, single games, shortcuts, built-in widgets), both edit modes to try |
+| 0.6.2 | HTML widgets (your own files, sandboxed, offline) and Android widgets |
+
+### 0.6.0-i6: Collections, the Select menu, the settings popup
+
+| Piece | State in 0.6.0-i6 |
+|---|---|
+| Collections | `SeriesFinder` (known series by name, titles that start alike), `CollectionsModel` (kept, renamed, edited, hidden, your own), saved as `collections.json`; `Section.Collections` with mosaic cards (`CoverMosaic`) and a collection's two-row grid |
+| Select menu | `QuickMenu` in a `PopupLayer` (dimmed, focus kept inside, B closes); Add to collection (`CollectionPicker`) and naming (`NameEntry`) popups; focus restored with `saveFocusedChild` / `restoreFocusedChild` |
+| Settings | `SettingsPanel`: the old System pages beside a list of categories, opened by Start or the menu; the bottom screen's "set up RetroAchievements" opens it on that page |
+| Bottom screen | `CompanionSubject.OfCollection`: covers and counts, Stats for the collection's games |
+| Theme | `header.tabSystem` became `header.tabCollections`; the app module applies the serialization plugin |
+| Fixes found by the tests | The view model read its series list before it was set (a start-up crash); a collection's view didn't show because the body ignored views outside Home |
+| Tests | `CollectionsTest`; `HeroScreenshots`: collections, suggested, empty, a collection, Select menus, Add to collection; `SystemScreenshots`: the settings popup walked with the controller (focus stays inside, Left returns to the category) |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.
