@@ -175,7 +175,7 @@ fun ConsoleGlyph(systemId: String, size: Dp, color: Color, modifier: Modifier = 
 /**
  * Line icons for the tiles below Home (original drawings on the 24-unit grid, the same path data
  * as tileIcon() in design/workbench.html): "wifi", "bluetooth", "display", "sound", "settings",
- * "clock", "week", "trophy", "dice", "play", "plus".
+ * "clock", "week", "trophy", "dice", "play", "plus", "code" (HTML widgets), "widget" (Android widgets).
  */
 val TILE_ICON_PATHS: Map<String, String> = mapOf(
     "wifi" to "M3.2 9.2a12.5 12.5 0 0 1 17.6 0M6.3 12.4a8 8 0 0 1 11.4 0M9.4 15.6a3.6 3.6 0 0 1 5.2 0M12 19.2h.01",
@@ -189,6 +189,8 @@ val TILE_ICON_PATHS: Map<String, String> = mapOf(
     "dice" to "M8 4.5h8a3.5 3.5 0 0 1 3.5 3.5v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16V8A3.5 3.5 0 0 1 8 4.5zM9 9h.01M12 12h.01M15 15h.01",
     "play" to "M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.6-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z",
     "plus" to "M12 6v12M6 12h12",
+    "code" to "M8.5 8l-4 4 4 4M15.5 8l4 4-4 4M13.5 5.5l-3 13",
+    "widget" to "M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM16.75 13.5v6.5M13.5 16.75H20",
 )
 
 @Composable

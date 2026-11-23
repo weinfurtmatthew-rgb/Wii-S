@@ -225,6 +225,20 @@ The owner asked for a page under Home for apps, HTML widgets and collections, a 
 | Workbench | The same page, tiles and both edit modes (hold Enter, or the Hold A button), page-aware navigation; its search now ignores the focused tile's lift when deciding what is below |
 | Tests | `BoardTest`; the recent-unlocks parser; `HeroScreenshots`: the page (light, dark, empty), the slide in frames, moving around it, holding Down through it to the dock, hold A to arrange, its menus and the Add picker, "+" after a removal |
 
+### 0.6.2-i6: SteamGridDB, HTML widgets, Android widgets
+
+| Piece | State in 0.6.2-i6 |
+|---|---|
+| SteamGridDB | `SteamGridDb` art provider (emulator module): `/search/autocomplete/{title}` then `/grids/game/{id}` (portrait, static, no NSFW, humor or epilepsy), bearer key only to `https://www.steamgriddb.com/api/v2/`, images fetched without it, covers over 400 KB re-encoded as JPEG. `AppGraph.steamGridKey` in `wiis_secrets`; third in `configureArt`; Settings → Box art section with Save and test, Get a key, Remove key; the report lists it |
+| HTML widgets | `Widgets.kt`: `WidgetFolder` (SAF, read-only: .html files and folders with index.html), `WidgetPaths` (per-widget origin on `*.wiis-widget.invalid`, path checks, MIME types, CSP), a WebView with JavaScript and DOM storage but no file, content, geolocation, permissions, windows or navigation, files served through `shouldInterceptRequest`; paused with the activity; live only while the page below Home shows; `HtmlWidgetScreen` full screen |
+| Android widgets | `AppWidgetHost` (listening between onStart and onStop), `WidgetBinder` (allocate, `bindAppWidgetIdIfAllowed` or Android's bind screen, the widget's configure activity through `startAppWidgetConfigureActivityForResult`, cancel gives the id back), `AppWidgetHostView` sized to its tile, `AndroidWidgetViews.press` for A; the tile's removal deletes the widget id |
+| Drawing them | `LocalWidgetRenderers`: the live web view and host view on the device, stand-ins in screenshots and previews |
+| Board | Kinds `html` (ref: path in the folder) and `android` (ref: widget id); `Board.add(size = …)` for a widget's starting size |
+| Settings | A Widgets page (folder, what was found, how they work) |
+| Focus | A popup closing restores focus where it was unless what closed it moves focus (adding or removing a tile, hiding a collection); 0.6.1 skipped the restore whenever Compose had already put focus on the first item, which it always does |
+| Workbench | Widget tiles in sandboxed frames, the full-screen viewer, Add's two new kinds, the Widgets and Box art settings, and the "Make an HTML widget" panel |
+| Tests | `SteamGridDbTest` (title cleaning, matching, the request flow and where the key goes, errors), `WidgetsTest` (origins, which requests are served, MIME types, starting sizes); `HeroScreenshots`: widget tiles, full screen and back, Add's widget kinds; `SystemScreenshots`: Box art with SteamGridDB, the Widgets page |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

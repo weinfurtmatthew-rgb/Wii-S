@@ -79,6 +79,10 @@ button { cursor: pointer; }
 .stage-note { color: var(--muted); font-size: 12px; text-align: center; margin: 8px 0 0; }
 .toggles { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-top: 8px; font-size: 13px; }
 .toggles label { display: inline-flex; gap: 6px; align-items: center; }
+.maker-stage { display: flex; justify-content: center; padding: 14px; border-radius: 12px; background: repeating-conic-gradient(var(--panel-2) 0 25%, var(--panel) 0 50%) 0 0/16px 16px; margin: 6px 0 8px; }
+.maker-tile { position: relative; overflow: hidden; border-radius: 18px; border: 1px solid var(--line); background: var(--panel); }
+.maker-name { border: 1px solid var(--line); border-radius: 9px; padding: 6px 10px; font: 13px var(--mono); background: var(--panel); color: var(--fg); min-width: 0; width: 12em; }
+#makerCode { min-height: 180px; }
 
 /* ---------- Review column ---------- */
 .review { min-width: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -275,6 +279,18 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
       </div>
     </div>
     <div id="groups"></div>
+    <div class="export maker" id="maker">
+      <h2 style="margin:0 0 6px;font-size:15px">Make an HTML widget</h2>
+      <p class="group-desc">Write a widget and see it at a tile's size. Download the .html file and put it in your widgets folder on the Thor (Wii-S settings → Widgets), then add it below Home: Select → Add a tile here… → HTML widgets. It runs offline, as on the Thor: no internet, no access to anything else. Full screen, it gets the arrow keys and Enter (A).</p>
+      <div class="group-tools" role="group" aria-label="Tile size">
+        <button class="btn" type="button" data-maker-size="1x1">1 × 1</button><button class="btn" type="button" data-maker-size="2x1">2 × 1</button><button class="btn primary" type="button" data-maker-size="2x2">2 × 2</button>
+        <span style="flex:1"></span>
+        <button class="btn" type="button" data-maker-sample="Night Sky/index.html">Night Sky</button><button class="btn" type="button" data-maker-sample="Pomodoro.html">Pomodoro</button>
+      </div>
+      <div class="maker-stage"><div class="maker-tile" id="makerTile"></div></div>
+      <textarea id="makerCode" spellcheck="false" aria-label="Widget HTML"></textarea>
+      <div class="group-tools"><input id="makerName" class="maker-name" value="my-widget" aria-label="File name"><span class="group-desc" style="margin:0">.html</span><button class="btn primary" id="makerDownload" type="button">Download</button><button class="btn" id="makerCopy" type="button">Copy</button></div>
+    </div>
     <div class="export">
       <h2 style="margin:0 0 6px;font-size:15px">Theme file</h2>
       <p class="group-desc">The exact file the launcher reads. Paste a theme here and press Load to bring it into the workbench.</p>
@@ -1774,7 +1790,7 @@ function systemViewHtml(next, room) {
 }
 // ---- The page below Home (0.6.1): the same board as home/Board.kt ----
 const BOARD = (() => {
-  const SIZES = { app: ["1x1", "2x1"], shortcut: ["1x1", "2x1"], game: ["1x1", "2x2", "2x1"], random: ["1x1", "2x1", "2x2"], collection: ["2x1", "2x2"], clock: ["2x1", "2x2"], lastPlayed: ["2x1", "2x2"], week: ["2x1", "2x2"], achievements: ["2x2", "2x1"] };
+  const SIZES = { app: ["1x1", "2x1"], shortcut: ["1x1", "2x1"], game: ["1x1", "2x2", "2x1"], random: ["1x1", "2x1", "2x2"], collection: ["2x1", "2x2"], clock: ["2x1", "2x2"], lastPlayed: ["2x1", "2x2"], week: ["2x1", "2x2"], achievements: ["2x2", "2x1"], html: ["2x2", "2x1", "1x1"], android: ["2x1", "2x2", "1x1"] };
   const sizesFor = (kind) => SIZES[kind] || ["1x1"];
   const cells = (s) => (s === "2x1" ? [2, 1] : s === "2x2" ? [2, 2] : [1, 1]);
   const area = (s) => cells(s)[0] * cells(s)[1];
@@ -1911,10 +1927,12 @@ const TILE_ICONS = {
   dice: "M8 4.5h8a3.5 3.5 0 0 1 3.5 3.5v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16V8A3.5 3.5 0 0 1 8 4.5zM9 9h.01M12 12h.01M15 15h.01",
   play: "M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.6-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z",
   plus: "M12 6v12M6 12h12",
+  code: "M8.5 8l-4 4 4 4M15.5 8l4 4-4 4M13.5 5.5l-3 13",
+  widget: "M4 4h6.5v6.5H4zM13.5 4H20v6.5h-6.5zM4 13.5h6.5V20H4zM16.75 13.5v6.5M13.5 16.75H20",
 };
 function tileIcon(id, size, color, sw = 1.8) { return lineSvg(`<path d="${TILE_ICONS[id] || TILE_ICONS.settings}"/>`, size, color, sw); }
 const SHORTCUT_NAMES = { wifi: "Wi-Fi", bluetooth: "Bluetooth", display: "Display", sound: "Sound", settings: "Android settings" };
-const KIND_NAMES = { app: "App", game: "Game", collection: "Collection", shortcut: "Shortcut", clock: "Clock", lastPlayed: "Last played", week: "This week", achievements: "Recent achievements", random: "Random game" };
+const KIND_NAMES = { app: "App", game: "Game", collection: "Collection", shortcut: "Shortcut", clock: "Clock", lastPlayed: "Last played", week: "This week", achievements: "Recent achievements", random: "Random game", html: "HTML widget", android: "Android widget" };
 const RECENT_UNLOCKS = [["First Flight", "Paper Pilots", 5], ["Night Owl", "Night Market", 10], ["Green Thumb", "Garden Days", 25]];
 const boardCols = () => Math.max(2, Math.min(12, theme.layout.boardColumns || 6));
 const boardRows = () => Math.max(1, Math.min(6, theme.layout.boardRows || 3));
@@ -1923,8 +1941,9 @@ function boardState() {
   if (!mock.board) {
     let id = 1; const t = (kind, ref = "", size = BOARD.sizesFor(kind)[0]) => ({ id: id++, kind, ref, size });
     const coral = allGames().find((g) => g.title === "Coral Drift");
-    const tiles = [t("clock"), t("lastPlayed", "", "2x2"), t("week"), t("random"), t("shortcut", "wifi"), t("achievements", "", "2x1"),
-      t("collection", "c:1"), t("game", coral.key), t("app", "Music"), t("app", "Camera"), t("shortcut", "bluetooth")];
+    // Your own HTML widget where Last played was (it repeats the Jump back in card), and an Android widget for Bluetooth.
+    const tiles = [t("clock"), t("html", "Night Sky/index.html", "2x2"), t("week"), t("random"), t("shortcut", "wifi"), t("achievements", "", "2x1"),
+      t("collection", "c:1"), t("game", coral.key), t("app", "Music"), t("app", "Camera"), t("android", "weather", "1x1")];
     mock.board = { tiles: BOARD.normalize(tiles, 6, 3), nextId: id, random: allGames().find((g) => g.title === "Lumen Island").key, week: [45, 0, 80, 20, 130, 0, 0], today: 4 };
   }
   return mock.board;
@@ -1943,7 +1962,8 @@ function tileGame(t) {
 function tileInfo(t) {
   const g = tileGame(t), col = t.kind === "collection" ? collections().find((c) => c.id === t.ref) : null;
   const total = sum(boardState().week);
-  const title = g ? g.title : col ? col.name : t.kind === "app" ? t.ref : t.kind === "shortcut" ? SHORTCUT_NAMES[t.ref] || t.ref : KIND_NAMES[t.kind];
+  const title = g ? g.title : col ? col.name : t.kind === "app" ? t.ref : t.kind === "shortcut" ? SHORTCUT_NAMES[t.ref] || t.ref
+    : t.kind === "html" ? widgetName(t.ref) : t.kind === "android" ? (SAMPLE_ANDROID.find((a) => a[0] === t.ref) || [, "Android widget"])[1] : KIND_NAMES[t.kind];
   const widget = ["clock", "week", "achievements"].includes(t.kind);
   const meta = g ? SYSTEMS[g.sys] : col ? `${col.games.length} games` : t.kind === "week" ? (total ? fmtMin(total) : "Nothing yet") : t.kind === "achievements" ? `${RECENT_UNLOCKS.length} lately` : "";
   return { g, col, title, meta, label: widget ? "Widget" : KIND_NAMES[t.kind], color: g ? sysColor(g.sys) : theme.colors.accent };
@@ -1955,7 +1975,8 @@ function tileHints(t, info) {
   const h = [];
   if (t.kind === "game" || t.kind === "lastPlayed") h.push(["A", "Play"], ["Y", "Emulator"], ["X", isPinned(info.g.key) ? "Unpin" : "Pin"]);
   else if (t.kind === "random") h.push(["A", "Play"], ["Y", "Another"]);
-  else if (["app", "collection", "shortcut"].includes(t.kind)) h.push(["A", "Open"]);
+  else if (["app", "collection", "shortcut", "html"].includes(t.kind)) h.push(["A", "Open"]);
+  else if (t.kind === "android") h.push(["A", "Press"]);
   h.push(["Hold A", "Arrange"], ["Select", "Menu"]);
   return h;
 }
@@ -2012,6 +2033,8 @@ function tileFaceHtml(t, p, w, h) {
       if (!big) return `<div style="position:absolute;inset:0;display:flex;gap:12px;padding:12px 16px"><div style="flex:1.25;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px"><div style="${small()}">This week</div><div style="${title(17, ell)}">${esc(totalText)}</div></div><div style="flex:1;display:flex">${bars(false)}</div></div>`;
       return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;gap:4px;padding:16px"><div style="${small(12)}">This week</div><div style="${title(22, ell)}">${esc(totalText)}</div><div style="height:6px"></div>${bars(true)}</div>`;
     }
+    case "html": return widgetFrame(SAMPLE_WIDGETS[t.ref] || "<p style='font:13px system-ui;padding:10px'>Your widget</p>", w, h, false);
+    case "android": return androidMockHtml(t.ref, w, h);
     case "achievements": {
       const badge = (s) => `<div style="width:${s}px;height:${s}px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(${rgb(T.glass.text)},.08)">${tileIcon("trophy", Math.round(s * 0.55), gm)}</div>`;
       const row = ([name, game, pts], s, label) => `<div style="display:flex;align-items:center;gap:10px">${badge(s)}<div style="min-width:0">${label ? `<div style="${small()}">${label}</div>` : ""}<div style="${title(13, ell)}">${esc(name)}</div><div style="${small()}">${esc(game)} · ${pts} pts</div></div></div>`;
@@ -2129,12 +2152,14 @@ function removeTile(id) {
   mock.focus = mock.boardEdit?.sticky ? `cell:${gone.col},${gone.row}` : near ? `board:${near.tile.id}` : "hero";
   mock.savedFocus = mock.focus; playSound("back"); renderAll();
 }
-const ADD_CATS = [["apps", "Apps"], ["games", "Games"], ["collections", "Collections"], ["widgets", "Widgets"], ["shortcuts", "Shortcuts"]];
+const ADD_CATS = [["apps", "Apps"], ["games", "Games"], ["collections", "Collections"], ["widgets", "Widgets"], ["html", "HTML widgets"], ["android", "Android widgets"], ["shortcuts", "Shortcuts"]];
 function addEntries(cat) {
   if (cat === "apps") return APPS.map(([n]) => ({ kind: "app", ref: n, label: n }));
   if (cat === "games") return allGames().sort((a, b) => a.title.localeCompare(b.title)).map((g) => ({ kind: "game", ref: g.key, label: g.title, detail: SYSTEMS[g.sys] }));
   if (cat === "collections") return collections().map((c) => ({ kind: "collection", ref: c.id, label: c.name, detail: `${c.games.length} games${c.suggested ? " · suggested" : ""}` }));
   if (cat === "widgets") return [["clock", "Clock", "Time and date", "clock"], ["lastPlayed", "Last played", "Jump back in", "play"], ["week", "This week", "Play time per day", "week"], ["achievements", "Recent achievements", "RetroAchievements", "trophy"], ["random", "Random game", "Y for another", "dice"]].map(([kind, label, detail, icon]) => ({ kind, ref: "", label, detail, icon }));
+  if (cat === "html") return Object.keys(SAMPLE_WIDGETS).map((ref) => ({ kind: "html", ref, label: widgetName(ref), detail: ref.includes("/") ? ref.split("/")[0] : "HTML", icon: "code" }));
+  if (cat === "android") return SAMPLE_ANDROID.map(([ref, label, app]) => ({ kind: "android", ref, label, detail: app, icon: "widget" }));
   return Object.keys(SHORTCUT_NAMES).map((r) => ({ kind: "shortcut", ref: r, label: SHORTCUT_NAMES[r], detail: r === "settings" ? null : "Android settings", icon: r }));
 }
 function openAddPicker(target) { mock.menu = null; mock.addPicker = { target, category: null }; mock.focus = "addcat:apps"; playSound("select"); renderAll(); }
@@ -2144,6 +2169,56 @@ function addTile(entry) {
   mock.addPicker = null;
   if (!next) { mock.focus = mock.savedFocus; playSound("error"); mock.message = "There's no room on this page. Remove a tile or make one smaller first."; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2600); return; }
   b.tiles = next; mock.focus = `board:${b.nextId}`; b.nextId++; playSound("select"); renderAll();
+}
+// ---- HTML and Android widgets on the page below Home (0.6.2) ----
+/** Two sample HTML widgets (invented): they size to their tile and read ?dark=1. Offline, like on the Thor. */
+const SAMPLE_WIDGETS = {
+  "Night Sky/index.html": `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>
+html,body{margin:0;height:100%;overflow:hidden;font-family:system-ui,sans-serif}
+body{background:linear-gradient(160deg,#1b1f4a,#0b0d20);color:#fff}
+canvas{position:absolute;inset:0;width:100%;height:100%}
+.t{position:absolute;left:14px;bottom:12px;font-weight:700;font-size:28px;letter-spacing:.5px}
+.d{position:absolute;left:14px;bottom:46px;font-size:12px;opacity:.75}
+</style></head><body><canvas id="c"></canvas><div class="d" id="d"></div><div class="t" id="t"></div><script>
+const c=document.getElementById('c'),x=c.getContext('2d');let s=[];
+function size(){c.width=innerWidth*devicePixelRatio;c.height=innerHeight*devicePixelRatio;s=Array.from({length:Math.round(innerWidth*innerHeight/900)},()=>({x:Math.random(),y:Math.random()*.8,r:Math.random()*1.4+.3,p:Math.random()*6}))}
+function draw(t){x.clearRect(0,0,c.width,c.height);for(const a of s){x.globalAlpha=.4+.6*Math.abs(Math.sin(a.p+t/900));x.beginPath();x.arc(a.x*c.width,a.y*c.height,a.r*devicePixelRatio,0,7);x.fillStyle='#fff';x.fill()}requestAnimationFrame(draw)}
+function clock(){const n=new Date();document.getElementById('t').textContent=n.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});document.getElementById('d').textContent=n.toLocaleDateString([],{weekday:'long'})}
+addEventListener('resize',size);size();clock();setInterval(clock,10000);requestAnimationFrame(draw);
+<\/script></body></html>`,
+  "Pomodoro.html": `<!doctype html><html><head><meta charset="utf-8"><style>
+html,body{margin:0;height:100%;font-family:system-ui,sans-serif}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;background:#fff4ec;color:#5b2a12}
+body.dark{background:#2a1a12;color:#ffd9c2}
+.n{font-size:min(34vh,40vw);font-weight:800;line-height:1}
+.h{font-size:12px;opacity:.7}
+</style></head><body><div class="n" id="n">25:00</div><div class="h" id="h">Enter: start · ←/→: minutes</div><script>
+if(/dark=1/.test(location.search))document.body.classList.add('dark');
+let m=25,left=m*60,run=null;const n=document.getElementById('n');
+function show(){n.textContent=String(Math.floor(left/60)).padStart(2,'0')+':'+String(left%60).padStart(2,'0')}
+addEventListener('keydown',e=>{if(e.key==='Enter'){if(run){clearInterval(run);run=null}else run=setInterval(()=>{left=Math.max(0,left-1);show()},1000)}
+if(e.key==='ArrowRight'&&!run){m=Math.min(90,m+5);left=m*60;show()}if(e.key==='ArrowLeft'&&!run){m=Math.max(5,m-5);left=m*60;show()}});show();
+<\/script></body></html>`,
+};
+const SAMPLE_ANDROID = [["weather", "Weather", "Sky Forecast"], ["music", "Now playing", "Music"], ["notes", "Sticky note", "Notes"]];
+const WIDGET_CSP = `<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob: 'unsafe-inline' 'unsafe-eval'; connect-src 'self'">`;
+const widgetName = (ref) => { const parts = ref.split("/"), last = parts[parts.length - 1]; return /^index\.html?$/i.test(last) ? parts[parts.length - 2] || last : last.replace(/\.[^.]+$/, ""); };
+/** A widget page in a sandboxed frame: scripts run, nothing else (no network, no access to this page). */
+function widgetFrame(code, w, h, interactive) {
+  const src = WIDGET_CSP + code.replace("location.search", `"?w=${w}&h=${h}&dark=${isDark() ? 1 : 0}"`);
+  return `<iframe sandbox="allow-scripts" srcdoc="${esc(src)}" style="position:absolute;inset:0;width:100%;height:100%;border:0;background:transparent;${interactive ? "" : "pointer-events:none"}" title="HTML widget"></iframe>`;
+}
+/** A stand-in Android widget, drawn like one (its look is the app's own on the Thor). */
+function androidMockHtml(kind, w, h) {
+  const T = theme, gt = css(T.glass.text), gm = css(T.glass.textMuted);
+  if (kind === "weather") return `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:10px;background:linear-gradient(160deg,#5aa9f0,#2e6fd1);color:#fff;font-family:system-ui,sans-serif"><span style="font-size:${Math.round(h * 0.34)}px">☁</span><span style="display:flex;flex-direction:column"><b style="font-size:${Math.round(h * 0.26)}px">18°</b>${w > 140 ? `<span style="font-size:11px;opacity:.85">Seaside · cloudy</span>` : ""}</span></div>`;
+  if (kind === "music") return `<div style="position:absolute;inset:0;display:flex;align-items:center;gap:10px;padding:0 12px;background:#1e1b27;color:#fff;font-family:system-ui,sans-serif"><span style="width:${Math.round(h * 0.55)}px;height:${Math.round(h * 0.55)}px;border-radius:8px;background:linear-gradient(135deg,#e5527a,#9a6bff);flex:none"></span><span style="min-width:0"><b style="font-size:13px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Harbour Lights</b><span style="font-size:11px;opacity:.7">▶ ❚❚ ⏭</span></span></div>`;
+  return `<div style="position:absolute;inset:0;padding:12px;background:#fff3a6;color:#5a4a00;font:600 13px/1.3 system-ui,sans-serif">Buy batteries for the controller</div>`;
+}
+function openHtmlWidget(ref) { mock.savedFocus = focusables[focusIdx] ? keyOf(focusables[focusIdx]) : null; mock.htmlOpen = ref; mock.focus = null; playSound("select"); renderAll(); }
+function htmlViewerHtml() {
+  const t = theme, ref = mock.htmlOpen, code = SAMPLE_WIDGETS[ref] || "<p>Your widget</p>";
+  return `<div class="m-scrim" style="background:rgba(0,0,0,${isDark() ? 0.55 : 0.4})"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:785px;height:432px;gap:10px"><div style="display:flex;align-items:center"><span style="flex:1;font-family:${fontStack(t.type.bodyFont)};font-weight:${t.type.labelWeight};font-size:16px;color:${css(t.glass.text)}">${esc(widgetName(ref))}</span>${hintsHtml([["B", "Close"]])}</div><div style="position:relative;flex:1;border-radius:${t.glass.radius}px;overflow:hidden">${widgetFrame(code, 757, 360, true)}</div></div></div>`;
 }
 function renderHeroTop() {
   const t = theme, L = t.layout, pad = t.spacing.screenPadding, gap = t.spacing.tileGap, innerW = 833 - 2 * pad;
@@ -2201,7 +2276,7 @@ function renderHeroTop() {
     <div class="m-body ${anim}" style="${clip}">${body}</div>${msg}${captionRow}${dockRow}</div>${popupHtml()}${frameGlowHtml()}</div>`;
 }
 // ---- Popups: the Select menu and the settings (0.6.0) ----
-const SETTINGS_PAGES = [["theme", "Theme"], ["sounds", "Sounds"], ["art", "Box art"], ["ra", "RetroAchievements"], ["report", "Report"]];
+const SETTINGS_PAGES = [["theme", "Theme"], ["sounds", "Sounds"], ["art", "Box art"], ["widgets", "Widgets"], ["ra", "RetroAchievements"], ["report", "Report"]];
 function popupRowHtml(idx, data, label, button, w, selected, detail, icon) {
   const t = theme, text = String(t.glass.text).replace("#", "").slice(-6);
   const badge = button ? `<i style="margin-left:auto;font-style:normal;height:22px;min-width:22px;padding:0 7px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:${button.length === 1 ? 11 : 7}px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};${labelStyle()}">${esc(button)}</i>` : "";
@@ -2214,9 +2289,11 @@ function popupHtml() {
   const t = theme, scrim = `background:rgba(0,0,0,${t.colors.background && isDark() ? 0.55 : 0.4})`;
   const titleHtml = (title, sub) => `<div style="padding:0 6px 10px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tileTitleSize + 2}px;color:${css(t.glass.text)}">${esc(title)}</div>${sub ? `<div style="${labelStyle()};color:${css(t.glass.textMuted)}">${esc(sub)}</div>` : ""}</div>`;
   let n = 1000;
+  if (mock.htmlOpen) return htmlViewerHtml();
   if (mock.addPicker) {
     const ap = mock.addPicker, pop = (title, sub, rows) => `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:440px">${titleHtml(title, sub)}${rows}</div></div>`;
     if (!ap.category) return pop("Add a tile", "Below Home", ADD_CATS.map(([id, label]) => popupRowHtml(n++, `data-addcat="${id}"`, `${label}…`, null, 404, false, id === "widgets" || id === "shortcuts" ? null : String(addEntries(id).length))).join(""));
+    // On the Thor, Android first asks once whether Wii-S may show widgets, then the widget's own setup (if any) opens.
     const list = addEntries(ap.category), gt = css(t.glass.text);
     const icon = (e) => e.kind === "app" ? `<span style="width:26px;height:26px;border-radius:8px;background:${(APPS.find((a) => a[0] === e.ref) || [])[1]}"></span>` : e.icon ? tileIcon(e.icon, 22, gt) : "";
     return pop(ADD_CATS.find((c) => c[0] === ap.category)[1], "B to go back", `<div class="m-popup-list" style="display:flex;flex-direction:column;gap:4px;max-height:272px;overflow:hidden">${list.map((e, i) => popupRowHtml(n++, `data-additem="${i}"`, e.label, null, 404, false, e.detail, icon(e))).join("")}</div>`);
@@ -2229,7 +2306,8 @@ function popupHtml() {
     const cats = SETTINGS_PAGES.map(([id, label]) => popupRowHtml(n++, `data-setcat="${id}"`, label, null, 196, id === mock.settings)).join("");
     const card = (title, body) => `<div style="background:${css(t.colors.surface)};border-radius:${t.shape.cardRadius}px;padding:16px;margin-bottom:12px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tabSize}px;color:${css(t.colors.text)}">${title}</div><div style="${labelStyle()};margin-top:8px">${body}</div></div>`;
     const page = { theme: card("Theme", `Active: ${esc(t.name)} (built-in)<br>Make or change a theme in the Design Workbench, export theme.json, then import it here.`) + card("Appearance", "As the theme says · Follow Android · Light · Dark"),
-      sounds: card("Sounds", "Sounds: On. Each sound comes from the theme unless you choose your own file."), art: card("Box art", "Art for most games, from your art folder and libretro thumbnails."),
+      sounds: card("Sounds", "Sounds: On. Each sound comes from the theme unless you choose your own file."), art: card("Box art", "Tried in this order: 1. your art folder, 2. libretro thumbnails, 3. SteamGridDB (with your free API key; it fills what the others miss, like Switch and Steam games).") + card("3. SteamGridDB", "Paste your key, then Save and test. It stays on the Thor and only goes to steamgriddb.com."),
+      widgets: card("Your HTML widgets", "Folder: none. Each .html file (or folder with index.html) in it is a widget; they run offline and on their own.") + card("Android widgets", "Add them from the page below Home: Select → Add a tile here… → Android widgets."),
       ra: card("RetroAchievements", "Your username and Web API key; they stay on this device."), report: card("Report", "Displays, the bottom screen, emulators and the library, to share when something is wrong.") }[mock.settings] || "";
     return `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:785px;height:412px"><div style="display:flex;align-items:center">${titleHtml("Settings", "")}<span style="margin-left:auto">${hintsHtml([["B", "Close"]])}</span></div><div style="display:flex;gap:14px;flex:1;min-height:0"><div style="display:flex;flex-direction:column;gap:4px;width:196px;flex:none">${cats}</div><div style="flex:1;min-width:0;overflow:hidden">${page}</div></div></div></div>`;
   }
@@ -2253,6 +2331,8 @@ function openMenu() {
       if (t.kind === "random") items.push({ label: "Another game", button: "Y", run: () => { shuffleRandom(); mock.menu.title = tileInfo(t).title; renderAll(); } });
     } else if (["app", "collection", "shortcut"].includes(t.kind)) items.push({ label: "Open", button: "A", run: () => { closePopups(); activate(); } });
     else if (t.kind === "achievements") items.push({ label: "RetroAchievements settings", run: () => { mock.menu = null; mock.settings = "ra"; openSettings(true); } });
+    else if (t.kind === "html") items.push({ label: "Open full screen", button: "A", run: () => { mock.menu = null; mock.htmlOpen = t.ref; renderAll(); } });
+    else if (t.kind === "android") items.push({ label: "Press", button: "A", run: () => { closePopups(); activate(); } });
     items.push({ label: "Move", line: items.length > 0, run: () => { mock.menu = null; mock.settings = null; pickUp(t.id, false); } });
     if (BOARD.sizesFor(t.kind).length > 1) { const it = { label: `Size: ${sizeLabel(t.size)}`, run: () => { resizeTile(t.id); it.label = `Size: ${sizeLabel(boardTile(t.id).size)}`; mock.menu.sub = `Tile below Home · ${sizeLabel(boardTile(t.id).size)}`; renderAll(); } }; items.push(it); }
     items.push({ label: "Remove", run: () => { mock.menu = null; removeTile(t.id); } });
@@ -2294,7 +2374,7 @@ function openSettings(keepSaved) {
   mock.menu = null; mock.settings = mock.settings || "theme"; mock.focus = `setcat:${mock.settings}`;
   playSound("select"); renderAll();
 }
-function closePopups() { mock.menu = null; mock.settings = null; mock.addPicker = null; mock.focus = mock.savedFocus; renderAll(); }
+function closePopups() { mock.menu = null; mock.settings = null; mock.addPicker = null; mock.htmlOpen = null; mock.focus = mock.savedFocus; renderAll(); }
 function shuffleRandom() { const all = allGames(), b = boardState(), others = all.filter((g) => g.key !== b.random); b.random = others[Math.floor(Math.random() * others.length)].key; playSound("select"); }
 function renderDockBottom() {
   const t = theme, c = t.companion, sub = currentSubject();
@@ -2343,6 +2423,8 @@ function renderAll() {
   if (sv) { const want = twoRowCover(sv.clientHeight - 36); if (want !== mock.coverSize) { mock.coverSize = want; mock.animate = anim; renderTop(); } }
   bindFocusables();
   restoreFocus();
+  // Nothing to focus (a full-screen widget): the background and caption are drawn all the same.
+  if (!focusables.length) updateHeroChrome();
   applyWhole();
   renderBottom();
   fitScreens();
@@ -2585,6 +2667,8 @@ function activate() {
     if (t.kind === "collection") { playSound("select"); mock.prevFocus = keyOf(el); mock.view = `col:${t.ref}`; mock.focus = null; mock.animate = true; mock.lastDir = 1; renderAll(); return; }
     if (t.kind === "app") { say(`Opens ${t.ref}`); return; }
     if (t.kind === "shortcut") { say(`Opens Android's ${SHORTCUT_NAMES[t.ref]} settings`); return; }
+    if (t.kind === "html") { openHtmlWidget(t.ref); return; }
+    if (t.kind === "android") { say("Presses the widget (on the Thor: the widget's own button, or its app)"); return; }
     playSound("select"); return;
   }
   if (el.dataset.setcat) return;
@@ -2621,6 +2705,7 @@ function press(key) {
     case "A": if (mock.boardEdit && mock.boardEdit.carrying != null) { dropTile(); break; } activate(); break;
     case "holdA": { const el = focusables[focusIdx]; if (el?.dataset.tile && !mock.boardEdit && !mock.menu && !mock.settings && !mock.addPicker) pickUp(Number(el.dataset.tile), true); else press("A"); break; }
     case "B":
+      if (mock.htmlOpen) { playSound("back"); closePopups(); break; }
       if (mock.addPicker && mock.addPicker.category) { playSound("back"); mock.focus = `addcat:${mock.addPicker.category}`; mock.addPicker.category = null; renderAll(); break; }
       if (mock.boardEdit && mock.boardEdit.carrying != null) { dropTile("back"); break; }
       if (mock.boardEdit && mock.boardEdit.sticky && !mock.menu && !mock.addPicker) { playSound("back"); mock.boardEdit = null; renderAll(); break; }
@@ -2641,8 +2726,8 @@ function press(key) {
     case "X": if (!mock.menu && !mock.settings && !mock.addPicker && !mock.boardEdit) togglePin(); break;
     case "L1": mock.boardEdit = null; mock.badgePress = { label: "L1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 2) % 3]); break;
     case "R1": mock.boardEdit = null; mock.badgePress = { label: "R1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 1) % 3]); break;
-    case "Start": mock.boardEdit = null; mock.addPicker = null; if (mock.settings) { playSound("back"); closePopups(); } else openSettings(); break;
-    case "Select": if (mock.boardEdit && mock.boardEdit.carrying != null) break; if (mock.menu || mock.addPicker) { playSound("back"); closePopups(); } else if (!mock.settings) openMenu(); break;
+    case "Start": mock.boardEdit = null; mock.addPicker = null; mock.htmlOpen = null; if (mock.settings) { playSound("back"); closePopups(); } else openSettings(); break;
+    case "Select": if (mock.boardEdit && mock.boardEdit.carrying != null) break; if (mock.htmlOpen) break; if (mock.menu || mock.addPicker) { playSound("back"); closePopups(); } else if (!mock.settings) openMenu(); break;
   }
 }
 
@@ -2766,6 +2851,37 @@ document.addEventListener("keyup", (e) => { if (e.key === "Enter" && holdA.t) { 
 new ResizeObserver(fitScreens).observe($("#device"));
 setInterval(() => { renderBottom(); const c = document.querySelector(".m-clock"); if (c) c.textContent = clockText(); document.querySelectorAll("#topScreen .m-clock-text").forEach((e) => (e.textContent = clockText())); }, 30000);
 if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("#previewMotion").checked = false;
+
+// ---- The HTML widget maker ----
+const MAKER_SIZES = { "1x1": [115, 98], "2x1": [248, 98], "2x2": [248, 214] };
+let makerSize = "2x2", makerTimer = null;
+function makerRender() {
+  const box = $("#makerTile"); if (!box) return;
+  const [w, h] = MAKER_SIZES[makerSize];
+  box.style.width = `${w}px`; box.style.height = `${h}px`;
+  box.innerHTML = widgetFrame($("#makerCode").value, w, h, true);
+}
+(function makerStart() {
+  const code = $("#makerCode"); if (!code) return;
+  code.value = SAMPLE_WIDGETS["Night Sky/index.html"];
+  makerRender();
+  code.addEventListener("input", () => { clearTimeout(makerTimer); makerTimer = setTimeout(makerRender, 350); });
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-maker-size],[data-maker-sample]"); if (!b) return;
+    if (b.dataset.makerSize) { makerSize = b.dataset.makerSize; document.querySelectorAll("[data-maker-size]").forEach((x) => x.classList.toggle("primary", x === b)); }
+    if (b.dataset.makerSample) { code.value = SAMPLE_WIDGETS[b.dataset.makerSample]; $("#makerName").value = widgetName(b.dataset.makerSample).toLowerCase().replace(/\s+/g, "-"); }
+    makerRender();
+  });
+  $("#makerDownload").addEventListener("click", async () => {
+    const name = ($("#makerName").value.trim() || "my-widget").replace(/[^\w.-]+/g, "-").replace(/\.html?$/i, "") + ".html";
+    try {
+      const dl = window.claude ? await window.claude.use("downloads") : null;
+      if (dl) { await dl.save({ filename: name, data: code.value }); toast(`Downloaded ${name}. Put it in your widgets folder on the Thor.`); return; }
+    } catch (err) { if (err && err.code === "declined") return; }
+    try { await navigator.clipboard.writeText(code.value); toast("Downloads aren't available here, so the widget was copied instead."); } catch (err) { code.focus(); code.select(); toast("Copy the widget from the box."); }
+  });
+  $("#makerCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(code.value); toast("Widget copied"); } catch (err) { code.focus(); code.select(); } });
+})();
 
 async function exportTheme() {
   const text = JSON.stringify(theme, null, 2);

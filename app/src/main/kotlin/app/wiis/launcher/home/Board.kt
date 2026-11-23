@@ -14,8 +14,9 @@ data class BoardFile(val tiles: List<BoardTile> = emptyList(), val nextId: Int =
 /**
  * One tile. [kind]: app (ref: app key), game (ref: game URI), collection (ref: collection id),
  * shortcut (ref: wifi, bluetooth, display, sound, settings, or emu:<package>), a built-in widget
- * (clock, lastPlayed, week, achievements, random), or gap (an empty cell). [size]: "1x1", "2x1"
- * or "2x2".
+ * (clock, lastPlayed, week, achievements, random), your own HTML widget (html, ref: its path in the
+ * widgets folder), an Android widget (android, ref: its app widget id), or gap (an empty cell).
+ * [size]: "1x1", "2x1" or "2x2".
  */
 @Serializable
 data class BoardTile(val id: Int, val kind: String, val ref: String = "", val size: String = "1x1")
@@ -35,6 +36,8 @@ object Board {
     const val WEEK = "week"
     const val ACHIEVEMENTS = "achievements"
     const val RANDOM = "random"
+    const val HTML = "html"
+    const val ANDROID = "android"
     const val GAP = "gap"
 
     val SHORTCUTS = listOf("wifi", "bluetooth", "display", "sound", "settings")
@@ -50,6 +53,8 @@ object Board {
         RANDOM -> listOf("1x1", "2x1", "2x2")
         COLLECTION, CLOCK, LAST_PLAYED, WEEK -> listOf("2x1", "2x2")
         ACHIEVEMENTS -> listOf("2x2", "2x1")
+        HTML -> listOf("2x2", "2x1", "1x1")
+        ANDROID -> listOf("2x1", "2x2", "1x1")
         else -> listOf("1x1")
     }
 
@@ -278,8 +283,8 @@ object Board {
      * no such place). It takes the size its kind starts at, or a smaller one where that doesn't
      * fit. Null when the page is full.
      */
-    fun add(file: BoardFile, kind: String, ref: String, cols: Int, rows: Int, before: Int? = null, at: Pair<Int, Int>? = null): BoardFile? {
-        val first = sizesFor(kind).first()
+    fun add(file: BoardFile, kind: String, ref: String, cols: Int, rows: Int, before: Int? = null, at: Pair<Int, Int>? = null, size: String? = null): BoardFile? {
+        val first = size?.takeIf { it in sizesFor(kind) } ?: sizesFor(kind).first()
         val sizes = listOf(first, "2x1", "1x1").distinct().filter { area(it) <= area(first) }
         for (size in sizes) {
             val tile = BoardTile(file.nextId, kind, ref, size)

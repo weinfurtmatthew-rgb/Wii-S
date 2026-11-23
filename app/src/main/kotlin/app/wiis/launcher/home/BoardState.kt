@@ -18,6 +18,8 @@ data class BoardUi(
     val week: List<Long> = emptyList(),
     val today: Int = 0,
     val achievements: RecentUnlocks = RecentUnlocks.Loading,
+    /** Android widget tiles' names, by their widget id. */
+    val widgetLabels: Map<String, String> = emptyMap(),
     /** Arranging: null when not. */
     val edit: BoardEdit? = null,
 )

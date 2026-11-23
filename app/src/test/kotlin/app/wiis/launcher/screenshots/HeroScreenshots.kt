@@ -351,6 +351,64 @@ class HeroScreenshots {
         shoot("top-33-board-plus", withBoard(HomeViewModel.cellKey(5, 2)).copy(board = sampleBoard.copy(tiles = tiles, edit = BoardEdit(sticky = true))))
     }
 
+    // ---- Widgets on the page below Home (0.6.2) ------------------------------------------------------
+
+    /** The sample page with an HTML widget (2×2) and an Android widget (2×1) in place of Last played and This week. */
+    private val widgetBoard: BoardUi by lazy {
+        val tiles = sampleBoard.tiles.map { t ->
+            when (t.kind) {
+                Board.LAST_PLAYED -> t.copy(kind = Board.HTML, ref = "Night Sky/index.html")
+                Board.WEEK -> t.copy(kind = Board.ANDROID, ref = "17")
+                else -> t
+            }
+        }
+        sampleBoard.copy(tiles = tiles, widgetLabels = mapOf("17" to "Weather"))
+    }
+
+    @Test fun boardWidgets() = shoot("top-34-board-widgets", withBoard(boardKey(Board.CLOCK)).copy(board = widgetBoard))
+
+    /** A on the HTML widget: it opens full screen; B closes it and focus is back on its tile. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun htmlWidgetFullScreen() {
+        val html = widgetBoard.tiles.first { it.kind == Board.HTML }
+        val live = Live(withBoard(HomeViewModel.boardKey(html.id)).copy(board = widgetBoard))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-35-html-full-screen.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonB) }
+        settle()
+        check(where(live).startsWith("tile:html")) { "after B: ${where(live)}" }
+    }
+
+    /** Add: HTML widgets before a folder is chosen, and the installed Android widgets. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun addWidgets() {
+        val choices = listOf(
+            app.wiis.launcher.home.AndroidWidgetChoice(ComponentName("sample.weather", "sample.Weather"), "Weather", "Sky Forecast", 180, 80),
+            app.wiis.launcher.home.AndroidWidgetChoice(ComponentName("sample.music", "sample.Player"), "Now playing", "Music", 180, 80),
+            app.wiis.launcher.home.AndroidWidgetChoice(ComponentName("sample.notes", "sample.Note"), "Sticky note", "Notes", 110, 110),
+        )
+        val live = Live(withBoard(boardKey(Board.APP, app("Music").key)).copy(androidWidgets = choices))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonSelect) }
+        settle()
+        walk(live, Key.DirectionDown, 4)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-36-add-categories.png").path)
+        walk(live, Key.DirectionDown, 4)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-37-add-html-no-folder.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonB) }
+        settle()
+        walk(live, Key.DirectionDown, 1)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-38-add-android.png").path)
+    }
+
     // ---- Navigation audit: the controller paths, as fast as a held button repeats ---------------
 
     /** The home screen driven like the view model drives it, with a trail of what took focus. */

@@ -16,10 +16,12 @@ import app.wiis.emulator.SystemDetector
 import app.wiis.emulator.art.ArtRepository
 import app.wiis.emulator.art.LibretroThumbnails
 import app.wiis.emulator.art.LocalArtFolder
+import app.wiis.emulator.art.SteamGridDb
 import app.wiis.emulator.ra.RaCredentials
 import app.wiis.emulator.ra.RaRepository
 import app.wiis.launcher.home.AppRef
 import app.wiis.launcher.home.BoardFile
+import app.wiis.launcher.home.WidgetBinder
 import app.wiis.launcher.home.CollectionsFile
 import app.wiis.launcher.home.DockApps
 import app.wiis.launcher.home.Pins
@@ -168,6 +170,21 @@ class AppGraph(val context: Application) {
         get() = prefs.getBoolean("art_libretro", true)
         set(value) { prefs.edit { putBoolean("art_libretro", value) }; configureArt(art) }
 
+    /**
+     * SteamGridDB's API key: kept with the other secrets (never backed up) and only ever sent to
+     * steamgriddb.com. Null when not set.
+     */
+    var steamGridKey: String?
+        get() = secrets.getString("sgdb_key", null)?.trim()?.takeIf { it.isNotEmpty() }
+        set(value) {
+            secrets.edit { if (value.isNullOrBlank()) remove("sgdb_key") else putString("sgdb_key", value.trim()) }
+            configureArt(art)
+            art.clearMisses()
+        }
+
+    /** The SteamGridDB source itself (the key is read when it is asked, so a new key works at once). */
+    val steamGrid by lazy { SteamGridDb(key = { steamGridKey }) }
+
     var artFolder: Uri?
         get() = prefs.getString("art_folder", null)?.let(Uri::parse)
         set(value) {
@@ -180,6 +197,8 @@ class AppGraph(val context: Application) {
         repo.providers = if (!artEnabled) emptyList() else buildList {
             artFolder?.let { add(LocalArtFolder(context.contentResolver, it)) }
             if (artLibretro) add(LibretroThumbnails())
+            // Third: SteamGridDB fills the gaps (Switch, Steam, names libretro doesn't know) once you add your key.
+            if (steamGridKey != null) add(steamGrid)
         }
     }
 
@@ -253,6 +272,25 @@ class AppGraph(val context: Application) {
         _board.value = next
         runCatching { boardFile.writeText(collectionsJson.encodeToString(BoardFile.serializer(), next)) }
     }
+
+    // ---- Widgets (device-level: your HTML widgets folder, and the Android widgets on the page) ----
+
+    private val _widgetsFolder = MutableStateFlow(prefs.getString("widgets_folder", null)?.let(Uri::parse))
+
+    /** The folder your HTML widgets are in (read-only access, chosen in Wii-S settings → Widgets). */
+    val widgetsFolderFlow: StateFlow<Uri?> = _widgetsFolder.asStateFlow()
+    var widgetsFolder: Uri?
+        get() = _widgetsFolder.value
+        set(value) {
+            prefs.edit { if (value == null) remove("widgets_folder") else putString("widgets_folder", value.toString()) }
+            _widgetsFolder.value = value
+        }
+
+    val widgetManager: android.appwidget.AppWidgetManager by lazy { android.appwidget.AppWidgetManager.getInstance(context) }
+
+    /** Wii-S's host for Android widgets; it listens while Home is on screen. */
+    val widgetHost: android.appwidget.AppWidgetHost by lazy { android.appwidget.AppWidgetHost(context, WidgetBinder.HOST_ID) }
+    val widgetBinder by lazy { WidgetBinder(this) }
 
     /** Emulator apps (their packages), which Apps and the dock leave to the emulator picker. */
     val emulatorPackageSet: Set<String> get() = emulatorPackages

@@ -226,13 +226,26 @@ interface HeroActions {
     fun boardResize(id: Int): Boolean = false
     fun boardRemove(id: Int) = Unit
     fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?): Boolean = false
+    fun refreshWidgetLists() = Unit
+    fun addAndroidWidget(provider: android.content.ComponentName, before: Int?, at: Pair<Int, Int>?) = Unit
+    fun pressAndroidWidget(id: Int) = Unit
 }
 
 @Composable
 fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
-    val graph = LocalContext.current.graph
+    val context = LocalContext.current
+    val graph = context.graph
     val status by graph.systemStatus.status.collectAsStateWithLifecycle()
+    // Android widgets: Android's "allow Wii-S to create widgets?", then the widget's own setup.
+    val activity = remember(context) { context.findActivity() }
+    val bind = androidx.activity.compose.rememberLauncherForActivityResult(androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult()) { r ->
+        graph.widgetBinder.onBindResult(r.resultCode == android.app.Activity.RESULT_OK, activity)
+    }
+    DisposableEffect(vm, graph) {
+        graph.widgetBinder.onAdded = { p -> vm.boardAdd(Board.ANDROID, p.id.toString(), p.before, p.at, size = p.size) }
+        onDispose { graph.widgetBinder.onAdded = {} }
+    }
     val actions = remember(vm, graph) {
         object : HeroActions {
             override fun selectSection(section: Section) = vm.selectSection(section)
@@ -275,9 +288,15 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun boardResize(id: Int) = vm.boardResize(id)
             override fun boardRemove(id: Int) = vm.boardRemove(id)
             override fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?) = vm.boardAdd(kind, ref, before, at)
+            override fun refreshWidgetLists() = vm.refreshWidgetLists()
+            override fun addAndroidWidget(provider: android.content.ComponentName, before: Int?, at: Pair<Int, Int>?) =
+                graph.widgetBinder.start(provider, before, at, activity, bind)
+            override fun pressAndroidWidget(id: Int) { if (!AndroidWidgetViews.press(id)) vm.openWidgetApp(id) }
         }
     }
-    HeroHomeScreen(state, status, actions) { page, height -> SettingsPanel(page, vm::settingsPage, onPickRomFolder = onPickFolder, height = height) }
+    CompositionLocalProvider(LocalWidgetRenderers provides WidgetRenderers.Live) {
+        HeroHomeScreen(state, status, actions) { page, height -> SettingsPanel(page, vm::settingsPage, onPickRomFolder = onPickFolder, height = height) }
+    }
 
     state.picker?.let { p -> EmulatorPickerDialog(p, onPick = { vm.launchGame(p.game, it) }, onDismiss = vm::dismissPicker) }
     state.dockPicker?.let { p -> DockPickerDialog(p, state.dock.getOrNull(p.slot), onPick = vm::chooseDockApp, onDismiss = vm::dismissDockPicker) }
@@ -322,17 +341,20 @@ fun HeroHomeScreen(
     var picking by remember { mutableStateOf<Game?>(null) }
     var naming by remember { mutableStateOf<Naming?>(null) }
     var adding by remember { mutableStateOf<AddTarget?>(null) }
-    val popup = menu != null || picking != null || naming != null || adding != null || state.settings != null
+    // An HTML widget opened full screen (A on its tile).
+    var htmlOpen by remember { mutableStateOf<String?>(null) }
+    val popup = menu != null || picking != null || naming != null || adding != null || htmlOpen != null || state.settings != null
     val content = remember { FocusRequester() }
-    var contentFocused by remember { mutableStateOf(false) }
-    // Focus goes back where it was when the last popup closes, unless something took it already
-    // (a tile just added, the neighbour of one just removed).
+    // Focus goes back where it was when the last popup closes (Compose puts it on the first item
+    // when the popup's own focus goes away), unless what closed the popup moves focus itself: a tile
+    // just added, the neighbour of one just removed, the next collection after one hidden.
+    var focusMoves by remember { mutableStateOf(false) }
     var hadPopup by remember { mutableStateOf(false) }
     LaunchedEffect(popup) {
         if (popup) { hadPopup = true; return@LaunchedEffect }
         if (!hadPopup) return@LaunchedEffect
         withFrameNanos { }
-        if (contentFocused) return@LaunchedEffect
+        if (focusMoves) { focusMoves = false; return@LaunchedEffect }
         if (!content.restoreFocusedChild()) runCatching { content.requestFocus() }
     }
     fun openPopup(open: () -> Unit) {
@@ -441,7 +463,6 @@ fun HeroHomeScreen(
                 .safeDrawingPadding()
                 .padding(start = pad.dp, end = pad.dp, top = topPad.dp, bottom = (if (dockNav) 10 else topPad).dp)
                 .focusRequester(content)
-                .onFocusChanged { contentFocused = it.hasFocus }
                 .focusGroup(),
         ) {
             HeroHeader(
@@ -458,6 +479,7 @@ fun HeroHomeScreen(
                 state, actions, onFocused,
                 onAdd = { target -> openPopup { adding = target } },
                 onSettings = { page -> openPopup { actions.openSettings(page) } },
+                onOpenHtml = { ref -> feedback.emit(UiEvent.Select); openPopup { htmlOpen = ref } },
                 modifier = Modifier.weight(1f).fillMaxWidth(),
             )
             state.message?.let { text ->
@@ -495,6 +517,8 @@ fun HeroHomeScreen(
                     pin = { g -> feedback.emit(if (state.isPinned(g)) UiEvent.Back else UiEvent.Select); actions.togglePin(g, fromRow = target is Focused.Pinned) },
                     add = { t -> menu = null; adding = t },
                     error = { feedback.emit(UiEvent.Error) },
+                    openHtml = { ref -> menu = null; htmlOpen = ref },
+                    focusMoves = { focusMoves = true },
                 ),
                 onDismiss = { feedback.emit(UiEvent.Back); menu = null },
             )
@@ -513,11 +537,21 @@ fun HeroHomeScreen(
         }
         adding?.let { target ->
             AddTilePicker(
-                state,
-                onPick = { kind, ref -> feedback.emit(UiEvent.Select); adding = null; actions.boardAdd(kind, ref, target.before, target.at) },
+                state, actions,
+                onPick = { kind, ref ->
+                    feedback.emit(UiEvent.Select)
+                    adding = null
+                    when (kind) {
+                        SETTINGS_ENTRY -> actions.openSettings(ref)
+                        Board.ANDROID -> android.content.ComponentName.unflattenFromString(ref)?.let { actions.addAndroidWidget(it, target.before, target.at) }
+                        // The new tile takes focus when it lands (or the old place keeps it, if there was no room).
+                        else -> if (actions.boardAdd(kind, ref, target.before, target.at)) focusMoves = true
+                    }
+                },
                 onDismiss = { feedback.emit(UiEvent.Back); adding = null },
             )
         }
+        htmlOpen?.let { ref -> HtmlWidgetScreen(ref, onClose = { feedback.emit(UiEvent.Back); htmlOpen = null }) }
         state.settings?.let { page ->
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 val height = (maxHeight.value - 56 - 36).toInt().coerceAtLeast(240)
@@ -560,6 +594,8 @@ private fun menuFor(
     pin: (Game) -> Unit,
     add: (AddTarget) -> Unit,
     error: () -> Unit,
+    openHtml: (String) -> Unit = {},
+    focusMoves: () -> Unit = {},
 ): List<MenuEntry> {
     val game = gameOf(f)
     val random = f is Focused.Tile && f.tile.kind == Board.RANDOM
@@ -579,7 +615,7 @@ private fun menuFor(
                 add(MenuEntry("Open", "A") { close(); actions.openCollection(c.id) })
                 if (c.suggested) add(MenuEntry("Keep") { close(); actions.keepCollection(c.id) })
                 add(MenuEntry("Rename…") { name(Naming("Rename collection", c.name) { n -> actions.renameCollection(c.id, n) }) })
-                add(MenuEntry(if (c.id.startsWith("s:")) "Hide" else "Delete") { close(); actions.hideCollection(c.id) })
+                add(MenuEntry(if (c.id.startsWith("s:")) "Hide" else "Delete") { focusMoves(); close(); actions.hideCollection(c.id) })
             }
             is Focused.DockApp -> {
                 add(MenuEntry("Open", "A") { close(); actions.launchApp(f.app) })
@@ -595,12 +631,14 @@ private fun menuFor(
                     Board.COLLECTION -> f.collection?.let { c -> add(MenuEntry("Open", "A") { close(); actions.openCollectionFrom(c.id, HomeViewModel.boardKey(t.id)) }) }
                     Board.SHORTCUT -> add(MenuEntry("Open", "A") { close(); actions.openShortcut(t.ref) })
                     Board.ACHIEVEMENTS -> add(MenuEntry("RetroAchievements settings", if (state.board.achievements is RecentUnlocks.NotSetUp) "A" else null) { close(); actions.openSettings("ra") })
+                    Board.HTML -> add(MenuEntry("Open full screen", "A") { close(); openHtml(t.ref) })
+                    Board.ANDROID -> t.ref.toIntOrNull()?.let { wid -> add(MenuEntry("Press", "A") { close(); actions.pressAndroidWidget(wid) }) }
                 }
                 add(MenuEntry("Move", lineAbove = isNotEmpty()) { close(); actions.boardPickUp(t.id, sticky = false) })
                 if (Board.sizesFor(t.kind).size > 1 || t.size !in Board.sizesFor(t.kind)) {
                     add(MenuEntry("Size: ${sizeLabel(t.size)}") { if (!actions.boardResize(t.id)) error() })
                 }
-                add(MenuEntry("Remove") { close(); actions.boardRemove(t.id) })
+                add(MenuEntry("Remove") { focusMoves(); close(); actions.boardRemove(t.id) })
                 add(MenuEntry("Add a tile here…") { add(AddTarget(before = t.id)) })
             }
             is Focused.Cell -> add(MenuEntry("Add a tile here…", "A") { add(AddTarget(at = f.col to f.row)) })
@@ -857,6 +895,8 @@ private fun tileCaption(f: Focused.Tile, state: HomeUiState, style: WiisStyle): 
                 Board.RANDOM -> if (f.game != null) { add("A" to "Play"); add("Y" to "Another") }
                 Board.APP, Board.COLLECTION, Board.SHORTCUT -> if (f.app != null || f.collection != null || t.kind == Board.SHORTCUT) add("A" to "Open")
                 Board.ACHIEVEMENTS -> if (state.board.achievements is RecentUnlocks.NotSetUp) add("A" to "Set up")
+                Board.HTML -> add("A" to "Open")
+                Board.ANDROID -> add("A" to "Press")
             }
             add("Hold A" to "Arrange")
             add("Select" to "Menu")
@@ -878,6 +918,8 @@ internal fun tileKindName(t: BoardTile): String = when (t.kind) {
     Board.WEEK -> "This week"
     Board.ACHIEVEMENTS -> "Recent achievements"
     Board.RANDOM -> "Random game"
+    Board.HTML -> "HTML widget"
+    Board.ANDROID -> "Android widget"
     else -> "Tile"
 }
 
@@ -896,6 +938,7 @@ private fun HeroBody(
     onFocused: (Focused) -> Unit,
     onAdd: (AddTarget) -> Unit,
     onSettings: (String) -> Unit,
+    onOpenHtml: (String) -> Unit,
     modifier: Modifier,
 ) {
     val motion = LocalWiis.current.spec.motion
@@ -925,7 +968,7 @@ private fun HeroBody(
                 is HomeView.InSystem -> SystemGames(view.systemId, state, actions, onFocused)
                 // A collection opened from its tile below Home.
                 is HomeView.InCollection -> CollectionGames(view.id, state, actions, onFocused)
-                else -> GamesHome(state, actions, onFocused, onAdd, onSettings)
+                else -> GamesHome(state, actions, onFocused, onAdd, onSettings, onOpenHtml)
             }
             Section.Apps -> GlassApps(state.apps, actions, onFocused)
             Section.Collections -> when (val view = key.view) {
@@ -937,7 +980,7 @@ private fun HeroBody(
 }
 
 @Composable
-private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit, onAdd: (AddTarget) -> Unit, onSettings: (String) -> Unit) {
+private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit, onAdd: (AddTarget) -> Unit, onSettings: (String) -> Unit, onOpenHtml: (String) -> Unit) {
     val other = Modifier.onFocusEvent { if (it.hasFocus) onFocused(Focused.Other) }
     when (val lib = state.library) {
         LibraryStatus.NoFolder -> Box(other) { CenterAction("Pick the folder that holds your ROMs.", "Choose ROM folder", actions::pickFolder) }
@@ -953,7 +996,7 @@ private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focu
                 TwoPages(
                     startBelow = target.startsWith("board:") || target.startsWith("cell:"),
                     home = { HomePage(hero, state, actions, onFocused) },
-                    below = { BoardPage(state, actions, onFocused, onAdd, onSettings) },
+                    below = { BoardPage(state, actions, onFocused, onAdd, onSettings, onOpenHtml) },
                 )
             }
         }

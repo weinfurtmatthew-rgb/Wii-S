@@ -111,6 +111,21 @@ class SystemScreenshots {
         repeat(3) { i -> go(Key.DirectionDown, 1); shot("system-2-sounds-${i + 1}") }
     }
 
+    /** Box art with its three sources (SteamGridDB third, waiting for a key), and the Widgets page. */
+    @Test fun artAndWidgetsPages() {
+        open("art")
+        shot("system-4-box-art")
+        // Down the categories to Widgets: its page follows focus.
+        go(Key.DirectionDown, 1)
+        check(state.settings == "widgets") { "after Down: ${state.settings}" }
+        shot("system-6-widgets")
+        // Back up to Box art and into it, down to SteamGridDB.
+        go(Key.DirectionUp, 1)
+        go(Key.DirectionRight, 1)
+        repeat(6) { go(Key.DirectionDown, 1) }
+        shot("system-5-box-art-steamgriddb")
+    }
+
     /**
      * Inside the popup: Left from a page comes back to its category, and focus never leaves the
      * popup (Down past the last item stays there instead of reaching the dock behind it).

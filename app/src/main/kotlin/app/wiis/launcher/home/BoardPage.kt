@@ -5,6 +5,8 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -135,6 +137,8 @@ private fun resolve(t: BoardTile, state: HomeUiState): Resolved = when (t.kind) 
     Board.RANDOM -> state.board.random?.let { Resolved(game = it, title = it.title) } ?: Resolved(missing = "No games yet")
     Board.LAST_PLAYED -> state.hero?.let { Resolved(game = it, title = it.title) } ?: Resolved(missing = "Nothing played yet")
     Board.COLLECTION -> state.collections.firstOrNull { it.id == t.ref }?.let { Resolved(collection = it, title = it.name) } ?: Resolved(missing = "Collection not found")
+    Board.HTML -> Resolved(title = WidgetPaths.name(t.ref))
+    Board.ANDROID -> Resolved(title = state.board.widgetLabels[t.ref] ?: "Android widget")
     Board.SHORTCUT -> if (t.ref.startsWith("emu:")) {
         state.apps.firstOrNull { it.component.packageName == t.ref.removePrefix("emu:") }?.let { Resolved(app = it, title = it.label) } ?: Resolved(missing = "Emulator not installed")
     } else {
@@ -165,6 +169,7 @@ internal fun BoardPage(
     onFocused: (Focused) -> Unit,
     onAdd: (AddTarget) -> Unit,
     onSettings: (String) -> Unit,
+    onOpenHtml: (String) -> Unit,
 ) {
     val style = LocalWiis.current
     val spec = style.spec
@@ -231,7 +236,7 @@ internal fun BoardPage(
         }
         // The carried tile last, so it is drawn over the others.
         placed.sortedBy { it.tile.id == carrying }.forEach { p ->
-            key(p.tile.id) { BoardTileView(p, geometry, moveMs, state, actions, onFocused, onSettings, within(HomeViewModel.boardKey(p.tile.id))) }
+            key(p.tile.id) { BoardTileView(p, geometry, moveMs, state, actions, onFocused, onSettings, onOpenHtml, within(HomeViewModel.boardKey(p.tile.id))) }
         }
     }
 }
@@ -273,11 +278,15 @@ private fun BoardTileView(
     actions: HeroActions,
     onFocused: (Focused) -> Unit,
     onSettings: (String) -> Unit,
+    onOpenHtml: (String) -> Unit,
     within: (FocusDirection) -> FocusRequester?,
 ) {
     val style = LocalWiis.current
     val spec = style.spec
     val feedback = LocalUiFeedback.current
+    val renderers = LocalWidgetRenderers.current
+    // Live widgets only while this page shows (a web page or an Android widget costs memory and battery).
+    val live = LocalVerticalNav.current?.page == 1
     val t = p.tile
     val key = HomeViewModel.boardKey(t.id)
     val r = resolve(t, state)
@@ -288,24 +297,28 @@ private fun BoardTileView(
     val w = g.w(p.w)
     val h = g.h(p.h)
     val plays = t.kind in PLAY_KINDS
+    val open = {
+        if (edit?.sticky == true) actions.boardPickUp(t.id, sticky = true)
+        else when (t.kind) {
+            Board.GAME, Board.RANDOM, Board.LAST_PLAYED -> r.game?.let { actions.launchFrom(it, key) }
+            Board.APP -> r.app?.let { actions.launchApp(it) }
+            Board.SHORTCUT -> actions.openShortcut(t.ref)
+            Board.COLLECTION -> r.collection?.let { actions.openCollectionFrom(it.id, key) }
+            Board.ACHIEVEMENTS -> if (state.board.achievements is RecentUnlocks.NotSetUp) onSettings("ra")
+            Board.HTML -> onOpenHtml(t.ref)
+            Board.ANDROID -> t.ref.toIntOrNull()?.let { actions.pressAndroidWidget(it) }
+        }
+    }
+    val hold: (() -> Unit)? = if (edit == null) ({ feedback.emit(UiEvent.Select); actions.boardPickUp(t.id, sticky = true) }) else null
     WiisTile(
-        onClick = {
-            if (edit?.sticky == true) actions.boardPickUp(t.id, sticky = true)
-            else when (t.kind) {
-                Board.GAME, Board.RANDOM, Board.LAST_PLAYED -> r.game?.let { actions.launchFrom(it, key) }
-                Board.APP -> r.app?.let { actions.launchApp(it) }
-                Board.SHORTCUT -> actions.openShortcut(t.ref)
-                Board.COLLECTION -> r.collection?.let { actions.openCollectionFrom(it.id, key) }
-                Board.ACHIEVEMENTS -> if (state.board.achievements is RecentUnlocks.NotSetUp) onSettings("ra")
-            }
-        },
+        onClick = { open() },
         onSecondary = when {
             edit != null -> ({ if (!actions.boardResize(t.id)) feedback.emit(UiEvent.Bump) })
             t.kind == Board.RANDOM -> ({ actions.shuffleRandom() })
             plays && r.game != null -> ({ actions.openPicker(r.game) })
             else -> null
         },
-        onLongClick = if (edit == null) ({ feedback.emit(UiEvent.Select); actions.boardPickUp(t.id, sticky = true) }) else null,
+        onLongClick = hold,
         clickSound = if (edit == null && plays && r.game != null) null else UiEvent.Select,
         shape = shape,
         fill = style.glassFill,
@@ -340,6 +353,16 @@ private fun BoardTileView(
                 t.kind == Board.CLOCK -> ClockFace(p)
                 t.kind == Board.WEEK -> WeekFace(state.board.week, state.board.today, p)
                 t.kind == Board.ACHIEVEMENTS -> AchievementsFace(state.board.achievements, p)
+                t.kind == Board.HTML -> {
+                    if (live) renderers.html(t.ref, false, {}, Modifier.fillMaxSize()) else WidgetName("code", r.title)
+                    // The page in the tile is only to look at: a tap opens it, as A does.
+                    Box(Modifier.matchParentSize().pointerInput(t.id, edit) { detectTapGestures(onTap = { open() }, onLongPress = { hold?.invoke() }) })
+                }
+                t.kind == Board.ANDROID -> {
+                    if (live) t.ref.toIntOrNull()?.let { renderers.android(it, Modifier.fillMaxSize()) } else WidgetName("widget", r.title)
+                    // While arranging, taps move tiles instead of pressing the widget.
+                    if (edit != null) Box(Modifier.matchParentSize().pointerInput(t.id, edit) { detectTapGestures(onTap = { open() }) })
+                }
             }
             // Arranging: every tile shows it can move.
             if (edit?.sticky == true && !carried) Box(Modifier.matchParentSize().dashed(style.glassText.copy(alpha = 0.45f), radius.toFloat()))
@@ -349,6 +372,16 @@ private fun BoardTileView(
 }
 
 private val PLAY_KINDS = setOf(Board.GAME, Board.RANDOM, Board.LAST_PLAYED)
+
+/** A widget while its page isn't showing: its icon and name. */
+@Composable
+private fun WidgetName(icon: String, name: String) {
+    val style = LocalWiis.current
+    Column(Modifier.fillMaxSize().padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterVertically), horizontalAlignment = Alignment.CenterHorizontally) {
+        TileIcon(icon, 24.dp, style.glassTextMuted)
+        Text(name, style = style.label.copy(color = style.glassText, fontSize = 12.sp), maxLines = 1, overflow = TextOverflow.Ellipsis)
+    }
+}
 
 /** A dashed outline just inside the edge: tiles while arranging, and empty cells. */
 private fun Modifier.dashed(color: Color, radius: Float): Modifier = drawBehind {
@@ -709,11 +742,17 @@ private fun Unlock(a: RaRecent, badge: Int, label: String? = null) {
 
 private data class AddEntry(val kind: String, val ref: String, val label: String, val detail: String? = null, val icon: (@Composable () -> Unit)? = null)
 
+/** A row in Add that opens a settings page instead of adding a tile. */
+internal const val SETTINGS_ENTRY = "settings"
+
 /** "Add a tile here…": a kind of tile, then which one. B goes back a step. */
 @Composable
-internal fun AddTilePicker(state: HomeUiState, onPick: (kind: String, ref: String) -> Unit, onDismiss: () -> Unit) {
+internal fun AddTilePicker(state: HomeUiState, actions: HeroActions, onPick: (kind: String, ref: String) -> Unit, onDismiss: () -> Unit) {
     val style = LocalWiis.current
     var category by remember { mutableStateOf<String?>(null) }
+    // Back from a list, focus is on the kind you came from.
+    var last by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(Unit) { actions.refreshWidgetLists() }
     val first = remember { FocusRequester() }
     LaunchedEffect(category) { withFrameNanos { }; runCatching { first.requestFocus() } }
     val systems = remember(state.systems) { state.systems.associate { it.id to it.name } }
@@ -728,13 +767,22 @@ internal fun AddTilePicker(state: HomeUiState, onPick: (kind: String, ref: Strin
             AddEntry(Board.ACHIEVEMENTS, "", "Recent achievements", "RetroAchievements", icon = { TileIcon("trophy", 22.dp, style.glassText) }),
             AddEntry(Board.RANDOM, "", "Random game", "Y for another", icon = { TileIcon("dice", 22.dp, style.glassText) }),
         )
+        "html" -> if (!state.widgetsFolderSet) {
+            listOf(AddEntry(SETTINGS_ENTRY, "widgets", "Choose your widgets folder…", "Wii-S settings", icon = { TileIcon("settings", 22.dp, style.glassText) }))
+        } else {
+            state.htmlWidgets.map { w -> AddEntry(Board.HTML, w.ref, w.name, w.ref.substringBeforeLast('/', "").ifEmpty { "HTML" }, icon = { TileIcon("code", 22.dp, style.glassText) }) }
+        }
+        "android" -> state.androidWidgets.map { w -> AddEntry(Board.ANDROID, w.provider.flattenToString(), w.label, w.app, icon = { TileIcon("widget", 22.dp, style.glassText) }) }
         "shortcuts" -> Board.SHORTCUTS.map { r -> AddEntry(Board.SHORTCUT, r, shortcutName(r), "Android settings".takeIf { r != "settings" }, icon = { TileIcon(r, 22.dp, style.glassText) }) } +
             state.apps.filter { it.component.packageName in state.emulators }.sortedBy { it.label.lowercase() }
                 .map { a -> AddEntry(Board.SHORTCUT, "emu:${a.component.packageName}", a.label, "Emulator", icon = { AppIcon(a, 26) }) }
         else -> emptyList()
     }
-    val categories = listOf("apps" to "Apps", "games" to "Games", "collections" to "Collections", "widgets" to "Widgets", "shortcuts" to "Shortcuts")
-    PopupLayer(onDismiss = { if (category != null) category = null else onDismiss() }, width = 440.dp) {
+    val categories = listOf(
+        "apps" to "Apps", "games" to "Games", "collections" to "Collections", "widgets" to "Widgets",
+        "html" to "HTML widgets", "android" to "Android widgets", "shortcuts" to "Shortcuts",
+    )
+    PopupLayer(onDismiss = { if (category != null) { last = category; category = null } else onDismiss() }, width = 440.dp) {
         Column {
             val open = category
             if (open == null) {
@@ -742,14 +790,19 @@ internal fun AddTilePicker(state: HomeUiState, onPick: (kind: String, ref: Strin
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     categories.forEachIndexed { i, (id, label) ->
                         val n = entries(id).size
-                        MenuRow("$label…", null, if (i == 0) Modifier.focusRequester(first) else Modifier, detail = if (id == "widgets" || id == "shortcuts") null else "$n") { category = id }
+                        MenuRow("$label…", null, if (id == last || (last == null && i == 0)) Modifier.focusRequester(first) else Modifier, detail = if (id in setOf("widgets", "shortcuts") || (id == "html" && !state.widgetsFolderSet)) null else "$n") { category = id }
                     }
                 }
             } else {
                 val list = entries(open)
                 PopupTitle(categories.first { it.first == open }.second, "B to go back")
                 if (list.isEmpty()) {
-                    MenuRow("Nothing here yet. Back", null, Modifier.focusRequester(first)) { category = null }
+                    val empty = when (open) {
+                        "html" -> "No .html files in your widgets folder yet. Back"
+                        "android" -> "No Android widgets installed. Back"
+                        else -> "Nothing here yet. Back"
+                    }
+                    MenuRow(empty, null, Modifier.focusRequester(first)) { last = category; category = null }
                 } else {
                     LazyColumn(Modifier.heightIn(max = 272.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(list, key = { _, e -> e.kind + ":" + e.ref }) { i, e ->

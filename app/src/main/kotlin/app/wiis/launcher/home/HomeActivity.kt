@@ -100,10 +100,28 @@ class HomeActivity : ComponentActivity() {
         bottom = null
     }
 
+    override fun onStart() {
+        super.onStart()
+        // Android widgets on the page below Home update while Home is on screen.
+        if (!reporting) runCatching { graph.widgetHost.startListening() }
+    }
+
     override fun onStop() {
         // Keep the window during a game that leaves the bottom screen free; hide it for anything else.
         if (!reporting && graph.shared.session.value?.usesBothScreens != false) hideBottom()
+        if (!reporting) runCatching { graph.widgetHost.stopListening() }
         super.onStop()
+    }
+
+    /** An Android widget's own setup screen finished (see WidgetBinder). */
+    @Deprecated("The widget host starts the setup screen with startActivityForResult")
+    @Suppress("DEPRECATION")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
+        if (requestCode == WidgetBinder.REQUEST_CONFIGURE) {
+            graph.widgetBinder.onConfigureResult(resultCode == RESULT_OK)
+            return
+        }
+        super.onActivityResult(requestCode, resultCode, data)
     }
 
     override fun onDestroy() {

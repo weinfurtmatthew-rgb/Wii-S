@@ -103,6 +103,10 @@ data class HomeUiState(
     val emulators: Set<String> = emptySet(),
     /** The page below Home. */
     val board: BoardUi = BoardUi(),
+    /** Your HTML widgets (in the widgets folder) and the installed Android widgets, for Add. */
+    val htmlWidgets: List<HtmlWidgetEntry> = emptyList(),
+    val widgetsFolderSet: Boolean = false,
+    val androidWidgets: List<AndroidWidgetChoice> = emptyList(),
 )
 
 /** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
@@ -156,6 +160,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         viewModelScope.launch { graph.apps.apps.collect { if (it.isNotEmpty()) seedBoard() } }
         refreshWeek()
         refreshRecent()
+        viewModelScope.launch { graph.widgetsFolderFlow.collect { refreshWidgetLists() } }
     }
 
     // ---- Navigation -------------------------------------------------------------------------
@@ -362,7 +367,23 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         val wanted = tiles.filter { it.kind == Board.GAME }.map { it.ref }.toSet()
         val byUri = if (wanted.isEmpty()) emptyMap() else games.filter { it.uri in wanted }.associateBy { it.uri }
         val edit = board.edit?.takeIf { e -> e.carrying == null || tiles.any { it.id == e.carrying } }
-        return copy(board = board.copy(tiles = tiles, cols = boardCols, rows = boardRows, games = byUri, edit = edit))
+        val pm = graph.context.packageManager
+        val labels = tiles.filter { it.kind == Board.ANDROID }.associate { t ->
+            t.ref to (runCatching { graph.widgetManager.getAppWidgetInfo(t.ref.toInt())?.loadLabel(pm) }.getOrNull() ?: "Android widget")
+        }
+        return copy(board = board.copy(tiles = tiles, cols = boardCols, rows = boardRows, games = byUri, edit = edit, widgetLabels = labels))
+    }
+
+    /** Your HTML widgets and the installed Android widgets, read again (the folder changed, or Add opened). */
+    fun refreshWidgetLists() {
+        viewModelScope.launch {
+            val tree = graph.widgetsFolder
+            val (html, android) = withContext(Dispatchers.IO) {
+                val html = tree?.let { runCatching { WidgetFolder(graph.context.contentResolver, it).widgets() }.getOrDefault(emptyList()) }.orEmpty()
+                html to androidWidgetChoices(graph.context, graph.widgetManager)
+            }
+            local.update { it.copy(htmlWidgets = html, widgetsFolderSet = tree != null, androidWidgets = android) }
+        }
     }
 
     /** A first start: the page gets a clock, the last game played, this week, a few shortcuts, collections and apps. */
@@ -417,6 +438,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         val placed = Board.layout(local.value.board.tiles, boardCols, boardRows)
         val gone = placed.firstOrNull { it.tile.id == id } ?: return
         editBoard { f -> Board.remove(f, id, boardCols, boardRows) }
+        // An Android widget's id goes back to Android with its tile.
+        if (gone.tile.kind == Board.ANDROID) gone.tile.ref.toIntOrNull()?.let { wid -> runCatching { graph.widgetHost.deleteAppWidgetId(wid) } }
         val s = local.value
         val key = if (s.board.edit?.sticky == true) cellKey(gone.col, gone.row) else {
             val rest = Board.layout(s.board.tiles, boardCols, boardRows)
@@ -426,15 +449,26 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     /** Add a tile in an empty cell [at] or before tile [before]; focus goes to it. False when the page is full. */
-    fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?): Boolean {
+    fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?, size: String? = null): Boolean {
         val id = graph.board.value.nextId
-        val added = editBoard { f -> Board.add(f, kind, ref, boardCols, boardRows, before = before, at = at) }
+        val added = editBoard { f -> Board.add(f, kind, ref, boardCols, boardRows, before = before, at = at, size = size) }
         if (!added) {
+            // An Android widget that found no room gives its id back.
+            if (kind == Board.ANDROID) ref.toIntOrNull()?.let { wid -> runCatching { graph.widgetHost.deleteAppWidgetId(wid) } }
             showMessage("There's no room on this page. Remove a tile or make one smaller first.", error = true)
             return false
         }
         local.update { it.copy(heroFocus = HeroFocus(boardKey(id), token())) }
         return true
+    }
+
+    /** A on an Android widget that has nothing to press: its app. */
+    fun openWidgetApp(id: Int) {
+        val pkg = runCatching { graph.widgetManager.getAppWidgetInfo(id)?.provider?.packageName }.getOrNull()
+        val intent = pkg?.let { graph.context.packageManager.getLaunchIntentForPackage(it) }
+        if (intent == null || runCatching { graph.context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isFailure) {
+            showMessage("This widget has nothing to open.", error = true)
+        }
     }
 
     /** Y on the random game: another one. */

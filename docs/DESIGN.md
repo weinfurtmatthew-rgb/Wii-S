@@ -213,5 +213,27 @@ Your answers: keep pressing Down to reach it, a grid of sized tiles like Cocoon 
 
 Recent achievements come from RetroAchievements' recent-unlocks list (the last 30 days), asked for only when the page has that tile. Your key stays on the device and goes only to retroachievements.org, as before.
 
+### SteamGridDB, HTML widgets and Android widgets (2026-11-23)
+
+Your answers: "Use steamdb as well as what's currently being used" (read as SteamGridDB, the art site in the earlier proposal; SteamDB has no art to offer), and from the widgets questions: your own HTML files, shown live, offline and sandboxed, A opens one full screen; and Android widgets.
+
+| Detail | Value | Status |
+|---|---|---|
+| Art sources | 1. your art folder, 2. libretro thumbnails, 3. SteamGridDB, tried in that order: SteamGridDB fills what the others miss (Switch, Steam, file names libretro doesn't know) | **Your answer** (as well as the current ones); the order is proposed |
+| SteamGridDB key | Your free API key (steamgriddb.com → Preferences → API), pasted in Settings → Box art; saved only after a test search works; kept with the RetroAchievements key (never backed up), sent only to steamgriddb.com | Proposed |
+| Finding a game | By its title without region tags and with a trailing ", The" put first; the result with the same name (a verified one first), or the first result when one name starts with the other; otherwise no art rather than another game's | Proposed |
+| Which cover | The best-rated portrait cover (600 × 900, 342 × 482 or 660 × 930), still images only, never NSFW, joke or flashing art; one over 400 KB is kept as JPEG at its size | Proposed |
+| HTML widgets: where | A folder you choose in Settings → Widgets; each .html file, and each folder with an index.html (its pictures, fonts and scripts beside it), is one widget | **Your answer** (your own files) |
+| Sandbox | No internet (every request outside its own files is refused, and a Content-Security-Policy blocks fetch, XHR and WebSockets), no file or app access, no permissions, can't navigate or open windows; each widget has its own storage | **Your answer** (offline and sandboxed); the rules are proposed |
+| In a tile | Live, edge to edge, its own background (transparent by default), only to look at: A or a tap opens it full screen. Wii-S tells it its size and light or dark (`?w=…&h=…&dark=1`). It runs only while the page below Home shows | **Your answer** (live in a tile); details proposed |
+| Full screen | The widget in a glass frame over the dimmed screen, its name and "B Close" on top; the page gets the D-pad (arrow keys) and A (Enter); B closes and focus goes back to its tile | **Your answer** (A opens it full screen); the frame is proposed |
+| Sizes | HTML widgets start at 2 × 2 (also 2 × 1, 1 × 1); Android widgets start at the size that fits their smallest size (2 × 2, 2 × 1 or 1 × 1) | Proposed |
+| Android widgets | Add → Android widgets… lists every installed widget (its name, its app). The first time, Android asks whether Wii-S may create widgets; a widget with its own setup shows it next. Cancelled anywhere, nothing is added | **Your answer** |
+| Using one | Touch works on it as on any home screen; A presses its largest button (usually the whole widget), or opens its app when it has none. While arranging, taps move tiles instead | Proposed |
+| Removing one | Removing its tile also removes the widget from Android | Proposed |
+| Add | Two more kinds after Widgets: HTML widgets… (or "Choose your widgets folder…" when none is set) and Android widgets…; B from a list goes back to the kind you came from | Proposed |
+| Settings | A Widgets page between Box art and RetroAchievements: the folder, what it found, how widgets work | Proposed |
+| Workbench | "Make an HTML widget": write one, see it live at 1 × 1, 2 × 1 or 2 × 2, then download the .html file. Two samples (Night Sky, Pomodoro); the sample page shows Night Sky and a mock Android weather widget | **Your answer** (made in the workbench) |
+
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

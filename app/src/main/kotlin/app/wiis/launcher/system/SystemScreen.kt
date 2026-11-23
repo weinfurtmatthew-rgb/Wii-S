@@ -54,6 +54,7 @@ import kotlinx.coroutines.launch
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.produceState
 import app.wiis.designsystem.LocalWiis
 import app.wiis.designsystem.SOUND_EVENTS
 import app.wiis.designsystem.WiisStyle
@@ -72,7 +73,7 @@ import java.util.Date
 import java.util.Locale
 
 private enum class Page(val id: String, val label: String) {
-    Theme("theme", "Theme"), Sounds("sounds", "Sounds"), Art("art", "Box art"), Achievements("ra", "RetroAchievements"), Report("report", "Report"),
+    Theme("theme", "Theme"), Sounds("sounds", "Sounds"), Art("art", "Box art"), Widgets("widgets", "Widgets"), Achievements("ra", "RetroAchievements"), Report("report", "Report"),
 }
 
 private val EVENT_LABELS = mapOf(
@@ -120,6 +121,7 @@ fun SettingsPanel(page: String, onPage: (String) -> Unit, onPickRomFolder: () ->
                         Page.Theme -> ThemePage(style)
                         Page.Sounds -> SoundsPage(style)
                         Page.Art -> ArtPage(style)
+                        Page.Widgets -> WidgetsPage(style)
                         Page.Achievements -> AchievementsPage(style)
                         Page.Report -> ReportPage(style, onPickRomFolder)
                     }
@@ -164,6 +166,7 @@ fun SystemScreen(onPickRomFolder: () -> Unit, requestedPage: String? = null, onP
                     Page.Theme -> ThemePage(style)
                     Page.Sounds -> SoundsPage(style)
                     Page.Art -> ArtPage(style)
+                    Page.Widgets -> WidgetsPage(style)
                     Page.Achievements -> AchievementsPage(style)
                     Page.Report -> ReportPage(style, onPickRomFolder)
                 }
@@ -349,7 +352,95 @@ private fun ArtPage(style: WiisStyle) {
         Text("2. libretro thumbnails: " + if (libretro) "on" else "off", style = style.body)
         Note("Free, no account. Matches No-Intro / Redump file names. Doesn't cover Switch or Steam.", style)
         ActionTile(if (libretro) "Turn off libretro" else "Turn on libretro", onClick = { graph.artLibretro = !libretro; refresh++ })
-        Note("More sources (ScreenScraper, SteamGridDB, IGDB…) need your account keys. They come next, once you pick which ones.", style)
+    }
+    SteamGridSection(style) { refresh++ }
+}
+
+/**
+ * Source 3: SteamGridDB, with your free API key. Saved only after a test search works; the key
+ * stays on this device (not in backups) and only goes to steamgriddb.com.
+ */
+@Composable
+private fun SteamGridSection(style: WiisStyle, onChanged: () -> Unit) {
+    val context = LocalContext.current
+    val graph = context.graph
+    var saved by remember { mutableStateOf(graph.steamGridKey) }
+    var key by rememberSaveable { mutableStateOf(saved.orEmpty()) }
+    var message by remember { mutableStateOf<String?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    val fieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = style.text, unfocusedTextColor = style.text,
+        focusedBorderColor = style.text, unfocusedBorderColor = style.textMuted,
+        focusedLabelColor = style.text, unfocusedLabelColor = style.textMuted, cursorColor = style.text,
+    )
+    Section("3. SteamGridDB: " + if (saved != null) "on" else "off (needs your key)", style) {
+        Note("Community art for every platform, including Switch and Steam games. Used when the sources above have nothing. Wii-S looks each game up by its title and takes its best-rated portrait cover, never NSFW or joke art.", style)
+        Note("Get a free key on steamgriddb.com: sign in, then Preferences → API. It stays on this device and is only sent to steamgriddb.com.", style)
+        OutlinedTextField(
+            key, { key = it }, label = { Text("SteamGridDB API key") }, singleLine = true, textStyle = style.body, colors = fieldColors,
+            visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ActionTile(if (busy) "Checking…" else "Save and test", emphasized = true, onClick = {
+                if (busy) return@ActionTile
+                val k = key.trim()
+                if (k.isEmpty()) { message = "Paste your API key first."; return@ActionTile }
+                busy = true
+                scope.launch {
+                    val result = withContext(Dispatchers.IO) { graph.steamGrid.test(k) }
+                    message = result.fold(
+                        onSuccess = {
+                            graph.steamGridKey = k
+                            saved = k
+                            onChanged()
+                            graph.art.prefetch(graph.currentGames(), force = true)
+                            "Connected. Fetching art for games that have none…"
+                        },
+                        onFailure = { "Couldn't connect: ${it.message}. Check the key and the Wi-Fi." },
+                    )
+                    busy = false
+                }
+            })
+            ActionTile("Get a key", onClick = {
+                runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://www.steamgriddb.com/profile/preferences/api".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            })
+            if (saved != null) ActionTile("Remove key", onClick = { graph.steamGridKey = null; saved = null; key = ""; message = "Removed. Art already fetched stays."; onChanged() })
+        }
+        message?.let { Text(it, style = style.body) }
+    }
+}
+
+/**
+ * Widgets for the page below Home: the folder your own HTML widgets are in, and how Android widgets
+ * get there.
+ */
+@Composable
+private fun WidgetsPage(style: WiisStyle) {
+    val context = LocalContext.current
+    val graph = context.graph
+    val folder by graph.widgetsFolderFlow.collectAsStateWithLifecycle()
+    val found by produceState<List<app.wiis.launcher.home.HtmlWidgetEntry>?>(null, folder) {
+        value = folder?.let { f -> withContext(Dispatchers.IO) { runCatching { app.wiis.launcher.home.WidgetFolder(context.contentResolver, f).widgets() }.getOrDefault(emptyList()) } }
+    }
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
+        uri ?: return@rememberLauncherForActivityResult
+        runCatching { context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION) }
+        graph.widgetsFolder = uri
+    }
+    Section("Your HTML widgets", style) {
+        Text("Folder: " + (folder?.lastPathSegment?.substringAfter(':') ?: "none"), style = style.body)
+        found?.let { list -> Note(if (list.isEmpty()) "No widgets in it yet." else "${list.size} widget${if (list.size == 1) "" else "s"}: " + list.joinToString { it.name }, style) }
+        Note("Each .html file in the folder is a widget, and so is each folder with an index.html (with its pictures, fonts and scripts beside it). Add one from the page below Home: Select → Add a tile here… → HTML widgets.", style)
+        Note("They run offline and on their own: no internet, no access to your files or other apps, and they can't open other pages. In a tile a widget is only to look at; A opens it full screen, where it gets the D-pad (arrow keys) and A (Enter), and B closes it. Make one in the Design Workbench, or write your own.", style)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            ActionTile(if (folder == null) "Choose widgets folder…" else "Change folder…", emphasized = folder == null, onClick = { pick.launch(null) })
+            if (folder != null) ActionTile("Remove folder", onClick = { graph.widgetsFolder = null })
+        }
+    }
+    Section("Android widgets", style) {
+        Note("Weather, music, calendar and other apps' widgets: Select → Add a tile here… → Android widgets. The first time, Android asks whether Wii-S may show widgets; a widget with its own setup shows that next.", style)
+        Note("Touch works on them as on any home screen; A presses the widget (or opens its app).", style)
     }
 }
 
@@ -366,6 +457,7 @@ private fun artSummary(s: app.wiis.emulator.art.ArtStatus): String = when {
 private fun providerLabel(id: String) = when (id) {
     "libretro" -> "libretro"
     "folder" -> "your folder"
+    "steamgriddb" -> "SteamGridDB"
     else -> id
 }
 
@@ -440,7 +532,7 @@ private fun buildReport(context: Context, g: AppGraph): String = buildString {
     appendLine("== Box art ==")
     appendLine(artSummary(g.art.status.value))
     g.art.status.value.lastError?.let { appendLine("Last problem: $it") }
-    appendLine("Sources: " + listOfNotNull(g.artFolder?.let { "your folder" }, "libretro".takeIf { g.artLibretro }).joinToString().ifEmpty { "none" } + if (g.artEnabled) "" else " (box art off)")
+    appendLine("Sources: " + listOfNotNull(g.artFolder?.let { "your folder" }, "libretro".takeIf { g.artLibretro }, "SteamGridDB".takeIf { g.steamGridKey != null }).joinToString().ifEmpty { "none" } + if (g.artEnabled) "" else " (box art off)")
     appendLine()
     append(g.diagnostics.report(g.diagnostics.run()))
     appendLine()
