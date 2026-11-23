@@ -1978,7 +1978,10 @@ internal fun Modifier.navSpot(
         }
         .onFocusChanged { if (it.isFocused) nav.focused(spot) }
         .focusProperties {
-            canFocus = nav.focusable(spot)
+            // Only ever off (a hidden row, the page that isn't showing): otherwise Compose decides, so
+            // in touch mode tiles stay unfocusable as usual. Forcing it on there made the launch walk
+            // in LaunchSmokeTest spin for minutes.
+            if (!nav.focusable(spot)) canFocus = false
             up = within?.invoke(FocusDirection.Up) ?: nav.next(spot, down = false)
             down = within?.invoke(FocusDirection.Down) ?: nav.next(spot, down = true)
             if (within != null) {
