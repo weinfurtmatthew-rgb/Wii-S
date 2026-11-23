@@ -103,6 +103,11 @@ data class LayoutTokens(
     val gridTileSize: Int = 132,
     /** A line under the recent row naming the focused game or system. */
     val focusCaption: Boolean = true,
+    /** The page below Home: a grid of tiles in sizes 1×1, 2×1 and 2×2, this many cells across and down. */
+    val boardColumns: Int = 6,
+    val boardRows: Int = 3,
+    /** Two dots at the right edge of Home saying which page shows (Home or the page below). */
+    val pageDots: Boolean = true,
 )
 
 @Immutable @Serializable
@@ -328,6 +333,10 @@ data class MotionTokens(
     /** Between tabs: "none", "fade" or "slide". */
     val tabTransition: String = "slide",
     val tabTransitionMs: Int = 220,
+    /** Down from Home's bottom row: Home slides up and the page below it slides in, in about this long. */
+    val pageSlideMs: Int = 380,
+    /** Hold A this long on a tile below Home to pick it up and start arranging. */
+    val holdMs: Int = 500,
     val reduceMotion: Boolean = false,
 )
 

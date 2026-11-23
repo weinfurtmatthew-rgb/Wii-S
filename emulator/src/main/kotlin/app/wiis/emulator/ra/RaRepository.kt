@@ -51,6 +51,7 @@ class RaRepository(
     private var matchesLoaded = false
     private val progress = mutableMapOf<Int, Pair<Long, RaGameProgress>>()
     private var completion: Pair<Long, List<RaCompletionEntry>>? = null
+    private var recent: Pair<Long, List<RaRecent>>? = null
 
     init { dir.mkdirs() }
 
@@ -78,6 +79,19 @@ class RaRepository(
         }.getOrElse { RaResult.Failed(describe(it)) }
     }
 
+    /**
+     * What the player unlocked in the last 30 days, newest first (cached for five minutes). Null
+     * when RetroAchievements isn't set up; a failure carries the message to show.
+     */
+    suspend fun recentUnlocks(): Result<List<RaRecent>>? = withContext(Dispatchers.IO) {
+        val creds = credentials() ?: return@withContext null
+        recent?.let { (at, r) -> if (System.currentTimeMillis() - at < FIVE_MINUTES) return@withContext Result.success(r) }
+        runCatching {
+            RaParse.recent(fetch(url("API_GetUserRecentAchievements.php", creds, "u" to creds.user, "m" to RECENT_MINUTES)))
+                .also { recent = System.currentTimeMillis() to it }
+        }.recoverCatching { throw IllegalStateException(describe(it)) }
+    }
+
     /** Checks a username and key; returns the profile on success. */
     suspend fun test(creds: RaCredentials): Result<RaProfile> = withContext(Dispatchers.IO) {
         runCatching { RaParse.profile(fetch(url("API_GetUserProfile.php", creds, "u" to creds.user))) }
@@ -87,6 +101,7 @@ class RaRepository(
     fun clearProgress() {
         progress.clear()
         completion = null
+        recent = null
     }
 
     // ---- matching ----
@@ -180,6 +195,8 @@ class RaRepository(
     companion object {
         private const val WEEK = 7L * 24 * 60 * 60 * 1000
         private const val FIVE_MINUTES = 5L * 60 * 1000
+        /** How far back the recent-achievements widget looks: 30 days. */
+        private const val RECENT_MINUTES = 30 * 24 * 60
         private const val MAX_ZIPPED = 64 * 1024 * 1024
         private const val API = "https://retroachievements.org/API/"
 

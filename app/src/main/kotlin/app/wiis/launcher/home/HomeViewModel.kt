@@ -58,12 +58,14 @@ data class EmulatorPicker(val game: Game, val options: List<EmulatorOption>)
 sealed interface HomeView {
     data object Home : HomeView
     data class InSystem(val systemId: String) : HomeView
-    data class InCollection(val id: String) : HomeView
+    /** [back]: the key focus returns to on B (the collection's card, or the tile below Home that opened it). */
+    data class InCollection(val id: String, val back: String? = null) : HomeView
 }
 
 /**
  * Hero layout: the element that should take focus. Keys: "hero", "sys:<id>", "pin:<uri>",
- * "grid:<uri>", "col:<id>", "nav:<section>", "dock:<slot>". [token] changes on every request.
+ * "grid:<uri>", "col:<id>", "nav:<section>", "dock:<slot>", and below Home "board:<tile id>" and
+ * "cell:<column>,<row>" (an empty cell while arranging). [token] changes on every request.
  */
 data class HeroFocus(val key: String, val token: Long)
 
@@ -95,6 +97,12 @@ data class HomeUiState(
     val collections: List<CollectionEntry> = emptyList(),
     /** The settings popup is open on this page ("theme", "sounds", "art", "ra", "report"); null: closed. */
     val settings: String? = null,
+    /** The whole library, A to Z (for choosing a game tile). */
+    val games: List<Game> = emptyList(),
+    /** Emulator apps' packages (an emulator's tile below Home opens it). */
+    val emulators: Set<String> = emptySet(),
+    /** The page below Home. */
+    val board: BoardUi = BoardUi(),
 )
 
 /** Unidirectional: the screen calls intents (functions); state flows back as one immutable value. */
@@ -108,6 +116,8 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     /** The series found in the library's titles (worked out when the library changes). Before init: collected there. */
     private var series: List<SeriesFinder.Series> = emptyList()
     private var layout: LayoutTokens = graph.themes.spec.value.layout
+    /** Below Home: where focus goes back to after a game started from a tile there. */
+    private var returnKey: String? = null
     private var scanning = false
     private var lastScanAt = 0L
     private var lastFocused: Pair<String, String>? = null
@@ -134,12 +144,18 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             graph.themes.spec.map { it.layout }.distinctUntilChanged().collect { tokens ->
                 layout = tokens
                 if (games.isNotEmpty()) local.update { buildHome(it.copy(shelves = buildShelves())) }
+                local.update { it.withBoard(graph.board.value) }
             }
         }
         viewModelScope.launch { graph.shared.openApps.collect { selectSection(Section.Apps) } }
         viewModelScope.launch { graph.pins.collect { pins -> local.update { it.copy(pinned = Pins.resolve(pins, games)) } } }
         viewModelScope.launch { graph.shared.openSystemPage.collect { page -> openSettings(page) } }
         viewModelScope.launch { graph.collections.collect { file -> local.update { it.copy(collections = CollectionsModel.resolve(file, series, games)).withCollectionView() } } }
+        local.update { it.copy(emulators = graph.emulatorPackageSet) }
+        viewModelScope.launch { graph.board.collect { file -> local.update { it.withBoard(file) } } }
+        viewModelScope.launch { graph.apps.apps.collect { if (it.isNotEmpty()) seedBoard() } }
+        refreshWeek()
+        refreshRecent()
     }
 
     // ---- Navigation -------------------------------------------------------------------------
@@ -153,7 +169,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
             Section.Collections -> s.collections.firstOrNull()?.let { HeroFocus(colKey(it.id), token()) }
             Section.Apps -> null
         }
-        s.copy(section = section, focusTarget = target ?: s.focusTarget, view = HomeView.Home, viewGames = emptyList(), heroFocus = heroTarget)
+        s.copy(section = section, focusTarget = target ?: s.focusTarget, view = HomeView.Home, viewGames = emptyList(), heroFocus = heroTarget, board = s.board.copy(edit = null))
     }
 
     fun cycleSection(delta: Int) {
@@ -166,7 +182,10 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     /** The settings popup, on [page] or the last one. */
     fun openSettings(page: String?) = local.update { it.copy(settings = page ?: it.settings ?: "theme") }
-    fun closeSettings() = local.update { it.copy(settings = null) }
+    fun closeSettings() {
+        local.update { it.copy(settings = null) }
+        refreshRecent()
+    }
     fun settingsPage(page: String) = local.update { if (it.settings == null) it else it.copy(settings = page) }
 
     fun focusGame(shelfId: String, game: Game) {
@@ -193,7 +212,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     fun closeView(): Boolean {
         val back = when (val view = local.value.view) {
             is HomeView.InSystem -> sysKey(view.systemId)
-            is HomeView.InCollection -> colKey(view.id)
+            is HomeView.InCollection -> view.back ?: colKey(view.id)
             HomeView.Home -> return false
         }
         local.update { it.copy(view = HomeView.Home, viewGames = emptyList(), heroFocus = HeroFocus(back, token())) }
@@ -202,11 +221,11 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
 
     // ---- Collections ----------------------------------------------------------------------------
 
-    /** A on a collection's card: its games, A to Z, focus on the first. */
-    fun openCollection(id: String) {
+    /** A on a collection's card (or its tile below Home, [back]): its games, A to Z, focus on the first. */
+    fun openCollection(id: String, back: String? = null) {
         val list = local.value.collections.firstOrNull { it.id == id }?.games.orEmpty()
         local.update { s ->
-            s.copy(view = HomeView.InCollection(id), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(gridKey(it), token()) })
+            s.copy(view = HomeView.InCollection(id, back), viewGames = list, heroFocus = list.firstOrNull()?.let { HeroFocus(gridKey(it), token()) })
         }
     }
 
@@ -332,6 +351,152 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         return FocusTarget(first.id, game.uri, token)
     }
 
+    // ---- The page below Home --------------------------------------------------------------------
+
+    private val boardCols get() = layout.boardColumns.coerceIn(2, 12)
+    private val boardRows get() = layout.boardRows.coerceIn(1, 6)
+
+    /** The saved tiles, laid out for the theme's grid, with the games they name. */
+    private fun HomeUiState.withBoard(file: BoardFile): HomeUiState {
+        val tiles = Board.normalize(file.tiles, boardCols, boardRows)
+        val wanted = tiles.filter { it.kind == Board.GAME }.map { it.ref }.toSet()
+        val byUri = if (wanted.isEmpty()) emptyMap() else games.filter { it.uri in wanted }.associateBy { it.uri }
+        val edit = board.edit?.takeIf { e -> e.carrying == null || tiles.any { it.id == e.carrying } }
+        return copy(board = board.copy(tiles = tiles, cols = boardCols, rows = boardRows, games = byUri, edit = edit))
+    }
+
+    /** A first start: the page gets a clock, the last game played, this week, a few shortcuts, collections and apps. */
+    private fun seedBoard() {
+        if (graph.board.value.seeded || games.isEmpty()) return
+        val apps = graph.apps.apps.value
+        if (apps.isEmpty()) return
+        val picked = BoardApps.pick(apps, graph.dock.value, graph.emulatorPackageSet, graph.context.packageName)
+        val file = Board.defaults(picked.map { it.key }, local.value.collections.map { it.id })
+        graph.editBoard { file.copy(tiles = Board.normalize(file.tiles, boardCols, boardRows)) }
+    }
+
+    private fun editBoard(change: (BoardFile) -> BoardFile?): Boolean {
+        val next = change(graph.board.value) ?: return false
+        graph.editBoard { next }
+        local.update { it.withBoard(graph.board.value) }
+        return true
+    }
+
+    /** Hold A on a tile ([sticky]: the edit mode, "+" in the empty cells) or Select → Move: the D-pad moves it now. */
+    fun boardPickUp(id: Int, sticky: Boolean) = local.update {
+        it.copy(board = it.board.copy(edit = BoardEdit(sticky = sticky || it.board.edit?.sticky == true, carrying = id)))
+    }
+
+    /** The carried tile one cell that way; false at the edge (nothing moved). */
+    fun boardStep(dx: Int, dy: Int): Boolean {
+        val id = local.value.board.edit?.carrying ?: return false
+        return editBoard { f -> Board.step(f.tiles, id, dx, dy, boardCols, boardRows)?.let { f.copy(tiles = it) } }
+    }
+
+    /** A or B while carrying: put it down. Moving one tile from the menu ends there; the edit mode stays. */
+    fun boardDrop() = local.update { s ->
+        val edit = s.board.edit ?: return@update s
+        val id = edit.carrying
+        s.copy(board = s.board.copy(edit = if (edit.sticky) edit.copy(carrying = null) else null), heroFocus = id?.let { HeroFocus(boardKey(it), token()) } ?: s.heroFocus)
+    }
+
+    /** B in the edit mode, or focus leaving the page: done arranging. */
+    fun boardEndEdit() = local.update { s ->
+        if (s.board.edit == null) s else s.copy(board = s.board.copy(edit = null))
+    }
+
+    /** Y while arranging, or Select → Size: the tile's next size that fits. */
+    fun boardResize(id: Int): Boolean {
+        val before = graph.board.value
+        editBoard { f -> f.copy(tiles = Board.resize(f.tiles, id, boardCols, boardRows)) }
+        return graph.board.value != before
+    }
+
+    /** Remove a tile: while arranging focus stays on its cell ("+"), otherwise it moves to the nearest tile. */
+    fun boardRemove(id: Int) {
+        val placed = Board.layout(local.value.board.tiles, boardCols, boardRows)
+        val gone = placed.firstOrNull { it.tile.id == id } ?: return
+        editBoard { f -> Board.remove(f, id, boardCols, boardRows) }
+        val s = local.value
+        val key = if (s.board.edit?.sticky == true) cellKey(gone.col, gone.row) else {
+            val rest = Board.layout(s.board.tiles, boardCols, boardRows)
+            rest.minByOrNull { kotlin.math.abs(it.col - gone.col) + 2 * kotlin.math.abs(it.row - gone.row) }?.let { boardKey(it.tile.id) }
+        }
+        local.update { it.copy(heroFocus = HeroFocus(key ?: KEY_HERO, token())) }
+    }
+
+    /** Add a tile in an empty cell [at] or before tile [before]; focus goes to it. False when the page is full. */
+    fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?): Boolean {
+        val id = graph.board.value.nextId
+        val added = editBoard { f -> Board.add(f, kind, ref, boardCols, boardRows, before = before, at = at) }
+        if (!added) {
+            showMessage("There's no room on this page. Remove a tile or make one smaller first.", error = true)
+            return false
+        }
+        local.update { it.copy(heroFocus = HeroFocus(boardKey(id), token())) }
+        return true
+    }
+
+    /** Y on the random game: another one. */
+    fun shuffleRandom() = local.update { s ->
+        val now = s.board.random
+        val next = if (games.size > 1) games.filter { it.uri != now?.uri }.randomOrNull() else games.firstOrNull()
+        s.copy(board = s.board.copy(random = next))
+    }
+
+    /** A on a shortcut tile: that Android settings page, or the emulator. */
+    fun openShortcut(ref: String) {
+        val context = graph.context
+        val intent = when (ref) {
+            "wifi" -> Intent(android.provider.Settings.ACTION_WIFI_SETTINGS)
+            "bluetooth" -> Intent(android.provider.Settings.ACTION_BLUETOOTH_SETTINGS)
+            "display" -> Intent(android.provider.Settings.ACTION_DISPLAY_SETTINGS)
+            "sound" -> Intent(android.provider.Settings.ACTION_SOUND_SETTINGS)
+            "settings" -> Intent(android.provider.Settings.ACTION_SETTINGS)
+            else -> ref.removePrefix("emu:").takeIf { ref.startsWith("emu:") }?.let { context.packageManager.getLaunchIntentForPackage(it) }
+        }
+        val ok = intent != null && runCatching { context.startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess
+        if (!ok) showMessage("Couldn't open that. It may not be on this device.", error = true)
+    }
+
+    /** What the bottom screen shows for a tile below Home. */
+    fun focusBoardTile(tile: BoardTile) {
+        val s = local.value
+        val f = when (tile.kind) {
+            Board.GAME -> s.board.games[tile.ref]?.let { Focus.OnGame(it) }
+            Board.RANDOM -> s.board.random?.let { Focus.OnGame(it) }
+            Board.LAST_PLAYED -> s.hero?.let { Focus.OnGame(it) }
+            Board.APP -> s.apps.firstOrNull { it.key == tile.ref }?.let { Focus.OnApp(it) }
+            Board.SHORTCUT -> tile.ref.removePrefix("emu:").takeIf { tile.ref.startsWith("emu:") }?.let { p -> s.apps.firstOrNull { it.component.packageName == p } }?.let { Focus.OnApp(it) }
+            Board.COLLECTION -> s.collections.firstOrNull { it.id == tile.ref }?.let { Focus.OnCollection(it.id, it.name, it.games) }
+            Board.WEEK, Board.ACHIEVEMENTS -> Focus.OnSystem(HomeModel.ALL, HomeModel.ALL_NAME, games.size)
+            else -> null
+        }
+        graph.shared.setFocus(f ?: Focus.None)
+    }
+
+    private fun refreshWeek() {
+        viewModelScope.launch {
+            val week = withContext(Dispatchers.IO) { runCatching { app.wiis.launcher.stats.Stats.week(graph.sessions.all(), System.currentTimeMillis()) }.getOrNull() }
+                ?: return@launch
+            local.update { it.copy(board = it.board.copy(week = week.days, today = week.todayIndex)) }
+        }
+    }
+
+    /** Recent achievements for their tile; only when the page has one, so nothing is asked of RetroAchievements otherwise. */
+    private fun refreshRecent() {
+        viewModelScope.launch {
+            if (graph.board.value.tiles.none { it.kind == Board.ACHIEVEMENTS } && graph.board.value.seeded) return@launch
+            val result = runCatching { graph.ra.recentUnlocks() }.getOrElse { Result.failure(it) }
+            val state = when {
+                result == null -> RecentUnlocks.NotSetUp
+                result.isSuccess -> RecentUnlocks.Ready(result.getOrThrow().take(3))
+                else -> RecentUnlocks.Failed(result.exceptionOrNull()?.message ?: "Couldn't load achievements.")
+            }
+            local.update { it.copy(board = it.board.copy(achievements = state)) }
+        }
+    }
+
     // ---- Library ----------------------------------------------------------------------------
 
     fun onFolderPicked(uri: Uri?) {
@@ -382,8 +547,12 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         val shelves = buildShelves()
         local.update { s ->
             val home = buildHome(s.copy(shelves = shelves, focusTarget = if (focusFirst) restoreTarget(shelves) else s.focusTarget))
-            if (focusFirst && home.section == Section.Games && home.view == HomeView.Home) home.copy(heroFocus = homeFocus(home)) else home
+            val withLibrary = home.copy(games = list.sortedBy { it.title.lowercase() }).withBoard(graph.board.value).let { b ->
+                if (b.board.random?.let { r -> list.any { it.uri == r.uri } } == true) b else b.copy(board = b.board.copy(random = list.randomOrNull()))
+            }
+            if (focusFirst && withLibrary.section == Section.Games && withLibrary.view == HomeView.Home) withLibrary.copy(heroFocus = homeFocus(withLibrary)) else withLibrary
         }
+        seedBoard()
         graph.art.refreshSummary(list)
         graph.art.prefetch(list)
     }
@@ -406,6 +575,12 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
     }
 
     // ---- Launching --------------------------------------------------------------------------
+
+    /** A game started from a tile below Home: focus comes back to that tile ([key]) afterwards. */
+    fun launchFrom(game: Game, key: String) {
+        returnKey = key
+        launchGame(game)
+    }
 
     fun launchGame(game: Game, choice: EmulatorChoice? = null) {
         local.update { it.copy(picker = null) }
@@ -454,10 +629,18 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
                         focusTarget = FocusTarget(shelfId, ended.game.uri, SystemClock.uptimeMillis()),
                     ),
                 )
-                // Hero layout: the game just played is now the Jump back in card; inside a system, stay on its tile.
+                // Hero layout: the game just played is now the Jump back in card; inside a system, stay on
+                // its tile; started from a tile below Home, back to that tile.
                 val inSystem = home.view is HomeView.InSystem && home.viewGames.any { g -> g.uri == ended.game.uri }
-                home.copy(heroFocus = HeroFocus(if (inSystem) gridKey(ended.game) else KEY_HERO, token()))
+                val back = returnKey?.takeIf { key -> home.board.tiles.any { boardKey(it.id) == key } }
+                home.copy(
+                    heroFocus = HeroFocus(back ?: if (inSystem) gridKey(ended.game) else KEY_HERO, token()),
+                    board = home.board.copy(random = games.randomOrNull() ?: home.board.random),
+                )
             }
+            returnKey = null
+            refreshWeek()
+            refreshRecent()
         }
         if (lastScanAt != 0L && SystemClock.elapsedRealtime() - lastScanAt > STALE_SCAN_MS) rescan(silent = true)
     }
@@ -487,5 +670,7 @@ class HomeViewModel(private val graph: AppGraph) : ViewModel() {
         fun navKey(section: Section) = "nav:${section.name}"
         fun dockKey(slot: Int) = "dock:$slot"
         fun colKey(id: String) = "col:$id"
+        fun boardKey(id: Int) = "board:$id"
+        fun cellKey(col: Int, row: Int) = "cell:$col,$row"
     }
 }

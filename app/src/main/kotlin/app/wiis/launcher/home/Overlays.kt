@@ -120,9 +120,20 @@ fun PopupTitle(title: String, subtitle: String) {
     }
 }
 
-/** A row in a popup list: the light highlight when focused, like the dock; the button's hint on the right. */
+/**
+ * A row in a popup list: the light highlight when focused, like the dock; the button's hint on the
+ * right, or a muted [detail]; an icon before the label when [leading] is given.
+ */
 @Composable
-fun MenuRow(label: String, button: String?, modifier: Modifier = Modifier, selected: Boolean = false, onClick: () -> Unit) {
+fun MenuRow(
+    label: String,
+    button: String?,
+    modifier: Modifier = Modifier,
+    selected: Boolean = false,
+    detail: String? = null,
+    leading: (@Composable () -> Unit)? = null,
+    onClick: () -> Unit,
+) {
     val style = LocalWiis.current
     val shape = RoundedCornerShape(14.dp)
     WiisTile(
@@ -136,6 +147,7 @@ fun MenuRow(label: String, button: String?, modifier: Modifier = Modifier, selec
         modifier = modifier.fillMaxWidth().height(44.dp),
     ) {
         Row(Modifier.fillMaxSize().padding(horizontal = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            if (leading != null) { leading(); Box(Modifier.width(10.dp)) }
             Text(
                 label,
                 style = TextStyle(fontFamily = style.fonts.body, fontWeight = if (selected) FontWeight.Bold else FontWeight.SemiBold, fontSize = 15.sp, color = style.glassText),
@@ -143,6 +155,7 @@ fun MenuRow(label: String, button: String?, modifier: Modifier = Modifier, selec
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (detail != null) Text(detail, style = style.label.copy(color = style.glassTextMuted), maxLines = 1, modifier = Modifier.padding(start = 10.dp))
             if (button != null) HintBadgeOnly(button)
         }
     }

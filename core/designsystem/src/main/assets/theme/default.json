@@ -14,7 +14,10 @@
     "systemTileHeight": 96,
     "recentTileSize": 96,
     "gridTileSize": 132,
-    "focusCaption": true
+    "focusCaption": true,
+    "boardColumns": 6,
+    "boardRows": 3,
+    "pageDots": true
   },
   "colors": {
     "backgroundStyle": "dots",
@@ -204,6 +207,8 @@
     "idleBobPeriodMs": 1800,
     "tabTransition": "slide",
     "tabTransitionMs": 220,
+    "pageSlideMs": 380,
+    "holdMs": 500,
     "reduceMotion": false
   },
   "header": {

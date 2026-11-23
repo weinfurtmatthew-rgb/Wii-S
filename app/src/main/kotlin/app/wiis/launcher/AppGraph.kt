@@ -19,6 +19,7 @@ import app.wiis.emulator.art.LocalArtFolder
 import app.wiis.emulator.ra.RaCredentials
 import app.wiis.emulator.ra.RaRepository
 import app.wiis.launcher.home.AppRef
+import app.wiis.launcher.home.BoardFile
 import app.wiis.launcher.home.CollectionsFile
 import app.wiis.launcher.home.DockApps
 import app.wiis.launcher.home.Pins
@@ -235,6 +236,26 @@ class AppGraph(val context: Application) {
         _collections.value = next
         runCatching { collectionsFile.writeText(collectionsJson.encodeToString(CollectionsFile.serializer(), next)) }
     }
+
+    // ---- The page below Home (device-level: your tiles and where they are) ----
+
+    private val boardFile = File(context.filesDir, "board.json")
+    private val _board = MutableStateFlow(
+        runCatching { collectionsJson.decodeFromString(BoardFile.serializer(), boardFile.readText()) }.getOrDefault(BoardFile()),
+    )
+
+    /** The tiles below Home, in their saved order (see Board). Empty and not yet seeded on a first start. */
+    val board: StateFlow<BoardFile> = _board.asStateFlow()
+
+    fun editBoard(change: (BoardFile) -> BoardFile) {
+        val next = change(_board.value)
+        if (next == _board.value) return
+        _board.value = next
+        runCatching { boardFile.writeText(collectionsJson.encodeToString(BoardFile.serializer(), next)) }
+    }
+
+    /** Emulator apps (their packages), which Apps and the dock leave to the emulator picker. */
+    val emulatorPackageSet: Set<String> get() = emulatorPackages
 
     private fun defaultBrowser(): String? = runCatching {
         context.packageManager

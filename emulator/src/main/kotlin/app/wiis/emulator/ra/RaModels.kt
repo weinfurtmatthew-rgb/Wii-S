@@ -84,6 +84,23 @@ data class RaCompletionEntry(
 
 data class RaProfile(val user: String, val totalPoints: Int)
 
+/** An achievement the player unlocked lately (API_GetUserRecentAchievements), newest first. */
+data class RaRecent(
+    val achievementId: Int,
+    val title: String,
+    val description: String,
+    val points: Int,
+    val badgeName: String,
+    val gameId: Int,
+    val gameTitle: String,
+    val consoleName: String,
+    /** When it was unlocked, as RetroAchievements gives it ("2026-11-20 18:04:11", UTC). */
+    val date: String,
+    val hardcore: Boolean,
+) {
+    val badgeUrl: String get() = "$MEDIA/Badge/$badgeName.png"
+}
+
 const val MEDIA = "https://media.retroachievements.org"
 
 object RaParse {
@@ -151,6 +168,26 @@ object RaParse {
                 highestAwardKind = o.str("HighestAwardKind")?.takeIf { it.isNotBlank() },
             )
         }
+    }
+
+    /** Recent unlocks, newest first; an empty answer (`[]` or `{}`) is no unlocks. */
+    fun recent(text: String): List<RaRecent> {
+        val list = element(text) as? JsonArray ?: return emptyList()
+        return list.mapNotNull { e ->
+            val o = e as? JsonObject ?: return@mapNotNull null
+            RaRecent(
+                achievementId = o.int("AchievementID") ?: return@mapNotNull null,
+                title = o.str("Title") ?: "",
+                description = o.str("Description") ?: "",
+                points = o.int("Points") ?: 0,
+                badgeName = o.str("BadgeName") ?: o.str("BadgeURL")?.substringAfterLast('/')?.removeSuffix(".png") ?: "",
+                gameId = o.int("GameID") ?: 0,
+                gameTitle = o.str("GameTitle") ?: "",
+                consoleName = o.str("ConsoleName") ?: "",
+                date = o.str("Date") ?: "",
+                hardcore = (o.int("HardcoreMode") ?: 0) != 0,
+            )
+        }.sortedByDescending { it.date }
     }
 
     fun profile(text: String): RaProfile {

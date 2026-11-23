@@ -171,3 +171,34 @@ fun ConsoleGlyph(systemId: String, size: Dp, color: Color, modifier: Modifier = 
     }
 }
 
+
+/**
+ * Line icons for the tiles below Home (original drawings on the 24-unit grid, the same path data
+ * as tileIcon() in design/workbench.html): "wifi", "bluetooth", "display", "sound", "settings",
+ * "clock", "week", "trophy", "dice", "play", "plus".
+ */
+val TILE_ICON_PATHS: Map<String, String> = mapOf(
+    "wifi" to "M3.2 9.2a12.5 12.5 0 0 1 17.6 0M6.3 12.4a8 8 0 0 1 11.4 0M9.4 15.6a3.6 3.6 0 0 1 5.2 0M12 19.2h.01",
+    "bluetooth" to "M7 7.5l10 9-5 4.5V3l5 4.5-10 9",
+    "display" to "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6",
+    "sound" to "M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.4a8 8 0 0 1 0 11.2",
+    "settings" to "M4 7h8.5M16.5 7H20M4 17h3.5M11.5 17H20M14.5 5v4M9.5 15v4",
+    "clock" to "M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17M12 7.5V12l3 2",
+    "week" to "M5.5 19.5v-5M10 19.5v-9M14.5 19.5v-7M19 19.5V6",
+    "trophy" to "M8 4.5h8v5a4 4 0 0 1-8 0zM8 6.5H5.5a2.5 2.5 0 0 0 2.6 4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 4M12 13.5v3.5M8.5 19.5h7",
+    "dice" to "M8 4.5h8a3.5 3.5 0 0 1 3.5 3.5v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16V8A3.5 3.5 0 0 1 8 4.5zM9 9h.01M12 12h.01M15 15h.01",
+    "play" to "M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.6-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z",
+    "plus" to "M12 6v12M6 12h12",
+)
+
+@Composable
+fun TileIcon(id: String, size: Dp, color: Color, modifier: Modifier = Modifier, strokeUnits: Float = 1.8f) {
+    val d = TILE_ICON_PATHS[id] ?: TILE_ICON_PATHS.getValue("settings")
+    val path = androidx.compose.runtime.remember(d) { PathParser().parsePathString(d).toPath() }
+    Canvas(modifier.size(size)) {
+        val u = this.size.minDimension / 24f
+        val p = Path().apply { addPath(path) }
+        p.transform(androidx.compose.ui.graphics.Matrix().apply { scale(u, u) })
+        drawPath(p, color, style = Stroke(width = strokeUnits * u, cap = StrokeCap.Round, join = StrokeJoin.Round))
+    }
+}

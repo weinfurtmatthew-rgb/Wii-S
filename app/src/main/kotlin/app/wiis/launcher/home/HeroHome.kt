@@ -68,6 +68,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.layout.findRootCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -207,6 +212,20 @@ interface HeroActions {
     fun quietMoves()
     fun pickFolder()
     fun rescan()
+
+    // Below Home. Defaults keep the screenshot tests' stubs short.
+    fun launchFrom(game: Game, key: String) = launchGame(game)
+    fun openCollectionFrom(id: String, key: String) = openCollection(id)
+    fun focusBoardTile(tile: BoardTile) = Unit
+    fun openShortcut(ref: String) = Unit
+    fun shuffleRandom() = Unit
+    fun boardPickUp(id: Int, sticky: Boolean) = Unit
+    fun boardStep(dx: Int, dy: Int): Boolean = false
+    fun boardDrop() = Unit
+    fun boardEndEdit() = Unit
+    fun boardResize(id: Int): Boolean = false
+    fun boardRemove(id: Int) = Unit
+    fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?): Boolean = false
 }
 
 @Composable
@@ -244,6 +263,18 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
             override fun quietMoves() = graph.sounds.quietMoves()
             override fun pickFolder() = onPickFolder()
             override fun rescan() = vm.rescan()
+            override fun launchFrom(game: Game, key: String) = vm.launchFrom(game, key)
+            override fun openCollectionFrom(id: String, key: String) = vm.openCollection(id, back = key)
+            override fun focusBoardTile(tile: BoardTile) = vm.focusBoardTile(tile)
+            override fun openShortcut(ref: String) = vm.openShortcut(ref)
+            override fun shuffleRandom() = vm.shuffleRandom()
+            override fun boardPickUp(id: Int, sticky: Boolean) = vm.boardPickUp(id, sticky)
+            override fun boardStep(dx: Int, dy: Int) = vm.boardStep(dx, dy)
+            override fun boardDrop() = vm.boardDrop()
+            override fun boardEndEdit() = vm.boardEndEdit()
+            override fun boardResize(id: Int) = vm.boardResize(id)
+            override fun boardRemove(id: Int) = vm.boardRemove(id)
+            override fun boardAdd(kind: String, ref: String, before: Int?, at: Pair<Int, Int>?) = vm.boardAdd(kind, ref, before, at)
         }
     }
     HeroHomeScreen(state, status, actions) { page, height -> SettingsPanel(page, vm::settingsPage, onPickRomFolder = onPickFolder, height = height) }
@@ -253,7 +284,7 @@ fun HeroHomeRoute(vm: HomeViewModel, onPickFolder: () -> Unit) {
 }
 
 /** What has focus, as far as the caption and the background care. */
-private sealed interface Focused {
+internal sealed interface Focused {
     data object None : Focused
     data class Hero(val game: Game) : Focused
     data class System(val entry: SystemEntry) : Focused
@@ -263,6 +294,10 @@ private sealed interface Focused {
     data class DockApp(val app: AppEntry) : Focused
     data class AppTile(val app: AppEntry) : Focused
     data class Collection(val entry: CollectionEntry) : Focused
+    /** A tile below Home, with what it shows. */
+    data class Tile(val tile: BoardTile, val game: Game? = null, val app: AppEntry? = null, val collection: CollectionEntry? = null, val title: String = "") : Focused
+    /** An empty cell below Home while arranging ("+"). */
+    data class Cell(val col: Int, val row: Int) : Focused
     data object Other : Focused
 }
 
@@ -286,14 +321,18 @@ fun HeroHomeScreen(
     var menu by remember { mutableStateOf<Focused?>(null) }
     var picking by remember { mutableStateOf<Game?>(null) }
     var naming by remember { mutableStateOf<Naming?>(null) }
-    val popup = menu != null || picking != null || naming != null || state.settings != null
+    var adding by remember { mutableStateOf<AddTarget?>(null) }
+    val popup = menu != null || picking != null || naming != null || adding != null || state.settings != null
     val content = remember { FocusRequester() }
-    // Focus goes back where it was when the last popup closes.
+    var contentFocused by remember { mutableStateOf(false) }
+    // Focus goes back where it was when the last popup closes, unless something took it already
+    // (a tile just added, the neighbour of one just removed).
     var hadPopup by remember { mutableStateOf(false) }
     LaunchedEffect(popup) {
         if (popup) { hadPopup = true; return@LaunchedEffect }
         if (!hadPopup) return@LaunchedEffect
         withFrameNanos { }
+        if (contentFocused) return@LaunchedEffect
         if (!content.restoreFocusedChild()) runCatching { content.requestFocus() }
     }
     fun openPopup(open: () -> Unit) {
@@ -315,6 +354,11 @@ fun HeroHomeScreen(
             is Focused.DockApp -> { subject = null; actions.focusApp(f.app) }
             is Focused.AppTile -> { subject = null; actions.focusApp(f.app) }
             is Focused.Collection -> { subject = f.entry.games.firstOrNull()?.let { BgSubject.OfGame(it) }; actions.focusCollection(f.entry) }
+            is Focused.Tile -> {
+                subject = (f.game ?: f.collection?.games?.firstOrNull())?.let { BgSubject.OfGame(it) }
+                actions.focusBoardTile(f.tile)
+            }
+            is Focused.Cell -> { subject = null; actions.focusBoardTile(BoardTile(0, Board.GAP)) }
             else -> Unit
         }
     }
@@ -332,6 +376,13 @@ fun HeroHomeScreen(
     val topPad = (pad * 0.6f).roundToInt()
     val presses = remember { ShoulderPresses() }
     val nav = remember { VerticalNav() }
+    val editing = state.board.edit
+    SideEffect {
+        // The element the view model names may take focus on the page that isn't showing.
+        nav.targetKey = state.heroFocus?.key
+        // Arranging ends when focus leaves the page below Home (to Home or the dock).
+        nav.onFocus = { spot -> if (spot.page != 1 && editing != null) actions.boardEndEdit() }
+    }
 
     CompositionLocalProvider(LocalVerticalNav provides nav) {
     Box(
@@ -343,12 +394,15 @@ fun HeroHomeScreen(
                 if (popup) {
                     // In a popup: Start toggles the settings, Select closes the menu; the rest stays inside.
                     return@onPreviewKeyEvent when (e.key) {
-                        Key.ButtonStart -> { feedback.emit(UiEvent.Tab); menu = null; picking = null; naming = null; actions.onStart(); true }
+                        Key.ButtonStart -> { feedback.emit(UiEvent.Tab); menu = null; picking = null; naming = null; adding = null; actions.onStart(); true }
                         Key.ButtonSelect -> { if (menu != null) { feedback.emit(UiEvent.Back); menu = null }; true }
                         Key.ButtonL1, Key.ButtonR1, Key.ButtonX -> true
                         else -> false
                     }
                 }
+                // While a tile is carried, the page below Home has the buttons; Select and X wait.
+                if (editing?.carrying != null && (e.key == Key.ButtonSelect || e.key == Key.ButtonX)) return@onPreviewKeyEvent true
+                if (editing != null && e.key in listOf(Key.ButtonL1, Key.ButtonR1, Key.ButtonStart)) actions.boardEndEdit()
                 when (e.key) {
                     Key.ButtonL1 -> { presses.l1++; feedback.emit(UiEvent.Tab); actions.cycleSection(-1); true }
                     Key.ButtonR1 -> { presses.r1++; feedback.emit(UiEvent.Tab); actions.cycleSection(+1); true }
@@ -362,10 +416,10 @@ fun HeroHomeScreen(
                         }
                         true
                     }
-                    // X pins the highlighted game to the bottom row, or unpins it.
+                    // X pins the highlighted game to the bottom row, or unpins it (not while arranging).
                     Key.ButtonX -> {
                         val game = gameOf(focused)
-                        if (game == null || state.section != Section.Games) false else {
+                        if (editing != null) true else if (game == null || state.section != Section.Games) false else {
                             feedback.emit(if (state.isPinned(game)) UiEvent.Back else UiEvent.Select)
                             actions.togglePin(game, fromRow = focused is Focused.Pinned)
                             true
@@ -387,6 +441,7 @@ fun HeroHomeScreen(
                 .safeDrawingPadding()
                 .padding(start = pad.dp, end = pad.dp, top = topPad.dp, bottom = (if (dockNav) 10 else topPad).dp)
                 .focusRequester(content)
+                .onFocusChanged { contentFocused = it.hasFocus }
                 .focusGroup(),
         ) {
             HeroHeader(
@@ -399,7 +454,12 @@ fun HeroHomeScreen(
                 nameplate = if (nameplate) ({ Nameplate(info, focused, it) }) else null,
             )
             Spacer(Modifier.height((spec.spacing.headerGap * 0.75f).roundToInt().dp))
-            HeroBody(state, actions, onFocused, Modifier.weight(1f).fillMaxWidth())
+            HeroBody(
+                state, actions, onFocused,
+                onAdd = { target -> openPopup { adding = target } },
+                onSettings = { page -> openPopup { actions.openSettings(page) } },
+                modifier = Modifier.weight(1f).fillMaxWidth(),
+            )
             state.message?.let { text ->
                 Text(
                     text,
@@ -433,6 +493,8 @@ fun HeroHomeScreen(
                     pick = { g -> menu = null; picking = g },
                     name = { n -> menu = null; naming = n },
                     pin = { g -> feedback.emit(if (state.isPinned(g)) UiEvent.Back else UiEvent.Select); actions.togglePin(g, fromRow = target is Focused.Pinned) },
+                    add = { t -> menu = null; adding = t },
+                    error = { feedback.emit(UiEvent.Error) },
                 ),
                 onDismiss = { feedback.emit(UiEvent.Back); menu = null },
             )
@@ -448,6 +510,13 @@ fun HeroHomeScreen(
         }
         naming?.let { n ->
             NameEntry(n.title, n.initial, onSave = { name -> feedback.emit(UiEvent.Select); n.save(name); naming = null }, onDismiss = { feedback.emit(UiEvent.Back); naming = null })
+        }
+        adding?.let { target ->
+            AddTilePicker(
+                state,
+                onPick = { kind, ref -> feedback.emit(UiEvent.Select); adding = null; actions.boardAdd(kind, ref, target.before, target.at) },
+                onDismiss = { feedback.emit(UiEvent.Back); adding = null },
+            )
         }
         state.settings?.let { page ->
             BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -474,6 +543,8 @@ private fun menuTitle(f: Focused, state: HomeUiState): Pair<String, String> {
         is Focused.Collection -> f.entry.name to (gamesCount(f.entry.games.size) + if (f.entry.suggested) " · suggested" else "")
         is Focused.DockApp -> f.app.label to "App in the dock"
         is Focused.AppTile -> f.app.label to "App"
+        is Focused.Tile -> f.title.ifEmpty { tileKindName(f.tile) } to "Tile below Home · ${sizeLabel(f.tile.size)}"
+        is Focused.Cell -> "Empty space" to "Below Home"
         else -> "Wii-S" to ""
     }
 }
@@ -487,15 +558,19 @@ private fun menuFor(
     pick: (Game) -> Unit,
     name: (Naming) -> Unit,
     pin: (Game) -> Unit,
+    add: (AddTarget) -> Unit,
+    error: () -> Unit,
 ): List<MenuEntry> {
     val game = gameOf(f)
+    val random = f is Focused.Tile && f.tile.kind == Board.RANDOM
     val inCollection = (state.view as? HomeView.InCollection)?.let { v -> state.collections.firstOrNull { it.id == v.id } }
     val items = buildList {
         if (game != null) {
             add(MenuEntry(if (state.isPinned(game)) "Unpin from Home" else "Pin to Home", "X") { close(); pin(game) })
             add(MenuEntry("Add to collection…") { pick(game) })
             if (inCollection != null && f is Focused.InGrid) add(MenuEntry("Remove from ${inCollection.name}") { close(); actions.removeFromCollection(inCollection.id, game) })
-            add(MenuEntry("Emulator…", "Y") { close(); actions.openPicker(game) })
+            add(MenuEntry("Emulator…", if (random) null else "Y") { close(); actions.openPicker(game) })
+            if (random) add(MenuEntry("Another game", "Y") { actions.shuffleRandom() })
         }
         when (f) {
             is Focused.System -> add(MenuEntry("Open", "A") { close(); actions.openSystem(f.entry.id) })
@@ -512,6 +587,23 @@ private fun menuFor(
                 if (slot >= 0) add(MenuEntry("Change app…", "Y") { close(); actions.openDockPicker(slot) })
             }
             is Focused.AppTile -> add(MenuEntry("Open", "A") { close(); actions.launchApp(f.app) })
+            is Focused.Tile -> {
+                // The tile as it is now (the size changes while the menu is open).
+                val t = state.board.tiles.firstOrNull { it.id == f.tile.id && !Board.isGap(it) } ?: f.tile
+                when (t.kind) {
+                    Board.APP -> f.app?.let { a -> add(MenuEntry("Open", "A") { close(); actions.launchApp(a) }) }
+                    Board.COLLECTION -> f.collection?.let { c -> add(MenuEntry("Open", "A") { close(); actions.openCollectionFrom(c.id, HomeViewModel.boardKey(t.id)) }) }
+                    Board.SHORTCUT -> add(MenuEntry("Open", "A") { close(); actions.openShortcut(t.ref) })
+                    Board.ACHIEVEMENTS -> add(MenuEntry("RetroAchievements settings", if (state.board.achievements is RecentUnlocks.NotSetUp) "A" else null) { close(); actions.openSettings("ra") })
+                }
+                add(MenuEntry("Move", lineAbove = isNotEmpty()) { close(); actions.boardPickUp(t.id, sticky = false) })
+                if (Board.sizesFor(t.kind).size > 1 || t.size !in Board.sizesFor(t.kind)) {
+                    add(MenuEntry("Size: ${sizeLabel(t.size)}") { if (!actions.boardResize(t.id)) error() })
+                }
+                add(MenuEntry("Remove") { close(); actions.boardRemove(t.id) })
+                add(MenuEntry("Add a tile here…") { add(AddTarget(before = t.id)) })
+            }
+            is Focused.Cell -> add(MenuEntry("Add a tile here…", "A") { add(AddTarget(at = f.col to f.row)) })
             else -> Unit
         }
     }
@@ -731,8 +823,68 @@ private fun captionFor(f: Focused, state: HomeUiState, style: WiisStyle): Captio
             "Collection", f.entry.name, gamesCount(f.entry.games.size) + if (f.entry.suggested) " · suggested" else "",
             style.accent, listOf("A" to "Open", "Select" to "Menu"),
         )
+        is Focused.Tile -> tileCaption(f, state, style)
+        is Focused.Cell -> CaptionInfo(
+            "Below Home", if (f.col < 0) "This page is empty" else "Empty space", "", style.accent,
+            if (state.board.edit?.sticky == true) listOf("A" to "Add", "B" to "Done") else listOf("A" to "Add"),
+        )
         Focused.Other, Focused.None -> CaptionInfo("", "", "", style.accent, listOf("A" to "Select", "B" to "Home"))
     }
+}
+
+/** A tile below Home: what it is and what the buttons do (while arranging, how to arrange). */
+private fun tileCaption(f: Focused.Tile, state: HomeUiState, style: WiisStyle): CaptionInfo {
+    val t = f.tile
+    val edit = state.board.edit
+    val color = f.game?.let { style.systemColor(it.systemId) } ?: style.accent
+    val meta = when {
+        f.game != null -> state.systems.firstOrNull { it.id == f.game.systemId }?.name ?: f.game.systemId
+        f.collection != null -> gamesCount(f.collection.games.size)
+        t.kind == Board.WEEK -> state.board.week.sum().let { if (it > 0) formatPlaytime(it) else "Nothing yet" }
+        t.kind == Board.ACHIEVEMENTS -> when (val a = state.board.achievements) {
+            is RecentUnlocks.Ready -> if (a.items.isEmpty()) "None lately" else "${a.items.size} lately"
+            RecentUnlocks.NotSetUp -> "Not signed in"
+            else -> ""
+        }
+        else -> ""
+    }
+    val hints = when {
+        edit?.carrying == t.id -> listOf("D-pad" to "Move", "Y" to "Size", "A" to "Drop")
+        edit?.sticky == true -> listOf("A" to "Pick up", "Y" to "Size", "B" to "Done")
+        else -> buildList {
+            when (t.kind) {
+                Board.GAME, Board.LAST_PLAYED -> if (f.game != null) { add("A" to "Play"); add("Y" to "Emulator"); add("X" to if (state.isPinned(f.game)) "Unpin" else "Pin") }
+                Board.RANDOM -> if (f.game != null) { add("A" to "Play"); add("Y" to "Another") }
+                Board.APP, Board.COLLECTION, Board.SHORTCUT -> if (f.app != null || f.collection != null || t.kind == Board.SHORTCUT) add("A" to "Open")
+                Board.ACHIEVEMENTS -> if (state.board.achievements is RecentUnlocks.NotSetUp) add("A" to "Set up")
+            }
+            add("Hold A" to "Arrange")
+            add("Select" to "Menu")
+        }
+    }
+    // The nameplate shows the meta, else the label: a widget's label isn't its own name again.
+    val label = if (t.kind in Board.WIDGETS && t.kind != Board.LAST_PLAYED && t.kind != Board.RANDOM) "Widget" else tileKindName(t)
+    return CaptionInfo(label, f.title.ifEmpty { tileKindName(t) }, meta, color, hints)
+}
+
+/** What a tile below Home is, in a word or two. */
+internal fun tileKindName(t: BoardTile): String = when (t.kind) {
+    Board.APP -> "App"
+    Board.GAME -> "Game"
+    Board.COLLECTION -> "Collection"
+    Board.SHORTCUT -> if (t.ref.startsWith("emu:")) "Emulator" else "Shortcut"
+    Board.CLOCK -> "Clock"
+    Board.LAST_PLAYED -> "Last played"
+    Board.WEEK -> "This week"
+    Board.ACHIEVEMENTS -> "Recent achievements"
+    Board.RANDOM -> "Random game"
+    else -> "Tile"
+}
+
+internal fun sizeLabel(size: String) = when (size) {
+    "2x1" -> "2 × 1"
+    "2x2" -> "2 × 2"
+    else -> "1 × 1"
 }
 
 // ---- Body -----------------------------------------------------------------------------------
@@ -742,6 +894,8 @@ private fun HeroBody(
     state: HomeUiState,
     actions: HeroActions,
     onFocused: (Focused) -> Unit,
+    onAdd: (AddTarget) -> Unit,
+    onSettings: (String) -> Unit,
     modifier: Modifier,
 ) {
     val motion = LocalWiis.current.spec.motion
@@ -769,7 +923,9 @@ private fun HeroBody(
         when (key.section) {
             Section.Games -> when (val view = key.view) {
                 is HomeView.InSystem -> SystemGames(view.systemId, state, actions, onFocused)
-                else -> GamesHome(state, actions, onFocused)
+                // A collection opened from its tile below Home.
+                is HomeView.InCollection -> CollectionGames(view.id, state, actions, onFocused)
+                else -> GamesHome(state, actions, onFocused, onAdd, onSettings)
             }
             Section.Apps -> GlassApps(state.apps, actions, onFocused)
             Section.Collections -> when (val view = key.view) {
@@ -781,7 +937,7 @@ private fun HeroBody(
 }
 
 @Composable
-private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit) {
+private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focused) -> Unit, onAdd: (AddTarget) -> Unit, onSettings: (String) -> Unit) {
     val other = Modifier.onFocusEvent { if (it.hasFocus) onFocused(Focused.Other) }
     when (val lib = state.library) {
         LibraryStatus.NoFolder -> Box(other) { CenterAction("Pick the folder that holds your ROMs.", "Choose ROM folder", actions::pickFolder) }
@@ -793,14 +949,86 @@ private fun GamesHome(state: HomeUiState, actions: HeroActions, onFocused: (Focu
                     CenterAction("No games found. The System screen lists the files that were skipped and why.", "Choose another folder", actions::pickFolder)
                 }
             } else {
-                HomePage(hero, state, actions, onFocused)
+                val target = state.heroFocus?.key.orEmpty()
+                TwoPages(
+                    startBelow = target.startsWith("board:") || target.startsWith("cell:"),
+                    home = { HomePage(hero, state, actions, onFocused) },
+                    below = { BoardPage(state, actions, onFocused, onAdd, onSettings) },
+                )
             }
         }
     }
 }
 
+/** Between Home and the page below while they slide: never seen at rest. */
+private val PAGE_GAP = 32.dp
+
+/**
+ * Home and the page below it, one whole page each. Down from Home's bottom row slides Home up and
+ * the page below in; Up from its top row slides them back. The page that isn't showing isn't
+ * drawn; while they slide, nothing is drawn past the body and the focus room around it. Two dots
+ * at the right edge say which page shows.
+ */
+@Composable
+private fun TwoPages(startBelow: Boolean, home: @Composable () -> Unit, below: @Composable () -> Unit) {
+    val nav = LocalVerticalNav.current
+    val style = LocalWiis.current
+    val spec = style.spec
+    val ms = if (spec.motion.reduceMotion) 0 else spec.motion.pageSlideMs.coerceIn(0, 2_000)
+    val pages = remember { PageState(if (startBelow) 1 else 0) }
+    DisposableEffect(nav, pages) {
+        nav?.pages = pages
+        onDispose { if (nav?.pages === pages) nav.pages = null }
+    }
+    val slide = remember { Animatable(pages.page.toFloat()) }
+    LaunchedEffect(pages.page) {
+        val to = pages.page.toFloat()
+        if (ms == 0) slide.snapTo(to) else slide.animateTo(to, smooth(ms))
+    }
+    val density = LocalDensity.current
+    val gapPx = with(density) { PAGE_GAP.roundToPx() }
+    val sidePx = with(density) { spec.spacing.screenPadding.dp.toPx() }
+    // While sliding, a little room above and below for the focused tile, but clear of the header and the dock.
+    val roomPx = with(density) { 8.dp.toPx() }
+    Box(Modifier.fillMaxSize()) {
+        Layout(
+            content = {
+                Box(Modifier.graphicsLayer { alpha = if (slide.value < 0.999f) 1f else 0f }) { home() }
+                Box(Modifier.graphicsLayer { alpha = if (slide.value > 0.001f) 1f else 0f }) { below() }
+            },
+            modifier = Modifier.fillMaxSize().drawWithContent {
+                if (slide.isRunning) clipRect(-sidePx, -roomPx, size.width + sidePx, size.height + roomPx) { this@drawWithContent.drawContent() } else drawContent()
+            },
+        ) { measurables, constraints ->
+            val w = constraints.maxWidth
+            val h = constraints.maxHeight
+            val fixed = Constraints.fixed(w, h)
+            val a = measurables[0].measure(fixed)
+            val b = measurables[1].measure(fixed)
+            layout(w, h) {
+                val step = h + gapPx
+                val off = (slide.value * step).roundToInt()
+                a.place(0, -off)
+                b.place(0, step - off)
+            }
+        }
+        if (spec.layout.pageDots) PageDots(slide.value, Modifier.align(Alignment.CenterEnd).offset(x = ((spec.spacing.screenPadding + 6) / 2f).dp))
+    }
+}
+
+/** Which page shows, as two dots on top of each other; the dot fills as its page slides in. */
+@Composable
+private fun PageDots(progress: Float, modifier: Modifier) {
+    val color = LocalWiis.current.text
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        listOf(1f - progress, progress).forEach { on ->
+            Box(Modifier.size(6.dp).background(color.copy(alpha = 0.22f + 0.5f * on.coerceIn(0f, 1f)), CircleShape))
+        }
+    }
+}
+
 /** Focus room the workbench leaves around a tile of [size] dp: growth, lift, bob and 4 dp. */
-private fun room(style: WiisStyle, size: Int): Int {
+internal fun room(style: WiisStyle, size: Int): Int {
     val m = style.spec.motion
     return ceil(size * (m.focusScale - 1f) / 2f).toInt() + m.focusLift + m.idleBobAmplitude + 4
 }
@@ -872,7 +1100,7 @@ private fun HeroCard(
         modifier = Modifier
             .size(width, height)
             .focusTarget(HomeViewModel.KEY_HERO, target, actions)
-            .navSpot(HomeViewModel.KEY_HERO, "hero")
+            .navSpot(HomeViewModel.KEY_HERO, "hero", page = 0)
             .onFocusChanged { if (it.isFocused) onFocused(Focused.Hero(game)) },
     ) {
         Box(Modifier.fillMaxSize()) {
@@ -1012,15 +1240,13 @@ private fun SystemsGrid(
                 val targeted = row.any { HomeViewModel.sysKey(it.id) == state.heroFocus?.key }
                 val enabled = { inside || targeted || shown(i) }
                 Row(
-                    Modifier
-                        .graphicsLayer { alpha = if (shown(i)) 1f else 0f }
-                        // From outside the grid only the rows it shows take focus, so Up from the
-                        // pinned row or the dock never lands on a row out of sight.
-                        .focusProperties { canFocus = enabled() },
+                    Modifier.graphicsLayer { alpha = if (shown(i)) 1f else 0f },
                     horizontalArrangement = Arrangement.spacedBy(gap),
                 ) {
                     row.forEachIndexed { c, entry ->
-                        val spot = Modifier.navSpot(HomeViewModel.sysKey(entry.id), "systems", enabled) { i to c }
+                        // From outside the grid only the rows it shows take focus, so Up from the
+                        // pinned row or the dock never lands on a row out of sight.
+                        val spot = Modifier.navSpot(HomeViewModel.sysKey(entry.id), "systems", enabled, page = 0) { i to c }
                         SystemTile(entry, state.allPreview, state.systemSamples[entry.id], cellW, cellH, state.heroFocus, actions, onFocused, spot)
                     }
                 }
@@ -1238,8 +1464,7 @@ private fun PinnedRow(games: List<Game>, innerW: Int, target: HeroFocus?, action
                     game, size, key, target, actions,
                     Modifier
                         .graphicsLayer { alpha = if (rowState.itemShown(i, windowPx)) 1f else 0f }
-                        .focusProperties { canFocus = enabled() }
-                        .navSpot(key, "pins", enabled),
+                        .navSpot(key, "pins", enabled, page = 0),
                 ) { onFocused(Focused.Pinned(game)) }
             }
         }
@@ -1580,7 +1805,6 @@ private fun <T> WholeRowsGrid(
                         item,
                         Modifier
                             .graphicsLayer { alpha = if (state.rowShown(i)) 1f else 0f }
-                            .focusProperties { canFocus = enabled() }
                             .navSpot(key(item), group, enabled) { state.cellOf(i) },
                     )
                 }
@@ -1597,6 +1821,12 @@ private fun LazyGridState.cellOf(index: Int): Pair<Int, Int>? =
 
 // ---- Up and Down ----------------------------------------------------------------------------
 
+/** Which page of Home shows: 0 Home, 1 the page below it. The two pages keep it; focus moves it. */
+@Stable
+internal class PageState(initial: Int) {
+    var page by mutableIntStateOf(initial)
+}
+
 /**
  * Up and Down on the top screen. Inside a grid, focus goes to the next row: the same column, or
  * the row's last tile when it is shorter, so a row out of sight slides in from any column.
@@ -1604,34 +1834,65 @@ private fun LazyGridState.cellOf(index: Int): Pair<Int, Int>? =
  * the most overlap first, then the leftmost. Compose's own search would rather take a closer
  * element off to the side: from the right end of the pinned row, Up went to the far-left column.
  * Left and Right keep Compose's search. Elements join with [navSpot].
+ *
+ * Home has a page below it. An element on a page takes focus only while its page shows (or when
+ * the view model names it); past the edge of its page, focus crosses to the other page, which
+ * slides in. The dock belongs to every page and leads to the one showing.
  */
 @Stable
-private class VerticalNav {
+internal class VerticalNav {
     class Spot(val key: String, val group: String, val requester: FocusRequester) {
         var bounds = Rect.Zero
         var enabled: () -> Boolean = { true }
         var cell: () -> Pair<Int, Int>? = { null }
+        /** 0: on Home; 1: on the page below; -1: on every page (the dock, the header). */
+        var page = -1
     }
 
     private val spots = HashMap<String, Spot>()
+    private val lastOnPage = HashMap<Int, String>()
+
+    /** Set by the two pages while they are on screen. */
+    var pages: PageState? = null
+    val page: Int get() = pages?.page ?: 0
+
+    /** The key the view model asked to focus: it may take focus on the page that isn't showing. */
+    var targetKey: String? = null
+
+    /** Called whenever an element takes focus. */
+    var onFocus: (Spot) -> Unit = {}
 
     fun add(spot: Spot) { spots[spot.key] = spot }
     fun remove(spot: Spot) { if (spots[spot.key] === spot) spots.remove(spot.key) }
+    fun requester(key: String): FocusRequester? = spots[key]?.requester
 
-    fun next(from: Spot, down: Boolean): FocusRequester {
-        from.cell()?.let { (row, column) ->
-            val want = row + if (down) 1 else -1
-            val inRow = spots.values.mapNotNull { s -> s.takeIf { it !== from && it.group == from.group }?.cell()?.takeIf { it.first == want }?.let { s to it.second } }
-            if (inRow.isNotEmpty()) {
-                return (inRow.firstOrNull { it.second == column } ?: inRow.filter { it.second < column }.maxByOrNull { it.second } ?: inRow.minBy { it.second }).first.requester
-            }
+    fun focusable(s: Spot): Boolean = (s.page < 0 || s.page == page || s.key == targetKey) && s.enabled()
+
+    fun focused(spot: Spot) {
+        if (spot.page >= 0) {
+            pages?.page = spot.page
+            lastOnPage[spot.page] = spot.key
         }
+        onFocus(spot)
+    }
+
+    /** Rule 1: the next row of the same grid. */
+    private fun inRow(from: Spot, down: Boolean): Spot? {
+        val (row, column) = from.cell() ?: return null
+        val want = row + if (down) 1 else -1
+        val inRow = spots.values.mapNotNull { s -> s.takeIf { it !== from && it.group == from.group }?.cell()?.takeIf { it.first == want }?.let { s to it.second } }
+        if (inRow.isEmpty()) return null
+        return (inRow.firstOrNull { it.second == column } ?: inRow.filter { it.second < column }.maxByOrNull { it.second } ?: inRow.minBy { it.second }).first
+    }
+
+    /** Rule 2: the nearest element of another group above or below, overlapping sideways. */
+    private fun nearest(from: Spot, down: Boolean, accept: (Spot) -> Boolean): Spot? {
         val f = from.bounds
         var best: Spot? = null
         var bestGap = 0f
         var bestOverlap = 0f
         for (s in spots.values) {
-            if (s === from || s.group == from.group || !s.enabled()) continue
+            if (s === from || s.group == from.group || !s.enabled() || !accept(s)) continue
             val b = s.bounds
             val overlap = min(b.right, f.right) - max(b.left, f.left)
             if (overlap < 1f) continue
@@ -1641,23 +1902,62 @@ private class VerticalNav {
                 (gap <= bestGap + 1f && (overlap > bestOverlap + 1f || (overlap >= bestOverlap - 1f && b.left < best.bounds.left)))
             if (better) { best = s; bestGap = gap; bestOverlap = overlap }
         }
-        return best?.requester ?: FocusRequester.Default
+        return best
+    }
+
+    fun next(from: Spot, down: Boolean): FocusRequester {
+        inRow(from, down)?.let { return it.requester }
+        val to = if (from.page >= 0) nearest(from, down) { it.page == from.page } ?: nearest(from, down) { it.page < 0 }
+        else nearest(from, down) { it.page < 0 || it.page == page }
+        return to?.requester ?: FocusRequester.Default
+    }
+
+    /**
+     * Down from Home's bottom row or Up from the top of the page below: where to go on the other
+     * page. Back where focus last was there, if that is still above or below; else the nearest.
+     */
+    fun across(from: Spot, down: Boolean): Spot? {
+        if (from.page < 0 || inRow(from, down) != null || nearest(from, down) { it.page == from.page } != null) return null
+        val other = from.page + if (down) 1 else -1
+        val back = lastOnPage[other]?.let { spots[it] }?.takeIf { s ->
+            s.page == other && s.enabled() && min(s.bounds.right, from.bounds.right) - max(s.bounds.left, from.bounds.left) >= 1f
+        }
+        return back ?: nearest(from, down) { it.page == other }
+    }
+
+    /** B below Home: back to [page], where focus last was there (else its first element). */
+    fun goTo(page: Int): Boolean {
+        val s = lastOnPage[page]?.let { spots[it] }?.takeIf { it.page == page && it.enabled() }
+            ?: spots.values.filter { it.page == page && it.enabled() }.minByOrNull { it.bounds.top * 100_000f + it.bounds.left }
+            ?: return false
+        pages?.page = page
+        return runCatching { s.requester.requestFocus() }.isSuccess
     }
 }
 
-private val LocalVerticalNav = staticCompositionLocalOf<VerticalNav?> { null }
+internal val LocalVerticalNav = staticCompositionLocalOf<VerticalNav?> { null }
 
 /**
  * Joins [VerticalNav] as [key] in [group]. [enabled]: may focus come here from another group (a
- * hidden row may not); [cell]: (row, column) inside a grid.
+ * hidden row may not); [page]: the page of Home it is on (-1: every page); [within]: the element
+ * next to it in a direction inside its own layout (the page below Home lays out its tiles itself),
+ * null at the layout's edge; [cell]: (row, column) inside a grid.
  */
 @Composable
-private fun Modifier.navSpot(key: String, group: String, enabled: () -> Boolean = { true }, cell: () -> Pair<Int, Int>? = { null }): Modifier {
+internal fun Modifier.navSpot(
+    key: String,
+    group: String,
+    enabled: () -> Boolean = { true },
+    page: Int = -1,
+    within: ((FocusDirection) -> FocusRequester?)? = null,
+    cell: () -> Pair<Int, Int>? = { null },
+): Modifier {
     val nav = LocalVerticalNav.current ?: return this
     val requester = remember(nav, key) { FocusRequester() }
     val spot = remember(nav, key, group) { VerticalNav.Spot(key, group, requester) }
     spot.enabled = enabled
     spot.cell = cell
+    spot.page = page
     DisposableEffect(nav, spot) {
         nav.add(spot)
         onDispose { nav.remove(spot) }
@@ -1666,9 +1966,25 @@ private fun Modifier.navSpot(key: String, group: String, enabled: () -> Boolean 
         .focusRequester(requester)
         // Where it is laid out, not where a scroll clips it or a lift moves it.
         .onGloballyPositioned { spot.bounds = it.findRootCoordinates().localBoundingBoxOf(it, clipBounds = false) }
+        // Past the edge of its page: the other page slides in and its nearest element takes focus.
+        .onPreviewKeyEvent { e ->
+            if (e.type != KeyEventType.KeyDown || (e.key != Key.DirectionDown && e.key != Key.DirectionUp)) return@onPreviewKeyEvent false
+            val down = e.key == Key.DirectionDown
+            if (within?.invoke(if (down) FocusDirection.Down else FocusDirection.Up) != null) return@onPreviewKeyEvent false
+            val to = nav.across(spot, down) ?: return@onPreviewKeyEvent false
+            nav.pages?.page = to.page
+            runCatching { to.requester.requestFocus() }
+            true
+        }
+        .onFocusChanged { if (it.isFocused) nav.focused(spot) }
         .focusProperties {
-            up = nav.next(spot, down = false)
-            down = nav.next(spot, down = true)
+            canFocus = nav.focusable(spot)
+            up = within?.invoke(FocusDirection.Up) ?: nav.next(spot, down = false)
+            down = within?.invoke(FocusDirection.Down) ?: nav.next(spot, down = true)
+            if (within != null) {
+                left = within(FocusDirection.Left) ?: FocusRequester.Cancel
+                right = within(FocusDirection.Right) ?: FocusRequester.Cancel
+            }
         }
 }
 
@@ -1722,7 +2038,7 @@ private class Glider(private val scope: CoroutineScope) {
 }
 
 /** Smooth, no bounce: a critically damped spring that settles in about [ms]. */
-private fun smooth(ms: Int): AnimationSpec<Float> {
+internal fun smooth(ms: Int): AnimationSpec<Float> {
     val w = 5.8f / (ms.coerceAtLeast(1) / 1000f)
     return spring(dampingRatio = 1f, stiffness = w * w)
 }
@@ -1903,14 +2219,15 @@ private fun sectionLabel(section: Section, style: WiisStyle) = when (section) {
 
 private fun systemTint(id: String, style: WiisStyle): Color = if (id == HomeModel.ALL) style.accent else style.systemColor(id)
 
-private fun gamesCount(n: Int) = if (n == 1) "1 game" else "$n games"
+internal fun gamesCount(n: Int) = if (n == 1) "1 game" else "$n games"
 
-private fun HomeUiState.isPinned(game: Game) = pinned.any { it.uri == game.uri }
+internal fun HomeUiState.isPinned(game: Game) = pinned.any { it.uri == game.uri }
 
 private fun gameOf(f: Focused): Game? = when (f) {
     is Focused.Hero -> f.game
     is Focused.Pinned -> f.game
     is Focused.InGrid -> f.game
+    is Focused.Tile -> f.game
     else -> null
 }
 
@@ -1919,7 +2236,7 @@ private fun gameOf(f: Focused): Game? = when (f) {
  * focus is quiet: the move sound is for the player's own moves.
  */
 @Composable
-private fun Modifier.focusTarget(key: String, target: HeroFocus?, actions: HeroActions): Modifier {
+internal fun Modifier.focusTarget(key: String, target: HeroFocus?, actions: HeroActions): Modifier {
     val requester = remember { FocusRequester() }
     if (target != null && target.key == key) {
         LaunchedEffect(target.token) {

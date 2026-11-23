@@ -211,6 +211,9 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 .dock-hints { flex: 1; min-width: 0; overflow: hidden; }
 .dock-hints .m-hints { padding-top: 0; gap: 14px; justify-content: flex-start !important; }
 .m-scrim { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; }
+.b-lift.carried { transform: translateY(-6px) scale(1.05); filter: drop-shadow(0 14px 16px rgba(0,0,0,.28)); }
+.m-dots { position: absolute; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 2; }
+.m-dot { width: 6px; height: 6px; border-radius: 99px; transition: opacity .2s; }
 .m-popup { padding: 18px; display: flex; flex-direction: column; gap: 4px; box-sizing: border-box; }
 .m-popup .m-line { height: 1px; margin: 6px 0; flex: none; }
 .pin-card { display: flex; align-items: center; gap: 14px; padding: 0 28px 0 22px; flex: none; align-self: flex-start; box-sizing: border-box; }
@@ -250,10 +253,10 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
     <div class="pad" role="group" aria-label="Controller for the preview">
       <div class="group"><button class="key" data-key="L1" type="button">L1</button><button class="key" data-key="R1" type="button">R1</button></div>
       <div class="group"><button class="key" data-key="left" type="button" aria-label="Left">◀</button><button class="key" data-key="up" type="button" aria-label="Up">▲</button><button class="key" data-key="down" type="button" aria-label="Down">▼</button><button class="key" data-key="right" type="button" aria-label="Right">▶</button></div>
-      <div class="group"><button class="key round" data-key="A" type="button">A</button><button class="key round" data-key="B" type="button">B</button><button class="key round" data-key="Y" type="button">Y</button><button class="key round" data-key="X" type="button">X</button></div>
+      <div class="group"><button class="key round" data-key="A" type="button">A</button><button class="key" data-key="holdA" type="button" title="Hold A: arrange the tiles below Home">Hold A</button><button class="key round" data-key="B" type="button">B</button><button class="key round" data-key="Y" type="button">Y</button><button class="key round" data-key="X" type="button">X</button></div>
       <div class="group"><button class="key" data-key="Select" type="button">Select</button><button class="key" data-key="Start" type="button">Start</button></div>
     </div>
-    <p class="stage-note">Keyboard: arrows move, Enter = A, Backspace = B, Y, X (pin), Q/E = L1/R1. Covers and titles are invented placeholders; real box art appears on the device.</p>
+    <p class="stage-note">Keyboard: arrows move, Enter = A (hold it on a tile below Home to arrange), Backspace = B, Y, X (pin), Q/E = L1/R1. Covers and titles are invented placeholders; real box art appears on the device.</p>
     <div class="toggles">
       <label><input type="checkbox" id="previewSound" checked> Play sounds in the preview</label>
       <label><input type="checkbox" id="previewMotion" checked> Animate the preview</label>
@@ -283,7 +286,7 @@ textarea.notes { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px s
 </div>
 <div class="toast" id="toast" hidden></div>
 
-<script type="application/json" id="proposal">{"schema":4,"name":"Draft 4","appearance":"system","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#FFFFFF","tile":"#F1F0F5","tileFocused":"#E4E2EC","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#FFFFFF","opacity":1.0,"blur":24,"border":"#DCDAE5","borderOpacity":1.0,"borderWidth":1.0,"text":"#23212D","textMuted":"#625F72","radius":18},"dark":{"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#15141C","backgroundTop":"#1D1C26","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.14,"surface":"#22212C","tile":"#2A2935","tileFocused":"#35343F","text":"#ECEAF3","textMuted":"#A9A5B9","accent":"#ECEAF3","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#ECEAF3","tabActiveText":"#15141C","tabIdleText":"#B6B2C6","hintBadge":"#ECEAF3","hintBadgeText":"#15141C","messageBar":"#22212C","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#23222D","opacity":1.0,"blur":24,"border":"#383645","borderOpacity":1.0,"borderWidth":1.0,"text":"#ECEAF3","textMuted":"#A9A5B9","radius":18},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#ECEAF3","colorB":"#ECEAF3","colorX":"#ECEAF3","colorY":"#ECEAF3","colorOther":"#ECEAF3"},"shadowColor":"#000000"},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":3,"focusRingGap":1,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":24,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0.0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.08,"focusGrowMax":8,"pressScale":0.94,"stiffness":400.0,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabCollections":"Collections","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate","pillMotion":"glide","focusGlide":true,"badgePress":true,"riseIn":true,"motionMs":250},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true,"showStats":true,"showAchievements":true,"pageStyle":"tabs","sparklines":true,"chartRange":"12w","achievementsRing":true,"achievementsPlaytime":true,"statColors":["#2F86F6","#1FA968","#8A5CF6","#F28C28"],"trophyGold":"#E9AE25","trophySilver":"#A3AEBE","trophyBronze":"#C9773D"},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880.0,988.0],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0.0,"lowpass":7000.0,"noise":0.0,"volume":0.32},"select":{"wave":"triangle","notes":[659.0,988.0],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0.0,"lowpass":8000.0,"noise":0.0,"volume":0.5},"back":{"wave":"triangle","notes":[740.0,494.0],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0.0,"lowpass":6000.0,"noise":0.0,"volume":0.45},"tab":{"wave":"square","notes":[523.0,784.0],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0.0,"lowpass":3200.0,"noise":0.0,"volume":0.28},"launch":{"wave":"triangle","notes":[523.0,659.0,784.0,1047.0],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0.0,"lowpass":9000.0,"noise":0.0,"volume":0.55},"error":{"wave":"square","notes":[233.0,196.0],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0.0,"lowpass":2200.0,"noise":0.0,"volume":0.35},"bump":{"wave":"sine","notes":[150.0],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6.0,"lowpass":2000.0,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
+<script type="application/json" id="proposal">{"schema":4,"name":"Draft 4","appearance":"system","layout":{"games":"hero","showRecent":true,"recentCount":12,"systemOrder":"alphabetical","scrollAnchor":"center","heroWidth":360,"systemColumns":3,"systemRows":2,"systemTileHeight":96,"recentTileSize":96,"gridTileSize":132,"focusCaption":true,"boardColumns":6,"boardRows":3,"pageDots":true},"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#E9E8F0","backgroundTop":"#F6F6F9","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.2,"surface":"#FFFFFF","tile":"#F1F0F5","tileFocused":"#E4E2EC","text":"#23212D","textMuted":"#5A5769","accent":"#23212D","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#23212D","tabActiveText":"#FFFFFF","tabIdleText":"#4E4B5E","hintBadge":"#23212D","hintBadgeText":"#FFFFFF","messageBar":"#FFFFFF","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#FFFFFF","opacity":1.0,"blur":24,"border":"#DCDAE5","borderOpacity":1.0,"borderWidth":1.0,"text":"#23212D","textMuted":"#625F72","radius":18},"dark":{"colors":{"backgroundStyle":"dots","artBlur":36,"artDim":0.5,"background":"#15141C","backgroundTop":"#1D1C26","glowA":"#1A0A52","glowB":"#3FA7F5","glowStrength":0.14,"surface":"#22212C","tile":"#2A2935","tileFocused":"#35343F","text":"#ECEAF3","textMuted":"#A9A5B9","accent":"#ECEAF3","focusRing":"#3FD39A","focusGlow":"#3FD39A","focusGlowStrength":0.0,"tabActiveFill":"#ECEAF3","tabActiveText":"#15141C","tabIdleText":"#B6B2C6","hintBadge":"#ECEAF3","hintBadgeText":"#15141C","messageBar":"#22212C","activeGlow":0.0,"edgeGlow":0.0,"frameGlow":0.0},"glass":{"fill":"#23222D","opacity":1.0,"blur":24,"border":"#383645","borderOpacity":1.0,"borderWidth":1.0,"text":"#ECEAF3","textMuted":"#A9A5B9","radius":18},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#ECEAF3","colorB":"#ECEAF3","colorX":"#ECEAF3","colorY":"#ECEAF3","colorOther":"#ECEAF3"},"shadowColor":"#000000"},"systemColors":{"recent":"#008CB4","nes":"#E4483C","snes":"#8C6CF0","n64":"#2FB86B","gb":"#9CB83A","gbc":"#C653D9","gba":"#5B6CFF","nds":"#3FA7F5","n3ds":"#EC4A63","gc":"#7C5CFF","wii":"#56C6F2","wiiu":"#22A6C8","switch":"#FF4B57","genesis":"#2F6FE4","psx":"#B4B8C6","ps2":"#3D5BD9","psp":"#7C8796","xbox360":"#7BC043","steam":"#5B8DEF"},"shape":{"tileWidth":196,"tileHeight":196,"tileRadius":18,"tileBorderWidth":0,"tileBorderColor":"#3A3552","focusRingWidth":3,"focusRingGap":1,"shadow":"soft","shadowColor":"#4A4766","shadowOffset":6,"systemStrip":"none","systemStripSize":6,"tabStyle":"pill","tabRadius":999,"cardRadius":24,"dialogRadius":28,"badgeRadius":999},"spacing":{"screenPadding":28,"headerGap":24,"shelfGap":22,"tileGap":18,"shelfTitleGap":10},"type":{"displayFont":"Poppins","bodyFont":"Poppins","wordmarkSize":26,"wordmarkWeight":700,"tabSize":15,"tabWeight":600,"shelfTitleSize":15,"shelfTitleWeight":600,"shelfTitleCase":"title","shelfTitleTracking":0.0,"tileTitleSize":17,"tileTitleWeight":600,"labelSize":13,"labelWeight":500,"clockSize":16,"clockWeight":500},"shelf":{"titleColor":"muted","marker":"none","showCount":true},"tile":{"artStyle":"full","artFit":"cover","titleVisibility":"never","systemBadge":"never","showFileType":false,"placeholder":"system","consoleIcon":"tab","consoleIconSize":18,"systemRing":5},"hero":{"prompt":"Jump back in","showPlaytime":true,"showSystem":false},"systemTile":{"style":"xmb","showCount":false,"tint":0.6},"motion":{"focusScale":1.08,"focusGrowMax":8,"pressScale":0.94,"stiffness":400.0,"damping":0.55,"focusLift":4,"idleBob":true,"idleBobAmplitude":2,"idleBobPeriodMs":1800,"tabTransition":"slide","tabTransitionMs":220,"pageSlideMs":380,"holdMs":500,"reduceMotion":false},"header":{"showWordmark":true,"wordmark":"Wii-S","clock24h":false,"showDate":false,"tabGames":"Home","tabApps":"Apps","tabCollections":"Collections","statusPill":true,"tabIcons":true},"nav":{"style":"dock","apps":5,"labels":"active","captionPlace":"nameplate","pillMotion":"glide","focusGlide":true,"badgePress":true,"riseIn":true,"motionMs":250},"hints":{"show":true,"align":"end","badgeShape":"circle","colorA":"#23212D","colorB":"#23212D","colorX":"#23212D","colorY":"#23212D","colorOther":"#23212D"},"companion":{"layout":"art","background":"inherit","backgroundColor":"#15141E","showPlaytime":true,"showLastPlayed":true,"showEmulator":true,"showClock":true,"showHints":false,"dock":true,"dockApps":5,"showDrawer":true,"showStats":true,"showAchievements":true,"pageStyle":"tabs","sparklines":true,"chartRange":"12w","achievementsRing":true,"achievementsPlaytime":true,"statColors":["#2F86F6","#1FA968","#8A5CF6","#F28C28"],"trophyGold":"#E9AE25","trophySilver":"#A3AEBE","trophyBronze":"#C9773D"},"sounds":{"enabled":true,"volume":0.7,"events":{"move":{"wave":"sine","notes":[880.0,988.0],"noteMs":18,"attackMs":2,"decayMs":45,"sweep":0.0,"lowpass":7000.0,"noise":0.0,"volume":0.32},"select":{"wave":"triangle","notes":[659.0,988.0],"noteMs":45,"attackMs":2,"decayMs":90,"sweep":0.0,"lowpass":8000.0,"noise":0.0,"volume":0.5},"back":{"wave":"triangle","notes":[740.0,494.0],"noteMs":45,"attackMs":2,"decayMs":80,"sweep":0.0,"lowpass":6000.0,"noise":0.0,"volume":0.45},"tab":{"wave":"square","notes":[523.0,784.0],"noteMs":30,"attackMs":1,"decayMs":60,"sweep":0.0,"lowpass":3200.0,"noise":0.0,"volume":0.28},"launch":{"wave":"triangle","notes":[523.0,659.0,784.0,1047.0],"noteMs":70,"attackMs":3,"decayMs":220,"sweep":0.0,"lowpass":9000.0,"noise":0.0,"volume":0.55},"error":{"wave":"square","notes":[233.0,196.0],"noteMs":90,"attackMs":2,"decayMs":120,"sweep":0.0,"lowpass":2200.0,"noise":0.0,"volume":0.35},"bump":{"wave":"sine","notes":[150.0],"noteMs":20,"attackMs":1,"decayMs":50,"sweep":-6.0,"lowpass":2000.0,"noise":0.15,"volume":0.5}}},"haptics":{"enabled":true,"events":{"move":"light","select":"medium","back":"light","tab":"light","launch":"heavy","error":"heavy","bump":"light"}}}</script>
 <script>
 "use strict";
 // ======================================================================================
@@ -347,6 +350,9 @@ const GROUPS = [
     R("layout.recentTileSize", "Recent game tile size", 64, 140, 2, "dp"),
     R("layout.gridTileSize", "Game tile size inside a system", 96, 200, 2, "dp"),
     T("layout.focusCaption", "Caption naming the focused item", "Along the bottom of the top screen."),
+    R("layout.boardColumns", "Columns on the page below Home", 4, 8, 1, "", "Tiles come in 1×1, 2×1 and 2×2 cells; they fill the page."),
+    R("layout.boardRows", "Rows on the page below Home", 2, 4, 1, ""),
+    T("layout.pageDots", "Page dots", "Two dots at the right edge of Home say which page shows."),
   ]},
   { id: "colors", title: "Colours", desc: "The launcher's palette. Background style and glow apply to both screens unless the bottom screen has its own colour.", items: [
     S("colors.backgroundStyle", "Background style", [["art", "Focused game's art"], ["artLight", "Focused game's art, washed light"], ["dots", "Light with dot grid + colour glow"], ["solid", "Solid"], ["gradient", "Gradient"], ["glow", "Gradient + glow"]]),
@@ -471,6 +477,8 @@ const GROUPS = [
     R("motion.idleBobPeriodMs", "Bob speed (one cycle)", 600, 4000, 50, "ms"),
     S("motion.tabTransition", "Tab change animation", [["slide", "Slide"], ["fade", "Fade"], ["none", "None"]]),
     R("motion.tabTransitionMs", "Tab change duration", 0, 600, 10, "ms"),
+    R("motion.pageSlideMs", "Home to the page below: slide", 0, 1000, 10, "ms", "Down from Home's bottom row slides the page below in."),
+    R("motion.holdMs", "Hold A to arrange tiles", 200, 1500, 50, "ms", "How long A is held on a tile below Home before it lifts."),
     T("motion.reduceMotion", "Reduce motion", "No bounce, no bob, quick fades."),
   ]},
   { id: "header", title: "Header & navigation", items: [
@@ -1386,7 +1394,7 @@ function isPinned(key) { pinnedGames(); return mock.pins.includes(key); }
 /** X: pin the focused game at the front of the row, or unpin it. Unpinned from the row, focus moves to the next pin (or the card). */
 function togglePin() {
   const el = focusables[focusIdx]; if (!el || mock.section !== "games") return;
-  const key = el.dataset.game || el.dataset.hero; if (!key) return;
+  const key = el.dataset.game || el.dataset.hero || (el.dataset.tile ? tileGame(boardTile(Number(el.dataset.tile)))?.key : null); if (!key) return;
   pinnedGames();
   const fromRow = !!el.closest('.m-track[data-shelf="pins"]');
   const i = mock.pins.indexOf(key);
@@ -1676,7 +1684,9 @@ function captionParts() {
   else if (el.dataset.tab) { kind = "tab"; label = t.nav.style === "dock" ? "Go to" : "Tabs"; title = { games: t.header.tabGames, apps: t.header.tabApps, collections: t.header.tabCollections }[el.dataset.tab]; hints = [["A", "Open"], ["L1/R1", "Switch"]]; }
   else if (el.dataset.app) { kind = "app"; label = "App"; title = el.dataset.app; hints = [["A", "Open"], ["Select", "Menu"]]; }
   else if (el.dataset.col) { const c = collections().find((x) => x.id === el.dataset.col); kind = "collection"; label = "Collection"; title = c.name; meta = `${c.games.length} games${c.suggested ? " · suggested" : ""}`; hints = [["A", "Open"], ["Select", "Menu"]]; }
-  else if (el.dataset.menu || el.dataset.setcat) { return null; }
+  else if (el.dataset.tile) { const t = boardTile(Number(el.dataset.tile)), info = tileInfo(t); kind = "tile"; label = info.label; title = info.title; meta = info.meta; color = info.color; hints = tileHints(t, info); }
+  else if (el.dataset.cell) { kind = "cell"; label = "Below Home"; title = el.dataset.cell === "-1,-1" ? "This page is empty" : "Empty space"; hints = mock.boardEdit && mock.boardEdit.sticky ? [["A", "Add"], ["B", "Done"]] : [["A", "Add"]]; }
+  else if (el.dataset.menu || el.dataset.setcat || el.dataset.addcat || el.dataset.additem) { return null; }
   else { hints = [["A", "Select"], ["B", "Home"]]; }
   return { kind, label, title, meta, color, hints };
 }
@@ -1762,6 +1772,379 @@ function systemViewHtml(next, room) {
       <span style="${labelStyle()}">${games.length} games</span></div>`;
   return `<div id="sysView" style="display:flex;flex-direction:column;height:100%">${title}<div style="position:relative;flex:1;min-height:0;overflow:hidden"><div class="m-scroll" id="vscroll" data-whole="1" data-room="${rS}" style="padding:${rS}px"><div class="m-grid" style="gap:${gap}px">${games.map((g) => artTileHtml(g, size, next())).join("")}</div></div></div></div>`;
 }
+// ---- The page below Home (0.6.1): the same board as home/Board.kt ----
+const BOARD = (() => {
+  const SIZES = { app: ["1x1", "2x1"], shortcut: ["1x1", "2x1"], game: ["1x1", "2x2", "2x1"], random: ["1x1", "2x1", "2x2"], collection: ["2x1", "2x2"], clock: ["2x1", "2x2"], lastPlayed: ["2x1", "2x2"], week: ["2x1", "2x2"], achievements: ["2x2", "2x1"] };
+  const sizesFor = (kind) => SIZES[kind] || ["1x1"];
+  const cells = (s) => (s === "2x1" ? [2, 1] : s === "2x2" ? [2, 2] : [1, 1]);
+  const area = (s) => cells(s)[0] * cells(s)[1];
+  const isGap = (t) => t.kind === "gap";
+  const gap = () => ({ id: 0, kind: "gap", ref: "", size: "1x1" });
+  const grid = (cols, rows) => Array.from({ length: rows }, () => new Array(cols).fill(false));
+  const free = (g, c, r, w, h) => { if (c < 0 || r < 0 || r + h > g.length || c + w > g[0].length) return false; for (let y = r; y < r + h; y++) for (let x = c; x < c + w; x++) if (g[y][x]) return false; return true; };
+  const take = (g, c, r, w, h) => { for (let y = r; y < r + h; y++) for (let x = c; x < c + w; x++) g[y][x] = true; };
+  const firstFree = (g, cols, rows, w, h) => { for (let r = 0; r <= rows - h; r++) for (let c = 0; c <= cols - w; c++) if (free(g, c, r, w, h)) return [c, r]; return null; };
+  const overlaps = (p, c, r, w, h) => p.col < c + w && c < p.col + p.w && p.row < r + h && r < p.row + p.h;
+  /** Each tile in the first place it fits, reading left to right, top to bottom; [placed, left over]. */
+  function place(tiles, cols, rows) {
+    const g = grid(cols, rows), placed = [], left = [];
+    for (const t of tiles) { const [w, h] = cells(t.size), s = firstFree(g, cols, rows, w, h); if (!s) { left.push(t); continue; } take(g, s[0], s[1], w, h); placed.push({ tile: t, col: s[0], row: s[1], w, h }); }
+    return [placed, left];
+  }
+  const layout = (tiles, cols, rows) => place(tiles, cols, rows)[0].filter((p) => !isGap(p.tile));
+  function freeCells(tiles, cols, rows) { const g = grid(cols, rows); for (const p of layout(tiles, cols, rows)) take(g, p.col, p.row, p.w, p.h); const out = []; for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!g[r][c]) out.push([c, r]); return out; }
+  const fits = (tiles, cols, rows) => place(tiles, cols, rows)[1].every(isGap);
+  /** The tiles at their top-left cells in reading order, a gap in every empty cell: lays out to the same places. */
+  function fromPlaces(at, cols, rows) {
+    const g = grid(cols, rows), entries = [];
+    for (const [t, [c, r]] of at) { const [w, h] = cells(t.size); for (let y = r; y < Math.min(r + h, rows); y++) for (let x = c; x < Math.min(c + w, cols); x++) g[y][x] = true; entries.push([r * cols + c, t]); }
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) if (!g[r][c]) entries.push([r * cols + c, gap()]);
+    return entries.sort((a, b) => a[0] - b[0]).map((e) => e[1]);
+  }
+  const keep = (placed) => placed.filter((p) => !isGap(p.tile));
+  function normalize(tiles, cols, rows) { const [placed, left] = place(tiles, cols, rows); return fromPlaces(keep(placed).map((p) => [p.tile, [p.col, p.row]]), cols, rows).concat(left.filter((t) => !isGap(t))); }
+  function onPage(tiles, cols, rows, op) { const [placed, left] = place(tiles, cols, rows); const r = op(placed); return r ? normalize(r, cols, rows).concat(left.filter((t) => !isGap(t))) : null; }
+  function displaced(others, inWay, me, col, row, cols, rows) {
+    const g = grid(cols, rows), out = [];
+    for (const p of others) if (!inWay.includes(p)) { take(g, p.col, p.row, p.w, p.h); out.push([p.tile, [p.col, p.row]]); }
+    take(g, col, row, me.w, me.h); out.push([me.tile, [col, row]]);
+    for (const p of inWay) {
+      let best = null, bestD = Infinity;
+      for (let r = 0; r <= rows - p.h; r++) for (let c = 0; c <= cols - p.w; c++) { if (!free(g, c, r, p.w, p.h)) continue; const d = Math.abs(c - p.col) + Math.abs(r - p.row); if (d < bestD) { best = [c, r]; bestD = d; } }
+      if (!best) return null;
+      take(g, best[0], best[1], p.w, p.h); out.push([p.tile, best]);
+    }
+    return out;
+  }
+  function around(page, me, col, row, cols, rows) {
+    const g = grid(cols, rows), out = [[me.tile, [col, row]]];
+    take(g, col, row, me.w, me.h);
+    for (const t of page) { const [w, h] = cells(t.size), s = firstFree(g, cols, rows, w, h); if (!s) { if (isGap(t)) continue; return null; } take(g, s[0], s[1], w, h); if (!isGap(t)) out.push([t, s]); }
+    return out;
+  }
+  function reordered(page, me, col, row, cols, rows) {
+    for (let i = 0; i <= page.length; i++) {
+      const list = page.slice(); list.splice(i, 0, me.tile);
+      const [p2, left] = place(list, cols, rows);
+      if (left.some((t) => !isGap(t))) continue;
+      const now = p2.find((p) => p.tile === me.tile);
+      if (now.col !== col || now.row !== row) continue;
+      return keep(p2).map((p) => [p.tile, [p.col, p.row]]);
+    }
+    return null;
+  }
+  /** Tile [id] to the cell (col, row): straight into empty cells, else the arrangement that moves the fewest others. */
+  function moveTo(tiles, id, col, row, cols, rows) {
+    return onPage(tiles, cols, rows, (placed) => {
+      const me = placed.find((p) => p.tile.id === id && !isGap(p.tile)); if (!me) return null;
+      if (col < 0 || row < 0 || col + me.w > cols || row + me.h > rows || (me.col === col && me.row === row)) return null;
+      const others = keep(placed).filter((p) => p !== me), inWay = others.filter((p) => overlaps(p, col, row, me.w, me.h));
+      if (!inWay.length) return fromPlaces(others.map((p) => [p.tile, [p.col, p.row]]).concat([[me.tile, [col, row]]]), cols, rows);
+      const page = placed.map((p) => p.tile).filter((t) => !(t.id === id && !isGap(t))), solid = page.filter((t) => !isGap(t));
+      const tries = [displaced(others, inWay, me, col, row, cols, rows), around(page, me, col, row, cols, rows), around(solid, me, col, row, cols, rows), reordered(page, me, col, row, cols, rows), reordered(solid, me, col, row, cols, rows)].filter(Boolean);
+      const was = new Map(others.map((p) => [p.tile.id, `${p.col},${p.row}`]));
+      let best = null, bestMoved = Infinity;
+      for (const pl of tries) { const moved = pl.filter(([t, [c, r]]) => t.id !== id && was.get(t.id) !== `${c},${r}`).length; if (moved < bestMoved) { best = pl; bestMoved = moved; } }
+      return best ? fromPlaces(best, cols, rows) : null;
+    });
+  }
+  /** One press of the D-pad while carrying: to the next cell that way it can take; null at the edge. */
+  function step(tiles, id, dx, dy, cols, rows) {
+    const me = layout(tiles, cols, rows).find((p) => p.tile.id === id); if (!me) return null;
+    let c = me.col, r = me.row;
+    for (let i = 0; i < Math.max(cols, rows); i++) { c += dx; r += dy; if (c < 0 || r < 0 || c >= cols || r >= rows) return null; const m = moveTo(tiles, id, c, r, cols, rows); if (m) return m; }
+    return null;
+  }
+  function resized(placed, me, size, cols, rows) {
+    const grown = { ...me.tile, size }, [w, h] = cells(size);
+    if (me.col + w <= cols && me.row + h <= rows && !placed.some((p) => p !== me && !isGap(p.tile) && overlaps(p, me.col, me.row, w, h))) {
+      return fromPlaces(keep(placed).map((p) => [p === me ? grown : p.tile, [p.col, p.row]]), cols, rows);
+    }
+    const page = placed.map((p) => p.tile);
+    for (const start of [page, page.filter((t) => !isGap(t))]) { const list = start.map((t) => (t.id === me.tile.id && !isGap(t) ? grown : t)); if (fits(list, cols, rows)) return list; }
+    return null;
+  }
+  /** The next size that fits (around to the first); unchanged when none does. */
+  function resize(tiles, id, cols, rows) {
+    const [placed, left] = place(tiles, cols, rows), me = placed.find((p) => p.tile.id === id && !isGap(p.tile)); if (!me) return tiles;
+    let sizes = sizesFor(me.tile.kind); if (!sizes.includes(me.tile.size)) sizes = [me.tile.size, ...sizes];
+    let at = sizes.indexOf(me.tile.size);
+    for (let i = 0; i < sizes.length - 1; i++) { at = (at + 1) % sizes.length; const r = resized(placed, me, sizes[at], cols, rows); if (r) return normalize(r, cols, rows).concat(left.filter((t) => !isGap(t))); }
+    return tiles;
+  }
+  const remove = (tiles, id, cols, rows) => onPage(tiles, cols, rows, (placed) => fromPlaces(keep(placed).filter((p) => p.tile.id !== id).map((p) => [p.tile, [p.col, p.row]]), cols, rows)) || tiles;
+  /** A new tile in the empty cell [at], before tile [before], or in the first empty place it fits; null when the page is full. */
+  function add(tiles, nextId, kind, ref, cols, rows, before, at) {
+    const first = sizesFor(kind)[0], sizes = [...new Set([first, "2x1", "1x1"])].filter((s) => area(s) <= area(first));
+    for (const size of sizes) {
+      const tile = { id: nextId, kind, ref, size }, [w, h] = cells(size);
+      const out = onPage(tiles, cols, rows, (placed) => {
+        const kept = keep(placed), g = grid(cols, rows); kept.forEach((p) => take(g, p.col, p.row, p.w, p.h));
+        const places = kept.map((p) => [p.tile, [p.col, p.row]]);
+        if (at) return free(g, at[0], at[1], w, h) ? fromPlaces(places.concat([[tile, at]]), cols, rows) : null;
+        if (before == null) { const s = firstFree(g, cols, rows, w, h); if (s) return fromPlaces(places.concat([[tile, s]]), cols, rows); }
+        const page = placed.map((p) => p.tile), firstGap = page.findIndex(isGap) < 0 ? page.length : page.findIndex(isGap);
+        for (const closed of [false, true]) {
+          const start = closed ? page.filter((t) => !isGap(t)) : page;
+          let i = before == null ? -1 : start.findIndex((t) => t.id === before && !isGap(t));
+          if (i < 0) i = closed ? page.slice(0, firstGap).filter((t) => !isGap(t)).length : firstGap;
+          const list = start.slice(); list.splice(i, 0, tile);
+          if (fits(list, cols, rows)) return list;
+        }
+        return null;
+      });
+      if (out) return out;
+    }
+    return null;
+  }
+  return { sizesFor, cells, isGap, place, layout, freeCells, fits, normalize, moveTo, step, resize, remove, add };
+})();
+const TILE_ICONS = {
+  wifi: "M3.2 9.2a12.5 12.5 0 0 1 17.6 0M6.3 12.4a8 8 0 0 1 11.4 0M9.4 15.6a3.6 3.6 0 0 1 5.2 0M12 19.2h.01",
+  bluetooth: "M7 7.5l10 9-5 4.5V3l5 4.5-10 9",
+  display: "M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8M12 2.8v2.2M12 19v2.2M2.8 12H5M19 12h2.2M5.5 5.5l1.6 1.6M16.9 16.9l1.6 1.6M5.5 18.5l1.6-1.6M16.9 7.1l1.6-1.6",
+  sound: "M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.4a8 8 0 0 1 0 11.2",
+  settings: "M4 7h8.5M16.5 7H20M4 17h3.5M11.5 17H20M14.5 5v4M9.5 15v4",
+  clock: "M12 3.5a8.5 8.5 0 1 0 0 17a8.5 8.5 0 1 0 0-17M12 7.5V12l3 2",
+  week: "M5.5 19.5v-5M10 19.5v-9M14.5 19.5v-7M19 19.5V6",
+  trophy: "M8 4.5h8v5a4 4 0 0 1-8 0zM8 6.5H5.5a2.5 2.5 0 0 0 2.6 4M16 6.5h2.5a2.5 2.5 0 0 1-2.6 4M12 13.5v3.5M8.5 19.5h7",
+  dice: "M8 4.5h8a3.5 3.5 0 0 1 3.5 3.5v8a3.5 3.5 0 0 1-3.5 3.5H8A3.5 3.5 0 0 1 4.5 16V8A3.5 3.5 0 0 1 8 4.5zM9 9h.01M12 12h.01M15 15h.01",
+  play: "M8.5 5.8v12.4a1 1 0 0 0 1.5.9l9.6-6.2a1 1 0 0 0 0-1.7L10 4.9a1 1 0 0 0-1.5.9z",
+  plus: "M12 6v12M6 12h12",
+};
+function tileIcon(id, size, color, sw = 1.8) { return lineSvg(`<path d="${TILE_ICONS[id] || TILE_ICONS.settings}"/>`, size, color, sw); }
+const SHORTCUT_NAMES = { wifi: "Wi-Fi", bluetooth: "Bluetooth", display: "Display", sound: "Sound", settings: "Android settings" };
+const KIND_NAMES = { app: "App", game: "Game", collection: "Collection", shortcut: "Shortcut", clock: "Clock", lastPlayed: "Last played", week: "This week", achievements: "Recent achievements", random: "Random game" };
+const RECENT_UNLOCKS = [["First Flight", "Paper Pilots", 5], ["Night Owl", "Night Market", 10], ["Green Thumb", "Garden Days", 25]];
+const boardCols = () => Math.max(2, Math.min(12, theme.layout.boardColumns || 6));
+const boardRows = () => Math.max(1, Math.min(6, theme.layout.boardRows || 3));
+/** The sample page: every kind of tile, six by three, full (as in the launcher's screenshot test). */
+function boardState() {
+  if (!mock.board) {
+    let id = 1; const t = (kind, ref = "", size = BOARD.sizesFor(kind)[0]) => ({ id: id++, kind, ref, size });
+    const coral = allGames().find((g) => g.title === "Coral Drift");
+    const tiles = [t("clock"), t("lastPlayed", "", "2x2"), t("week"), t("random"), t("shortcut", "wifi"), t("achievements", "", "2x1"),
+      t("collection", "c:1"), t("game", coral.key), t("app", "Music"), t("app", "Camera"), t("shortcut", "bluetooth")];
+    mock.board = { tiles: BOARD.normalize(tiles, 6, 3), nextId: id, random: allGames().find((g) => g.title === "Lumen Island").key, week: [45, 0, 80, 20, 130, 0, 0], today: 4 };
+  }
+  return mock.board;
+}
+const boardTiles = () => BOARD.normalize(boardState().tiles, boardCols(), boardRows());
+const boardTile = (id) => boardState().tiles.find((t) => t.id === id && t.kind !== "gap") || null;
+const sizeLabel = (s) => (s === "2x1" ? "2 × 1" : s === "2x2" ? "2 × 2" : "1 × 1");
+function tileGame(t) {
+  if (!t) return null;
+  if (t.kind === "game") return findAnyGame(t.ref);
+  if (t.kind === "random") return findAnyGame(boardState().random);
+  if (t.kind === "lastPlayed") return lastPlayed();
+  return null;
+}
+/** What a tile is called and what the caption says about it. */
+function tileInfo(t) {
+  const g = tileGame(t), col = t.kind === "collection" ? collections().find((c) => c.id === t.ref) : null;
+  const total = sum(boardState().week);
+  const title = g ? g.title : col ? col.name : t.kind === "app" ? t.ref : t.kind === "shortcut" ? SHORTCUT_NAMES[t.ref] || t.ref : KIND_NAMES[t.kind];
+  const widget = ["clock", "week", "achievements"].includes(t.kind);
+  const meta = g ? SYSTEMS[g.sys] : col ? `${col.games.length} games` : t.kind === "week" ? (total ? fmtMin(total) : "Nothing yet") : t.kind === "achievements" ? `${RECENT_UNLOCKS.length} lately` : "";
+  return { g, col, title, meta, label: widget ? "Widget" : KIND_NAMES[t.kind], color: g ? sysColor(g.sys) : theme.colors.accent };
+}
+function tileHints(t, info) {
+  const e = mock.boardEdit;
+  if (e && e.carrying === t.id) return [["D-pad", "Move"], ["Y", "Size"], ["A", "Drop"]];
+  if (e && e.sticky) return [["A", "Pick up"], ["Y", "Size"], ["B", "Done"]];
+  const h = [];
+  if (t.kind === "game" || t.kind === "lastPlayed") h.push(["A", "Play"], ["Y", "Emulator"], ["X", isPinned(info.g.key) ? "Unpin" : "Pin"]);
+  else if (t.kind === "random") h.push(["A", "Play"], ["Y", "Another"]);
+  else if (["app", "collection", "shortcut"].includes(t.kind)) h.push(["A", "Open"]);
+  h.push(["Hold A", "Arrange"], ["Select", "Menu"]);
+  return h;
+}
+/** A tile's face, drawn as the launcher draws it (BoardPage.kt). */
+function tileFaceHtml(t, p, w, h) {
+  const T = theme, ty = T.type, gt = css(T.glass.text), gm = css(T.glass.textMuted);
+  const title = (size, extra = "") => `font-family:${fontStack(ty.displayFont)};font-weight:${ty.tabWeight};font-size:${size}px;color:${gt};${extra}`;
+  const small = (size = 11) => `${labelStyle()};font-size:${size}px;color:${gm};white-space:nowrap;overflow:hidden;text-overflow:ellipsis`;
+  const ell = "white-space:nowrap;overflow:hidden;text-overflow:ellipsis";
+  const info = tileInfo(t);
+  const wide = p.w > p.h, big = p.h > 1;
+  const gameFace = (g, label, icon, played) => {
+    const color = sysColor(g.sys), rad = T.glass.radius;
+    const art = (cw, ch) => g.ratio != null ? coverHtml(g.title, g.sys, g.ratio, cw, ch, "cover") : `<div style="width:${cw}px;height:${ch}px;display:flex;align-items:center;justify-content:center;padding:10px;box-sizing:border-box;text-align:center;background:linear-gradient(135deg, ${mix(color, "#ffffff", 0.2)}, ${mix(color, "#000000", 0.45)});font-family:${fontStack(ty.bodyFont)};font-weight:${ty.tileTitleWeight};font-size:13px;color:#fff">${esc(g.title)}</div>`;
+    if (wide) return `<div style="position:absolute;inset:0;display:flex"><div style="position:relative;width:${h}px;height:${h}px;flex:none;overflow:hidden">${art(h, h)}${consoleMark(g.sys)}</div>
+      <div style="flex:1;min-width:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:3px">${label ? `<div style="${small()}">${esc(label)}</div>` : ""}<div style="${title(15)}display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(g.title)}</div>${played ? `<div style="${small()}">Played 3 h 12 min</div>` : ""}</div></div>${ringOverlay(color, rad)}`;
+    const meta = [label, played ? "Played 3 h 12 min" : null].filter(Boolean).join(" · ");
+    const panel = big ? `<div style="position:absolute;left:10px;right:10px;bottom:10px;padding:8px 12px;z-index:4;${glassCss(`border-radius:${Math.max(8, rad - 8)}px;`)}"><div style="${title(15, ell)}">${esc(g.title)}</div>${meta ? `<div style="${small()}">${esc(meta)}</div>` : ""}</div>`
+      : label ? `<span style="position:absolute;left:7px;top:7px;z-index:4;display:inline-flex;align-items:center;gap:4px;padding:3px 7px;border-radius:99px;background:${css(T.colors.hintBadge)};color:${css(T.colors.hintBadgeText)};font:800 10px/1.2 ${fontStack(ty.bodyFont)}">${icon ? tileIcon(icon, 12, css(T.colors.hintBadgeText), 2.4) : ""}${esc(label)}</span>` : "";
+    return `<div style="position:absolute;inset:0;display:flex">${art(w, h)}</div>${ringOverlay(color, rad)}${consoleMark(g.sys)}${panel}`;
+  };
+  switch (t.kind) {
+    case "app": {
+      const a = APPS.find((x) => x[0] === t.ref), icon = (s) => `<div style="width:${s}px;height:${s}px;border-radius:${Math.round(s * 0.3)}px;background:${a ? a[1] : "#888"};flex:none"></div>`;
+      if (!a) return `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;${small()}">App not installed</div>`;
+      return wide ? `<div style="position:absolute;inset:0;display:flex;align-items:center;gap:14px;padding:0 16px">${icon(52)}<div style="min-width:0"><div style="${title(15, ell)}">${esc(a[0])}</div><div style="${small(12)}">App</div></div></div>`
+        : `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:0 8px">${icon(46)}<span style="font-family:${fontStack(ty.bodyFont)};font-weight:700;font-size:12px;color:${gt};${ell};max-width:100%">${esc(a[0])}</span></div>`;
+    }
+    case "game": return info.g ? gameFace(info.g, null) : `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;${small()}">Game not found</div>`;
+    case "random": return gameFace(info.g, "Random", "dice");
+    case "lastPlayed": return gameFace(info.g, "Last played", null, true);
+    case "collection": {
+      const c = info.col; if (!c) return `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;${small()}">Collection not found</div>`;
+      if (wide) return `<div style="position:absolute;inset:0;display:flex"><div style="width:${h}px;height:${h}px;flex:none;overflow:hidden">${mosaicHtml(c.games, h, h)}</div><div style="flex:1;min-width:0;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;gap:3px"><div style="${small()}">Collection</div><div style="${title(15)}display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${esc(c.name)}</div><div style="${small()}">${c.games.length} games</div></div></div>`;
+      const nameH = big ? 46 : 30;
+      return `<div style="position:absolute;inset:0;display:flex;flex-direction:column">${mosaicHtml(c.games, w, h - nameH)}<div style="padding:6px 10px"><div style="${title(p.w > 1 ? 14 : 12, ell)}">${esc(c.name)}</div>${big ? `<div style="${small()}">${c.games.length} games</div>` : ""}</div></div>`;
+    }
+    case "shortcut": {
+      const name = SHORTCUT_NAMES[t.ref] || t.ref, detail = t.ref === "settings" ? "Everything else" : "Android settings";
+      return wide ? `<div style="position:absolute;inset:0;display:flex;align-items:center;gap:14px;padding:0 16px">${tileIcon(t.ref, 32, gt)}<div style="min-width:0"><div style="${title(15, ell)}">${esc(name)}</div><div style="${small(12)}">${esc(detail)}</div></div></div>`
+        : `<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px">${tileIcon(t.ref, 30, gt)}<span style="font-family:${fontStack(ty.bodyFont)};font-weight:700;font-size:12px;color:${gt}">${esc(name)}</span></div>`;
+    }
+    case "clock": {
+      const d = new Date(), time = T.header.clock24h ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false }) : d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", hour12: true }).replace(/\s?[AP]M$/i, "");
+      const ampm = T.header.clock24h ? "" : (d.getHours() < 12 ? "AM" : "PM"), size = big ? 52 : p.w > 1 ? 36 : 24;
+      const date = d.toLocaleDateString([], big ? { weekday: "long", day: "numeric", month: "long" } : { weekday: "short", day: "numeric", month: "short" });
+      return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;padding:10px 16px"><div style="display:flex;align-items:baseline;gap:6px"><span style="${title(size)}font-weight:${ty.wordmarkWeight};line-height:1">${esc(time)}</span>${ampm && p.w > 1 ? `<span style="${small(13)}">${ampm}</span>` : ""}</div>${p.w > 1 ? `<div style="${small(13)};margin-top:6px">${esc(date)}</div>` : ""}</div>`;
+    }
+    case "week": {
+      const b = boardState(), days = b.week, most = Math.max(30, ...days), total = sum(days), totalText = total ? fmtMin(total) : "Nothing yet";
+      const letters = ["M", "T", "W", "T", "F", "S", "S"];
+      const bars = (letter) => `<div style="flex:1;display:flex;align-items:flex-end;gap:${big ? 8 : 5}px;min-height:0">${days.map((m, i) => `<div style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center"><div style="width:100%;height:${Math.max(4, Math.round(100 * m / most))}%;border-radius:3px;background:${i === b.today ? gt : `rgba(${rgb(T.glass.text)},.22)`}"></div>${letter ? `<span style="${small(10)};margin-top:4px;${i === b.today ? `color:${gt}` : ""}">${letters[i]}</span>` : ""}</div>`).join("")}</div>`;
+      if (p.w === 1) return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;gap:6px;padding:12px"><div style="${small()}">This week</div><div style="${title(14, ell)}">${esc(totalText)}</div>${bars(false)}</div>`;
+      if (!big) return `<div style="position:absolute;inset:0;display:flex;gap:12px;padding:12px 16px"><div style="flex:1.25;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px"><div style="${small()}">This week</div><div style="${title(17, ell)}">${esc(totalText)}</div></div><div style="flex:1;display:flex">${bars(false)}</div></div>`;
+      return `<div style="position:absolute;inset:0;display:flex;flex-direction:column;gap:4px;padding:16px"><div style="${small(12)}">This week</div><div style="${title(22, ell)}">${esc(totalText)}</div><div style="height:6px"></div>${bars(true)}</div>`;
+    }
+    case "achievements": {
+      const badge = (s) => `<div style="width:${s}px;height:${s}px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(${rgb(T.glass.text)},.08)">${tileIcon("trophy", Math.round(s * 0.55), gm)}</div>`;
+      const row = ([name, game, pts], s, label) => `<div style="display:flex;align-items:center;gap:10px">${badge(s)}<div style="min-width:0">${label ? `<div style="${small()}">${label}</div>` : ""}<div style="${title(13, ell)}">${esc(name)}</div><div style="${small()}">${esc(game)} · ${pts} pts</div></div></div>`;
+      if (p.w === 1) return `<div style="position:absolute;inset:0;padding:12px 14px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;align-items:center;gap:6px">${tileIcon("trophy", 16, gm)}<span style="${small()}">Unlocks</span></div><div style="${title(24)}">${RECENT_UNLOCKS.length}</div></div>`;
+      if (!big) return `<div style="position:absolute;inset:0;padding:12px 14px;display:flex;flex-direction:column;justify-content:center">${row(RECENT_UNLOCKS[0], 40, "Latest achievement")}</div>`;
+      return `<div style="position:absolute;inset:0;padding:12px 14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:6px">${tileIcon("trophy", 16, gm)}<span style="${small()}">Recent achievements</span></div>${RECENT_UNLOCKS.map((u) => row(u, 36)).join("")}</div>`;
+    }
+  }
+  return "";
+}
+/** The page below Home: tiles on a grid that fills the page; "+" in the empty cells while arranging. */
+function boardHtml(next, W, H) {
+  const T = theme, cols = boardCols(), rows = boardRows(), gap = T.spacing.tileGap, rad = T.glass.radius;
+  const tiles = boardTiles(), placed = BOARD.layout(tiles, cols, rows), e = mock.boardEdit;
+  const cw = (W - (cols - 1) * gap) / cols, ch = (H - (rows - 1) * gap) / rows;
+  const X = (c) => c * (cw + gap), Y = (r) => r * (ch + gap), Wd = (n) => n * cw + (n - 1) * gap, Ht = (n) => n * ch + (n - 1) * gap;
+  const dashed = (alpha) => `<div style="position:absolute;inset:2px;border:1.6px dashed rgba(${rgb(T.glass.text)},${alpha});border-radius:${Math.max(0, rad - 2)}px;z-index:5;pointer-events:none"></div>`;
+  if (!placed.length && !(e && e.sticky)) {
+    const inner = `<div style="position:absolute;inset:0;display:flex;align-items:center;gap:14px;padding:0 20px;z-index:3"><span style="width:40px;height:40px;border-radius:99px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:${css(T.colors.hintBadge)}">${tileIcon("plus", 22, css(T.colors.hintBadgeText), 2.4)}</span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-family:${fontStack(T.type.displayFont)};font-weight:${T.type.tabWeight};font-size:${T.type.tileTitleSize}px;color:${css(T.glass.text)}">Add tiles to this page</span><span style="${labelStyle()};color:${css(T.glass.textMuted)}">Apps, games, collections, widgets and shortcuts. Press A.</span></span></div>${edgeOverlay(rad)}`;
+    return focusableHtml({ w: Math.round(Wd(Math.min(3, cols))), h: Math.round(Ht(1)), rad, idx: next(), data: `data-cell="-1,-1" data-c="0" data-r="0" data-w="1" data-h="1"`, inner, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() });
+  }
+  let out = "";
+  const plus = e && e.sticky ? BOARD.freeCells(tiles, cols, rows) : [];
+  for (const [c, r] of plus) {
+    const inner = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:3">${tileIcon("plus", 26, css(T.glass.textMuted), 2)}</div>${dashed(0.35)}`;
+    out += `<div class="b-cell" data-key="cell:${c},${r}" style="position:absolute;left:${X(c)}px;top:${Y(r)}px">${focusableHtml({ w: Math.round(Wd(1)), h: Math.round(Ht(1)), rad, idx: next(), data: `data-cell="${c},${r}" data-c="${c}" data-r="${r}" data-w="1" data-h="1"`, inner, elevated: false, fill: `${glassHex().slice(0, 1)}${Math.round(parseInt(glassHex().slice(1, 3), 16) * 0.35).toString(16).padStart(2, "0")}${glassHex().slice(3)}`, fillFocused: `${glassHex().slice(0, 1)}${Math.round(parseInt(glassHex().slice(1, 3), 16) * 0.6).toString(16).padStart(2, "0")}${glassHex().slice(3)}` })}</div>`;
+  }
+  // The carried tile last, so it is drawn over the others.
+  for (const p of placed.slice().sort((a, b) => (a.tile.id === e?.carrying) - (b.tile.id === e?.carrying))) {
+    const t = p.tile, w = Math.round(Wd(p.w)), h = Math.round(Ht(p.h)), carried = e && e.carrying === t.id;
+    const inner = `<div style="position:absolute;inset:0;overflow:hidden;border-radius:${rad}px">${tileFaceHtml(t, p, w, h)}</div>${e && e.sticky && !carried ? dashed(0.45) : ""}${edgeOverlay(rad)}`;
+    out += `<div class="b-cell" data-key="board:${t.id}" style="position:absolute;left:${X(p.col)}px;top:${Y(p.row)}px;${carried ? "z-index:6" : ""}"><div class="b-lift${carried ? " carried" : ""}">${focusableHtml({ w, h, rad, idx: next(), data: `data-tile="${t.id}" data-c="${p.col}" data-r="${p.row}" data-w="${p.w}" data-h="${p.h}"`, inner, fill: glassHex(), fillFocused: glassHex(), surface: glassBlur() })}</div></div>`;
+  }
+  return `<div style="position:relative;width:${W}px;height:${H}px">${out}</div>`;
+}
+/** Which page of Home an element is on: 0 Home, 1 the page below; -1 for the dock and the header. */
+function pageOf(el) { const p = el && el.closest(".m-page"); return p ? Number(p.dataset.page) : -1; }
+/** The neighbour on the page below Home, by cells (null at its edge), as boardNeighbour() in BoardPage.kt. */
+function boardNeighbourEl(cur, dir) {
+  const item = (el) => ({ el, col: +el.dataset.c, row: +el.dataset.r, w: +el.dataset.w, h: +el.dataset.h });
+  const items = focusables.filter((el) => pageOf(el) === 1 && (el.dataset.tile || el.dataset.cell)).map(item), from = item(cur);
+  const rowsO = (b) => Math.min(from.row + from.h, b.row + b.h) - Math.max(from.row, b.row), colsO = (b) => Math.min(from.col + from.w, b.col + b.w) - Math.max(from.col, b.col);
+  const others = items.filter((b) => b.el !== cur);
+  const pick = (list, ...keys) => list.slice().sort((a, b) => { for (const k of keys) { const d = k(a) - k(b); if (d) return d; } return 0; })[0] || null;
+  let r = null;
+  if (dir === "right") r = pick(others.filter((b) => b.col >= from.col + from.w && rowsO(b) > 0), (b) => b.col, (b) => -rowsO(b), (b) => b.row);
+  else if (dir === "left") r = pick(others.filter((b) => b.col + b.w <= from.col && rowsO(b) > 0), (b) => -(b.col + b.w), (b) => -rowsO(b), (b) => b.row);
+  else if (dir === "down") { const below = others.filter((b) => b.row >= from.row + from.h); r = pick(below.filter((b) => colsO(b) > 0), (b) => b.row, (b) => -colsO(b), (b) => b.col) || pick(below, (b) => b.row, (b) => Math.abs(b.col - from.col)); }
+  else { const above = others.filter((b) => b.row + b.h <= from.row); r = pick(above.filter((b) => colsO(b) > 0), (b) => -(b.row + b.h), (b) => -colsO(b), (b) => b.col) || pick(above, (b) => -(b.row + b.h), (b) => Math.abs(b.col - from.col)); }
+  return r ? r.el : null;
+}
+/** Slides Home and the page below to [page]: the other page isn't shown at rest; while sliding nothing shows past the body. */
+function showPage(page, instant) {
+  const from = mock.page || 0; mock.page = page;
+  const pages = document.getElementById("mPages"); if (!pages) return;
+  const stepPx = Number(pages.dataset.step), body = pages.parentElement;
+  const ms = instant || theme.motion.reduceMotion || !$("#previewMotion").checked ? 0 : Math.max(0, theme.motion.pageSlideMs);
+  const settle = () => { pages.querySelectorAll(".m-page").forEach((p) => (p.style.visibility = Number(p.dataset.page) === mock.page ? "" : "hidden")); body.style.clipPath = ""; };
+  document.querySelectorAll("#topScreen .m-dot").forEach((d) => (d.style.opacity = Number(d.dataset.page) === page ? 0.72 : 0.22));
+  clearTimeout(showPage.t);
+  if (from === page || ms === 0) { pages.style.transition = "none"; pages.style.transform = `translateY(${-page * stepPx}px)`; settle(); return; }
+  pages.querySelectorAll(".m-page").forEach((p) => (p.style.visibility = ""));
+  body.style.clipPath = `inset(-8px -${theme.spacing.screenPadding}px)`;
+  pages.style.transition = `transform ${ms}ms cubic-bezier(.22,1,.36,1)`;
+  pages.style.transform = `translateY(${-page * stepPx}px)`;
+  showPage.t = setTimeout(settle, ms + 40);
+}
+/** Down from Home's bottom row, Up from the top of the page below (or B there): back where focus was, if above or below; else the nearest. */
+function crossTo(page, from, dir, anyLast) {
+  const onPage = focusables.filter((el) => pageOf(el) === page);
+  if (!onPage.length) return false;
+  const a = from.getBoundingClientRect(), last = mock.lastOnPage?.[page];
+  let target = last ? onPage.find((el) => keyOf(el) === last) : null;
+  if (target && !anyLast) { const b = target.getBoundingClientRect(); if (Math.min(a.right, b.right) - Math.max(a.left, b.left) < 1) target = null; }
+  target = target || nearestEl(from, dir, (el) => pageOf(el) === page) || onPage[0];
+  showPage(page);
+  setFocus(focusables.indexOf(target), true);
+  return true;
+}
+function nearestEl(cur, dir, accept) {
+  const a = cur.getBoundingClientRect(), ax = a.left + a.width / 2, ay = a.top + a.height / 2;
+  let best = null, bestScore = Infinity;
+  for (const el of focusables) {
+    if (el === cur || !accept(el)) continue;
+    const b = el.getBoundingClientRect(), dx = b.left + b.width / 2 - ax, dy = b.top + b.height / 2 - ay;
+    const [main, cross] = dir === "right" ? [dx, dy] : dir === "left" ? [-dx, dy] : dir === "down" ? [dy, dx] : [-dy, dx];
+    // Past the focused element's middle by its edge: a lifted, grown tile isn't "above" its own row.
+    const past = dir === "down" ? b.top >= ay : dir === "up" ? b.bottom <= ay : dir === "right" ? b.left >= ax : b.right <= ax;
+    if (main <= 4 || !past) continue;
+    const overlap = dir === "left" || dir === "right" ? !(b.bottom < a.top || b.top > a.bottom) : !(b.right < a.left || b.left > a.right);
+    const score = (overlap ? 0 : 100000) + main + 2 * Math.abs(cross);
+    if (score < bestScore) { bestScore = score; best = el; }
+  }
+  return best;
+}
+// Arranging: hold A (or Select → Move) picks a tile up; the D-pad carries it; Y changes its size; A or B puts it down.
+function pickUp(id, sticky) { mock.boardEdit = { sticky: sticky || !!mock.boardEdit?.sticky, carrying: id }; mock.focus = `board:${id}`; playSound("select"); renderAll(); }
+function dropTile(sound = "select") { const e = mock.boardEdit; if (!e) return; playSound(sound); mock.boardEdit = e.sticky ? { sticky: true, carrying: null } : null; renderAll(); }
+function boardStepDir(dir) {
+  const b = boardState(), id = mock.boardEdit.carrying, [dx, dy] = { left: [-1, 0], right: [1, 0], up: [0, -1], down: [0, 1] }[dir];
+  const next = BOARD.step(boardTiles(), id, dx, dy, boardCols(), boardRows());
+  if (!next) { playSound("bump"); return; }
+  b.tiles = next; playSound("move"); renderAll();
+}
+function resizeTile(id) {
+  const b = boardState(), before = boardTiles(), next = BOARD.resize(before, id, boardCols(), boardRows());
+  if (JSON.stringify(next) === JSON.stringify(before)) { playSound("bump"); return false; }
+  b.tiles = next; playSound("select"); renderAll(); return true;
+}
+function removeTile(id) {
+  const b = boardState(), placed = BOARD.layout(boardTiles(), boardCols(), boardRows()), gone = placed.find((p) => p.tile.id === id); if (!gone) return;
+  b.tiles = BOARD.remove(boardTiles(), id, boardCols(), boardRows());
+  const rest = BOARD.layout(b.tiles, boardCols(), boardRows());
+  const near = rest.slice().sort((p, q) => (Math.abs(p.col - gone.col) + 2 * Math.abs(p.row - gone.row)) - (Math.abs(q.col - gone.col) + 2 * Math.abs(q.row - gone.row)))[0];
+  mock.focus = mock.boardEdit?.sticky ? `cell:${gone.col},${gone.row}` : near ? `board:${near.tile.id}` : "hero";
+  mock.savedFocus = mock.focus; playSound("back"); renderAll();
+}
+const ADD_CATS = [["apps", "Apps"], ["games", "Games"], ["collections", "Collections"], ["widgets", "Widgets"], ["shortcuts", "Shortcuts"]];
+function addEntries(cat) {
+  if (cat === "apps") return APPS.map(([n]) => ({ kind: "app", ref: n, label: n }));
+  if (cat === "games") return allGames().sort((a, b) => a.title.localeCompare(b.title)).map((g) => ({ kind: "game", ref: g.key, label: g.title, detail: SYSTEMS[g.sys] }));
+  if (cat === "collections") return collections().map((c) => ({ kind: "collection", ref: c.id, label: c.name, detail: `${c.games.length} games${c.suggested ? " · suggested" : ""}` }));
+  if (cat === "widgets") return [["clock", "Clock", "Time and date", "clock"], ["lastPlayed", "Last played", "Jump back in", "play"], ["week", "This week", "Play time per day", "week"], ["achievements", "Recent achievements", "RetroAchievements", "trophy"], ["random", "Random game", "Y for another", "dice"]].map(([kind, label, detail, icon]) => ({ kind, ref: "", label, detail, icon }));
+  return Object.keys(SHORTCUT_NAMES).map((r) => ({ kind: "shortcut", ref: r, label: SHORTCUT_NAMES[r], detail: r === "settings" ? null : "Android settings", icon: r }));
+}
+function openAddPicker(target) { mock.menu = null; mock.addPicker = { target, category: null }; mock.focus = "addcat:apps"; playSound("select"); renderAll(); }
+function addTile(entry) {
+  const b = boardState(), tg = mock.addPicker.target;
+  const next = BOARD.add(boardTiles(), b.nextId, entry.kind, entry.ref, boardCols(), boardRows(), tg.before ?? null, tg.at || null);
+  mock.addPicker = null;
+  if (!next) { mock.focus = mock.savedFocus; playSound("error"); mock.message = "There's no room on this page. Remove a tile or make one smaller first."; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2600); return; }
+  b.tiles = next; mock.focus = `board:${b.nextId}`; b.nextId++; playSound("select"); renderAll();
+}
 function renderHeroTop() {
   const t = theme, L = t.layout, pad = t.spacing.screenPadding, gap = t.spacing.tileGap, innerW = 833 - 2 * pad;
   let n = 0; const next = () => n++;
@@ -1784,7 +2167,13 @@ function renderHeroTop() {
     const fit = Math.max(1, Math.floor((innerW + pad - rR + gap) / (size + gap))), windowW = fit * (size + gap) - gap;
     const pinCard = `<div class="pin-card" style="height:${size}px;${glassCss(`border-radius:${t.glass.radius}px;`)}"><span style="width:40px;height:40px;border-radius:99px;flex:none;display:inline-flex;align-items:center;justify-content:center;background:${css(t.hints.colorX)};color:${css(t.colors.hintBadgeText)};font-family:${fontStack(t.type.bodyFont)};font-weight:800;font-size:17px">X</span><span style="display:flex;flex-direction:column;gap:3px"><span style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tileTitleSize}px;color:${css(t.glass.text)};white-space:nowrap">Pin your games here</span><span style="${labelStyle()};color:${css(t.glass.textMuted)};white-space:nowrap">Press X on any game to add it to this row.</span></span></div>`;
     const row = !L.showRecent ? "" : pins.length ? `<div class="m-row" style="margin:${-rR}px 0"><div class="m-track" data-shelf="pins" data-view="${windowW}" data-whole="1" style="gap:${gap}px;padding:${rR}px 0">${pins.map((g) => artTileHtml(g, size, next())).join("")}</div></div>` : pinCard;
-    body = `<div style="display:flex;flex-direction:column;gap:${gap}px"><div style="display:flex;gap:${gap}px;align-items:flex-start">${hero}${grid}</div>${row}</div>`;
+    const home = `<div style="display:flex;flex-direction:column;gap:${gap}px"><div style="display:flex;gap:${gap}px;align-items:flex-start">${hero}${grid}</div>${row}</div>`;
+    // Home and the page below it, one whole page each (Down from the bottom row slides them).
+    const bodyH = mock.bodyH || 330, stepPx = bodyH + 32, page = mock.page || 0;
+    const dots = L.pageDots ? `<div class="m-dots" style="right:${-Math.round((pad + 6) / 2) - 3}px">${[0, 1].map((i) => `<span class="m-dot" data-page="${i}" style="background:${css(t.colors.text)};opacity:${i === page ? 0.72 : 0.22}"></span>`).join("")}</div>` : "";
+    body = `<div id="mPages" data-step="${stepPx}" style="position:absolute;left:0;right:0;top:0;height:${bodyH}px;transform:translateY(${-page * stepPx}px)">
+      <div class="m-page" data-page="0" style="position:absolute;left:0;right:0;top:0;height:${bodyH}px;${page === 0 ? "" : "visibility:hidden"}">${home}</div>
+      <div class="m-page" data-page="1" style="position:absolute;left:0;right:0;top:${stepPx}px;height:${bodyH}px;${page === 1 ? "" : "visibility:hidden"}">${boardHtml(next, innerW, bodyH)}</div></div>${dots}`;
   } else if (mock.section === "games") {
     body = systemViewHtml(next, room);
   } else if (mock.section === "apps") {
@@ -1813,16 +2202,25 @@ function renderHeroTop() {
 }
 // ---- Popups: the Select menu and the settings (0.6.0) ----
 const SETTINGS_PAGES = [["theme", "Theme"], ["sounds", "Sounds"], ["art", "Box art"], ["ra", "RetroAchievements"], ["report", "Report"]];
-function popupRowHtml(idx, data, label, button, w, selected) {
+function popupRowHtml(idx, data, label, button, w, selected, detail, icon) {
   const t = theme, text = String(t.glass.text).replace("#", "").slice(-6);
   const badge = button ? `<i style="margin-left:auto;font-style:normal;height:22px;min-width:22px;padding:0 7px;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;border-radius:${button.length === 1 ? 11 : 7}px;background:${css(t.colors.hintBadge)};color:${css(t.colors.hintBadgeText)};${labelStyle()}">${esc(button)}</i>` : "";
-  const inner = `<div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 14px;font-family:${fontStack(t.type.bodyFont)};font-weight:${selected ? 700 : 600};font-size:15px;color:${css(t.glass.text)};z-index:3"><span>${esc(label)}</span>${badge}</div>`;
+  const more = detail ? `<span style="margin-left:auto;padding-left:10px;${labelStyle()};color:${css(t.glass.textMuted)};white-space:nowrap">${esc(detail)}</span>` : "";
+  const lead = icon ? `<span style="display:inline-flex;margin-right:10px">${icon}</span>` : "";
+  const inner = `<div style="position:absolute;inset:0;display:flex;align-items:center;padding:0 14px;font-family:${fontStack(t.type.bodyFont)};font-weight:${selected ? 700 : 600};font-size:15px;color:${css(t.glass.text)};z-index:3">${lead}<span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(label)}</span>${more}${badge}</div>`;
   return focusableHtml({ w, h: 44, rad: 14, idx, data, inner, elevated: false, ring: false, grow: false, fill: selected ? `#14${text}` : "#00000000", fillFocused: `#24${text}` });
 }
 function popupHtml() {
   const t = theme, scrim = `background:rgba(0,0,0,${t.colors.background && isDark() ? 0.55 : 0.4})`;
   const titleHtml = (title, sub) => `<div style="padding:0 6px 10px"><div style="font-family:${fontStack(t.type.displayFont)};font-weight:${t.type.tabWeight};font-size:${t.type.tileTitleSize + 2}px;color:${css(t.glass.text)}">${esc(title)}</div>${sub ? `<div style="${labelStyle()};color:${css(t.glass.textMuted)}">${esc(sub)}</div>` : ""}</div>`;
   let n = 1000;
+  if (mock.addPicker) {
+    const ap = mock.addPicker, pop = (title, sub, rows) => `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:440px">${titleHtml(title, sub)}${rows}</div></div>`;
+    if (!ap.category) return pop("Add a tile", "Below Home", ADD_CATS.map(([id, label]) => popupRowHtml(n++, `data-addcat="${id}"`, `${label}…`, null, 404, false, id === "widgets" || id === "shortcuts" ? null : String(addEntries(id).length))).join(""));
+    const list = addEntries(ap.category), gt = css(t.glass.text);
+    const icon = (e) => e.kind === "app" ? `<span style="width:26px;height:26px;border-radius:8px;background:${(APPS.find((a) => a[0] === e.ref) || [])[1]}"></span>` : e.icon ? tileIcon(e.icon, 22, gt) : "";
+    return pop(ADD_CATS.find((c) => c[0] === ap.category)[1], "B to go back", `<div class="m-popup-list" style="display:flex;flex-direction:column;gap:4px;max-height:272px;overflow:hidden">${list.map((e, i) => popupRowHtml(n++, `data-additem="${i}"`, e.label, null, 404, false, e.detail, icon(e))).join("")}</div>`);
+  }
   if (mock.menu) {
     const m = mock.menu, rows = m.items.map((it, i) => (it.line ? `<div class="m-line" style="background:rgba(${rgb(t.glass.text)},.12)"></div>` : "") + popupRowHtml(n++, `data-menu="${i}"`, it.label, it.button, 344, false)).join("");
     return `<div class="m-scrim" style="${scrim}"><div class="m-popup" style="${glassCss(`border-radius:${Math.min(28, t.shape.dialogRadius)}px;`)}width:380px">${titleHtml(m.title, m.sub)}${rows}</div></div>`;
@@ -1844,7 +2242,32 @@ function openMenu() {
   const key = el ? keyOf(el) : null;
   const game = el?.dataset.game ? findAnyGame(el.dataset.game) : el?.dataset.hero ? findAnyGame(el.dataset.hero) : null;
   const col = el?.dataset.col ? collections().find((c) => c.id === el.dataset.col) : null;
+  const tile = el?.dataset.tile ? boardTile(Number(el.dataset.tile)) : null;
   const items = [];
+  if (tile) {
+    const t = tile, g = tileGame(t), info = tileInfo(t);
+    if (g) {
+      items.push({ label: isPinned(g.key) ? "Unpin from Home" : "Pin to Home", button: "X", run: () => { closePopups(); togglePin(); } });
+      items.push({ label: "Add to collection…", run: () => { closePopups(); toast("On the Thor this lists your collections and New collection…"); } });
+      items.push({ label: "Emulator…", button: t.kind === "random" ? null : "Y", run: () => { closePopups(); toast("Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"); } });
+      if (t.kind === "random") items.push({ label: "Another game", button: "Y", run: () => { shuffleRandom(); mock.menu.title = tileInfo(t).title; renderAll(); } });
+    } else if (["app", "collection", "shortcut"].includes(t.kind)) items.push({ label: "Open", button: "A", run: () => { closePopups(); activate(); } });
+    else if (t.kind === "achievements") items.push({ label: "RetroAchievements settings", run: () => { mock.menu = null; mock.settings = "ra"; openSettings(true); } });
+    items.push({ label: "Move", line: items.length > 0, run: () => { mock.menu = null; mock.settings = null; pickUp(t.id, false); } });
+    if (BOARD.sizesFor(t.kind).length > 1) { const it = { label: `Size: ${sizeLabel(t.size)}`, run: () => { resizeTile(t.id); it.label = `Size: ${sizeLabel(boardTile(t.id).size)}`; mock.menu.sub = `Tile below Home · ${sizeLabel(boardTile(t.id).size)}`; renderAll(); } }; items.push(it); }
+    items.push({ label: "Remove", run: () => { mock.menu = null; removeTile(t.id); } });
+    items.push({ label: "Add a tile here…", run: () => openAddPicker({ before: t.id }) });
+    items.push({ label: "Wii-S settings", button: "Start", line: true, run: () => { mock.menu = null; openSettings(true); } });
+    mock.savedFocus = key; mock.menu = { title: info.title, sub: `Tile below Home · ${sizeLabel(t.size)}`, items }; mock.focus = "menu:0";
+    playSound("select"); renderAll(); return;
+  }
+  if (el?.dataset.cell) {
+    const [c, r] = el.dataset.cell.split(",").map(Number);
+    items.push({ label: "Add a tile here…", button: "A", run: () => openAddPicker(c < 0 ? {} : { at: [c, r] }) });
+    items.push({ label: "Wii-S settings", button: "Start", line: true, run: () => { mock.menu = null; openSettings(true); } });
+    mock.savedFocus = key; mock.menu = { title: "Empty space", sub: "Below Home", items }; mock.focus = "menu:0";
+    playSound("select"); renderAll(); return;
+  }
   if (game) {
     items.push({ label: isPinned(game.key) ? "Unpin from Home" : "Pin to Home", button: "X", run: () => { closePopups(); togglePin(); } });
     items.push({ label: "Add to collection…", run: () => { closePopups(); toast("On the Thor this lists your collections and New collection…"); } });
@@ -1871,7 +2294,8 @@ function openSettings(keepSaved) {
   mock.menu = null; mock.settings = mock.settings || "theme"; mock.focus = `setcat:${mock.settings}`;
   playSound("select"); renderAll();
 }
-function closePopups() { mock.menu = null; mock.settings = null; mock.focus = mock.savedFocus; renderAll(); }
+function closePopups() { mock.menu = null; mock.settings = null; mock.addPicker = null; mock.focus = mock.savedFocus; renderAll(); }
+function shuffleRandom() { const all = allGames(), b = boardState(), others = all.filter((g) => g.key !== b.random); b.random = others[Math.floor(Math.random() * others.length)].key; playSound("select"); }
 function renderDockBottom() {
   const t = theme, c = t.companion, sub = currentSubject();
   let art = "";
@@ -1901,7 +2325,20 @@ function twoRowCover(avail) {
 }
 function renderAll() {
   const anim = mock.animate;
+  const before = new Map(); document.querySelectorAll("#topScreen .b-cell").forEach((c) => before.set(c.dataset.key, c.getBoundingClientRect()));
   renderTop();
+  const mb = document.querySelector("#topScreen .m-body");
+  if (mb && document.getElementById("mPages")) { const h = Math.round(mb.clientHeight); if (h > 0 && h !== mock.bodyH) { mock.bodyH = h; mock.animate = anim; renderTop(); } }
+  if ($("#previewMotion").checked && !theme.motion.reduceMotion && before.size) {
+    const scale = ($("#topScreen").getBoundingClientRect().width || 833) / 833, ms = Math.round(theme.motion.pageSlideMs * 0.6);
+    document.querySelectorAll("#topScreen .b-cell").forEach((c) => {
+      const b = before.get(c.dataset.key); if (!b) return;
+      const a = c.getBoundingClientRect(), dx = (b.left - a.left) / scale, dy = (b.top - a.top) / scale;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      c.style.transition = "none"; c.style.transform = `translate(${dx}px,${dy}px)`; c.offsetWidth;
+      c.style.transition = `transform ${ms}ms cubic-bezier(.22,1,.36,1)`; c.style.transform = "";
+    });
+  }
   const sv = document.getElementById("sysView");
   if (sv) { const want = twoRowCover(sv.clientHeight - 36); if (want !== mock.coverSize) { mock.coverSize = want; mock.animate = anim; renderTop(); } }
   bindFocusables();
@@ -1929,7 +2366,7 @@ function restoreFocus() {
   else { let i = focusables.findIndex((el) => el.dataset.hero); if (i < 0) i = focusables.findIndex((el) => el.dataset.game); if (i >= 0) target = i; }
   setFocus(target, false, true);
 }
-function keyOf(el) { return el.dataset.hero ? "hero" : el.dataset.system ? `sys:${el.dataset.system}` : el.dataset.col ? `col:${el.dataset.col}` : el.dataset.menu ? `menu:${el.dataset.menu}` : el.dataset.setcat ? `setcat:${el.dataset.setcat}` : el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
+function keyOf(el) { return el.dataset.tile ? `board:${el.dataset.tile}` : el.dataset.cell ? `cell:${el.dataset.cell}` : el.dataset.addcat ? `addcat:${el.dataset.addcat}` : el.dataset.additem ? `additem:${el.dataset.additem}` : el.dataset.hero ? "hero" : el.dataset.system ? `sys:${el.dataset.system}` : el.dataset.col ? `col:${el.dataset.col}` : el.dataset.menu ? `menu:${el.dataset.menu}` : el.dataset.setcat ? `setcat:${el.dataset.setcat}` : el.dataset.game || el.dataset.app || el.dataset.tab || el.dataset.sys; }
 function setFocus(i, sound, instant) {
   const prev = focusables[focusIdx];
   focusIdx = i;
@@ -1943,10 +2380,15 @@ function setFocus(i, sound, instant) {
     springs.set(f, s);
   }
   if (sound && prev !== el) playSound("move");
+  const pg = pageOf(el);
+  if (pg >= 0) { mock.lastOnPage = mock.lastOnPage || {}; mock.lastOnPage[pg] = mock.focus; if (pg !== (mock.page || 0)) showPage(pg, instant); }
+  if (mock.boardEdit && pg !== 1 && !mock.menu && !mock.addPicker && !mock.settings) { mock.boardEdit = null; scheduleRender(); }
+  const list = el.closest(".m-popup-list"); if (list) { const top = el.offsetTop - list.offsetTop, bottom = top + el.offsetHeight; if (top < list.scrollTop) list.scrollTop = top; else if (bottom > list.scrollTop + list.clientHeight) list.scrollTop = bottom - list.clientHeight; }
   // bottom screen follows focus
-  const game = el.dataset.game ? findGame(el.dataset.game) : el.dataset.hero ? findGame(el.dataset.hero) : null;
+  const tile = el.dataset.tile ? boardTile(Number(el.dataset.tile)) : null;
+  const game = el.dataset.game ? findGame(el.dataset.game) : el.dataset.hero ? findGame(el.dataset.hero) : tile ? tileGame(tile) : null;
   const app = el.dataset.app ? APPS.find((a) => a[0] === el.dataset.app) : null;
-  mock.focusSystem = el.dataset.system || (game || app ? null : mock.focusSystem);
+  mock.focusSystem = el.dataset.system || (tile && ["week", "achievements"].includes(tile.kind) ? "all" : null) || (game || app || tile ? null : mock.focusSystem);
   if (game || app || el.dataset.system || !mock.focusGame) { mock.focusGame = game; mock.focusApp = app; }
   scrollIntoView(el, instant);
   updateHeroChrome();
@@ -2089,8 +2531,29 @@ function gridStep(cur, dir) {
 }
 function navigate(dir) {
   const cur = focusables[focusIdx]; if (!cur) return;
+  if (mock.boardEdit && mock.boardEdit.carrying != null) { boardStepDir(dir); return; }
+  const page = pageOf(cur);
+  if (page === 1) {
+    // The page below Home moves by its cells; past its top, back to Home; past its bottom, the dock.
+    const nb = boardNeighbourEl(cur, dir);
+    if (nb) { setFocus(focusables.indexOf(nb), true); return; }
+    if (dir === "left" || dir === "right") { playSound("bump"); return; }
+    if (dir === "up") { if (!crossTo(0, cur, "up")) playSound("bump"); return; }
+    const dock = nearestEl(cur, dir, (el) => pageOf(el) < 0);
+    if (dock) setFocus(focusables.indexOf(dock), true); else playSound("bump");
+    return;
+  }
   const step = gridStep(cur, dir);
   if (step) { setFocus(focusables.indexOf(step), true); return; }
+  if (document.getElementById("mPages")) {
+    const shown = mock.page || 0, same = (el) => (page >= 0 ? pageOf(el) === page : pageOf(el) < 0 || pageOf(el) === shown);
+    let best = nearestEl(cur, dir, same);
+    if (!best && page === 0 && dir === "down" && crossTo(1, cur, "down")) return;
+    if (!best && page >= 0) best = nearestEl(cur, dir, (el) => pageOf(el) < 0);
+    if (!best) { playSound("bump"); return; }
+    setFocus(focusables.indexOf(best), true);
+    return;
+  }
   const a = cur.getBoundingClientRect(); const ax = a.left + a.width / 2, ay = a.top + a.height / 2;
   let best = -1, bestScore = Infinity;
   focusables.forEach((el, i) => {
@@ -2111,6 +2574,19 @@ function navigate(dir) {
 function activate() {
   const el = focusables[focusIdx]; if (!el) return;
   if (el.dataset.menu) { mock.menu.items[Number(el.dataset.menu)].run(); return; }
+  if (el.dataset.addcat) { playSound("select"); mock.addPicker.category = el.dataset.addcat; mock.focus = "additem:0"; renderAll(); return; }
+  if (el.dataset.additem) { addTile(addEntries(mock.addPicker.category)[Number(el.dataset.additem)]); return; }
+  if (el.dataset.cell) { const [c, r] = el.dataset.cell.split(",").map(Number); mock.savedFocus = keyOf(el); openAddPicker(c < 0 ? {} : { at: [c, r] }); return; }
+  if (el.dataset.tile) {
+    const t = boardTile(Number(el.dataset.tile)); if (!t) return;
+    if (mock.boardEdit && mock.boardEdit.sticky) { pickUp(t.id, true); return; }
+    const g = tileGame(t), say = (text) => { playSound("select"); mock.message = text; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 1800); };
+    if (g) { playSound("launch"); mock.nowPlaying = g; renderBottom(); clearTimeout(activate.t); activate.t = setTimeout(() => { mock.nowPlaying = null; renderAll(); }, 2600); return; }
+    if (t.kind === "collection") { playSound("select"); mock.prevFocus = keyOf(el); mock.view = `col:${t.ref}`; mock.focus = null; mock.animate = true; mock.lastDir = 1; renderAll(); return; }
+    if (t.kind === "app") { say(`Opens ${t.ref}`); return; }
+    if (t.kind === "shortcut") { say(`Opens Android's ${SHORTCUT_NAMES[t.ref]} settings`); return; }
+    playSound("select"); return;
+  }
   if (el.dataset.setcat) return;
   if (el.dataset.col) { playSound("select"); mock.prevFocus = keyOf(el); mock.view = `col:${el.dataset.col}`; mock.focus = null; mock.animate = true; mock.lastDir = 1; renderAll(); return; }
   const s = springs.get(el); if (s) { s.ptarget = 1; kick(); setTimeout(() => { s.ptarget = 0; kick(); }, 120); }
@@ -2133,7 +2609,7 @@ function switchSection(id, sound = true) {
   const order = ["games", "apps", "collections"];
   mock.lastDir = order.indexOf(id) > order.indexOf(mock.section) ? 1 : -1;
   mock.dockSwitch = { from: mock.section, to: id };
-  mock.section = id; mock.view = "home"; mock.focus = null; mock.animate = true;
+  mock.section = id; mock.view = "home"; mock.focus = null; mock.animate = true; mock.boardEdit = null;
   if (sound) playSound("tab");
   $("#topSection").textContent = { games: "Games", apps: "Apps", collections: "Collections" }[id];
   renderAll();
@@ -2142,19 +2618,31 @@ function press(key) {
   const order = ["games", "apps", "collections"];
   switch (key) {
     case "left": case "right": case "up": case "down": navigate(key); break;
-    case "A": activate(); break;
+    case "A": if (mock.boardEdit && mock.boardEdit.carrying != null) { dropTile(); break; } activate(); break;
+    case "holdA": { const el = focusables[focusIdx]; if (el?.dataset.tile && !mock.boardEdit && !mock.menu && !mock.settings && !mock.addPicker) pickUp(Number(el.dataset.tile), true); else press("A"); break; }
     case "B":
+      if (mock.addPicker && mock.addPicker.category) { playSound("back"); mock.focus = `addcat:${mock.addPicker.category}`; mock.addPicker.category = null; renderAll(); break; }
+      if (mock.boardEdit && mock.boardEdit.carrying != null) { dropTile("back"); break; }
+      if (mock.boardEdit && mock.boardEdit.sticky && !mock.menu && !mock.addPicker) { playSound("back"); mock.boardEdit = null; renderAll(); break; }
       playSound("back");
-      if (mock.menu || mock.settings) { closePopups(); break; }
+      if (mock.menu || mock.settings || mock.addPicker) { closePopups(); break; }
+      if (pageOf(focusables[focusIdx]) === 1) { crossTo(0, focusables[focusIdx], "up", true); break; }
       if (mock.section !== "apps" && mock.view !== "home") { mock.view = "home"; mock.focus = mock.prevFocus || null; mock.animate = true; mock.lastDir = -1; renderAll(); }
       else if (mock.section !== "games") switchSection("games", false);
       break;
-    case "Y": if (focusables[focusIdx]?.dataset.game || focusables[focusIdx]?.dataset.hero) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); } break;
-    case "X": if (!mock.menu && !mock.settings) togglePin(); break;
-    case "L1": mock.badgePress = { label: "L1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 2) % 3]); break;
-    case "R1": mock.badgePress = { label: "R1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 1) % 3]); break;
-    case "Start": if (mock.settings) { playSound("back"); closePopups(); } else openSettings(); break;
-    case "Select": if (mock.menu) { playSound("back"); closePopups(); } else if (!mock.settings) openMenu(); break;
+    case "Y": if (focusables[focusIdx]?.dataset.tile && !mock.menu && !mock.addPicker) {
+        const t = boardTile(Number(focusables[focusIdx].dataset.tile));
+        if (mock.boardEdit) resizeTile(t.id);
+        else if (t.kind === "random") { shuffleRandom(); renderAll(); }
+        else if (tileGame(t)) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); }
+        break;
+      }
+      if (focusables[focusIdx]?.dataset.game || focusables[focusIdx]?.dataset.hero) { playSound("select"); mock.message = "Play with: melonDS · RetroArch (on the Thor this opens the emulator picker)"; renderAll(); setTimeout(() => { mock.message = null; renderAll(); }, 2200); } break;
+    case "X": if (!mock.menu && !mock.settings && !mock.addPicker && !mock.boardEdit) togglePin(); break;
+    case "L1": mock.boardEdit = null; mock.badgePress = { label: "L1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 2) % 3]); break;
+    case "R1": mock.boardEdit = null; mock.badgePress = { label: "R1", at: performance.now() }; switchSection(order[(order.indexOf(mock.section) + 1) % 3]); break;
+    case "Start": mock.boardEdit = null; mock.addPicker = null; if (mock.settings) { playSound("back"); closePopups(); } else openSettings(); break;
+    case "Select": if (mock.boardEdit && mock.boardEdit.carrying != null) break; if (mock.menu || mock.addPicker) { playSound("back"); closePopups(); } else if (!mock.settings) openMenu(); break;
   }
 }
 
@@ -2264,10 +2752,17 @@ document.addEventListener("keydown", (e) => {
   const map = { ArrowLeft: "left", ArrowRight: "right", ArrowUp: "up", ArrowDown: "down", Enter: "A", Backspace: "B", y: "Y", Y: "Y", x: "X", X: "X", q: "L1", Q: "L1", e: "R1", E: "R1" };
   const k = map[e.key];
   if (!k) return;
+  // Hold Enter (A) on a tile below Home to pick it up; a short press is A.
+  if (k === "A" && e.repeat) { e.preventDefault(); return; }
+  if (k === "A" && focusables[focusIdx]?.dataset.tile && !mock.boardEdit && !mock.menu && !mock.settings && !mock.addPicker && !e.target.closest(".review")) {
+    e.preventDefault(); clearTimeout(holdA.t); holdA.t = setTimeout(() => { holdA.t = null; press("holdA"); }, Math.max(150, theme.motion.holdMs)); return;
+  }
   if (e.target.closest(".review") && (k === "A")) return; // Enter on review buttons keeps its normal meaning
   if (e.target.closest(".review") && k !== "A") return;
   e.preventDefault(); press(k);
 });
+const holdA = { t: null };
+document.addEventListener("keyup", (e) => { if (e.key === "Enter" && holdA.t) { clearTimeout(holdA.t); holdA.t = null; press("A"); } });
 new ResizeObserver(fitScreens).observe($("#device"));
 setInterval(() => { renderBottom(); const c = document.querySelector(".m-clock"); if (c) c.textContent = clockText(); document.querySelectorAll("#topScreen .m-clock-text").forEach((e) => (e.textContent = clockText())); }, 30000);
 if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) $("#previewMotion").checked = false;

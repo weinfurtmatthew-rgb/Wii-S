@@ -182,5 +182,36 @@ Your answers: a page below Home reached with Down, a grid of sized tiles, holdin
 | Bottom screen | A highlighted collection: its covers, name, games, played and consoles; Stats for its games together; Achievements ask you to highlight a game | Proposed |
 | Older layouts | The shelves and grid layouts keep the settings as their third page | Proposed |
 
+### The page below Home (2026-11-23)
+
+Your answers: keep pressing Down to reach it, a grid of sized tiles like Cocoon 3, built-in widgets, single games, shortcuts, collections and apps, and both edit modes to try. HTML and Android widgets come in 0.6.2.
+
+| Detail | Value | Status |
+|---|---|---|
+| Getting there | Down from Home's bottom row (the pinned row, or the card and systems when nothing is pinned): Home slides up and the page below slides in, one whole page. Up from its top row slides back. The dock stays and is reached from its last row; Up from the dock goes to the page that shows | **Your answer** |
+| Slide | 380 ms, smooth with no bounce (`motion.pageSlideMs`); nothing is drawn past the body while the pages move; instant with reduce motion | Proposed |
+| Back where you were | Crossing between the pages returns to the element you came from when it is still above or below you. B on the page below goes back to Home where focus was | Proposed |
+| Page dots | Two 6 dp dots at the right edge, 8 dp apart; the page that shows is darker (`layout.pageDots`) | Proposed |
+| Grid | 6 × 3 cells filling the page (`layout.boardColumns`, `layout.boardRows`), the theme's tile gap; a cell is about 115 × 98 dp on the Thor | **Your answer** (sized tiles); the grid is proposed |
+| Sizes | 1×1, 2×1 and 2×2. Each kind starts at its own: apps, shortcuts, games and the random game 1×1; collections, clock, last played and this week 2×1; recent achievements 2×2 | Proposed |
+| Tile look | Glass, like the system tiles and collection cards. Games show their cover (2×2 with a glass strip naming it, 2×1 the cover beside the name); collections their mosaic; apps their icon and name; shortcuts a line icon and name | Proposed |
+| Widgets | Clock: time with the date under it. Last played: the Jump back in game. This week: the total and a bar per day, Monday to Sunday, today darkest. Recent achievements: the last three unlocks in 30 days with their badges, or "Sign in" (A opens that setting). Random game: a new pick each time you come back, Y for another | **Your answer** (built-in widgets); the looks are proposed |
+| Shortcuts | Wi-Fi, Bluetooth, Display, Sound and Android settings open Android's page; an emulator opens the emulator, where its settings are | **Your answer** |
+| First page | Clock, Last played (large), This week, Random game, Wi-Fi, Recent achievements, two collections and two apps (well-known apps first, none already in the dock). It starts full | Proposed |
+| A on a tile | Plays the game (focus comes back to the tile afterwards); opens the app, the shortcut or the collection (B comes back to the tile) | Proposed |
+| Y and X on a tile | Games: Y the emulator picker, X pin. Random game: Y another | Proposed |
+| Arranging, option 1: Select | Select on a tile: its own entries, then Move, Size: n × n (changes in place, the menu stays open), Remove, Add a tile here…. Move lifts it: the D-pad carries it, A or B puts it down | **Your answer** (both to try) |
+| Arranging, option 2: hold A | Hold A (500 ms, `motion.holdMs`) lifts a tile and the page starts arranging: dashed outlines on every tile and "+" in empty cells. The D-pad carries the lifted tile, Y changes its size, A puts it down, A on another picks that one up, B is done. Leaving the page ends it | **Your answer**; the details are proposed |
+| Carried tile | Lifted 6 dp, 5% bigger, with a shadow; the other tiles glide out of its way in about 230 ms | Proposed |
+| Moving | One cell per press; a cell it can't take is skipped. Into empty cells it simply goes; otherwise the arrangement that moves the fewest other tiles wins (a swap on a full page, a big tile pushed along) | Proposed |
+| Removing | Leaves its cells empty; nothing else moves. While arranging the cells show "+" | Proposed |
+| Adding | "Add a tile here…" (Select) or A on "+": Apps…, Games…, Collections…, Widgets…, Shortcuts…, then the one you want. It goes in that cell (or before the tile), at its kind's size, smaller where that doesn't fit; "There's no room on this page" when it is full | Proposed |
+| Empty page | One card: "Add tiles to this page", A opens Add | Proposed |
+| Bottom screen | Follows the tile: a game, an app, a collection. This week and Recent achievements show All games' stats and achievements | Proposed |
+| Hints | A tile: its buttons, then "Hold A Arrange" and "Select Menu". Arranging: A Pick up, Y Size, B Done. Carrying: D-pad Move, Y Size, A Drop | Proposed |
+| Nameplate | A widget says "Widget" under its name (it said "Clock Clock"); This week shows its total, Recent achievements how many | Proposed |
+
+Recent achievements come from RetroAchievements' recent-unlocks list (the last 30 days), asked for only when the page has that tile. Your key stays on the device and goes only to retroachievements.org, as before.
+
 Older theme files (schema 3 and before) have one palette; the launcher and the workbench use it in both modes, so an imported Draft 3 looks the same in light and dark.
 

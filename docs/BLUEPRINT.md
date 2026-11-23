@@ -210,6 +210,21 @@ The owner asked for a page under Home for apps, HTML widgets and collections, a 
 | Fixes found by the tests | The view model read its series list before it was set (a start-up crash); a collection's view didn't show because the body ignored views outside Home |
 | Tests | `CollectionsTest`; `HeroScreenshots`: collections, suggested, empty, a collection, Select menus, Add to collection; `SystemScreenshots`: the settings popup walked with the controller (focus stays inside, Left returns to the category) |
 
+### 0.6.1-i6: the page below Home
+
+| Piece | State in 0.6.1-i6 |
+|---|---|
+| Board model | `Board.kt`: tiles saved in reading order of their top-left cells with a "gap" in each empty cell, so first-fit layout gives every tile back its cell. Moving tries straight into empty cells, then the tiles in the way to the nearest empty cells, the others filling in around it, and changing its place in the order, and keeps the one that moves the fewest tiles. Also step, resize, add (a cell, before a tile, or the first place), remove (cells stay empty), normalize for another grid size. Saved as `board.json` (`AppGraph.board`) |
+| Pages | `TwoPages` in `HeroHome.kt`: Home and the page below, a slide (`motion.pageSlideMs`), the hidden page not drawn, a clip while sliding, page dots |
+| The page | `BoardPage.kt`: the grid, each kind's face, "+" cells, the empty page card, the Add picker (`AddTilePicker`) |
+| Navigation | `VerticalNav` knows pages: an element on the hidden page takes no focus (unless the view model names it); at a page's edge `across()` crosses to the other page, back where focus was when that is above or below; the page below moves by its cells (`boardNeighbour`); B there goes back to Home |
+| Arranging | `WiisTile(onLongClick)` fires after `motion.holdMs`; `BoardEdit(sticky, carrying)` in the view model; the page's key handler moves, resizes and drops the carried tile; L1, R1, Start or leaving the page end it |
+| Widgets' data | `Stats.week` for This week; `RaRepository.recentUnlocks()` (API_GetUserRecentAchievements, 30 days, cached for five minutes, only with that tile on the page); a random game, new after each game and on Y |
+| Launching from it | `launchFrom(game, key)`: focus returns to the tile; a collection opened from it closes back to it (`HomeView.InCollection.back`) |
+| Theme | `layout.boardColumns`, `layout.boardRows`, `layout.pageDots`, `motion.pageSlideMs`, `motion.holdMs` |
+| Workbench | The same page, tiles and both edit modes (hold Enter, or the Hold A button), page-aware navigation; its search now ignores the focused tile's lift when deciding what is below |
+| Tests | `BoardTest`; the recent-unlocks parser; `HeroScreenshots`: the page (light, dark, empty), the slide in frames, moving around it, holding Down through it to the dock, hold A to arrange, its menus and the Add picker, "+" after a removal |
+
 ## 0. Device assumptions (to verify on hardware)
 
 The architecture depends on how the Thor exposes its second screen, so it needs to be checked on a real unit before any production code depends on it.

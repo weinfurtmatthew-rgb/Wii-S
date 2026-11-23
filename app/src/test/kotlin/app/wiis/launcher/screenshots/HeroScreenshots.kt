@@ -36,7 +36,13 @@ import app.wiis.designsystem.WiisFonts
 import app.wiis.designsystem.WiisTheme
 import app.wiis.designsystem.mix
 import app.wiis.emulator.Game
+import app.wiis.emulator.ra.RaRecent
+import app.wiis.launcher.home.Board
+import app.wiis.launcher.home.BoardEdit
+import app.wiis.launcher.home.BoardTile
+import app.wiis.launcher.home.BoardUi
 import app.wiis.launcher.home.CollectionEntry
+import app.wiis.launcher.home.RecentUnlocks
 import app.wiis.launcher.home.HeroActions
 import app.wiis.launcher.home.HeroFocus
 import app.wiis.launcher.home.HeroHomeScreen
@@ -195,6 +201,156 @@ class HeroScreenshots {
         check(state.pinned.isEmpty()) { "still pinned: ${state.pinned.map { it.title }}" }
     }
 
+    // ---- The page below Home (0.6.1) ---------------------------------------------------------------
+
+    /** The sample page: every kind of tile, six by three, full. */
+    private val sampleBoard: BoardUi by lazy {
+        var id = 1
+        fun t(kind: String, ref: String = "", size: String = Board.sizesFor(kind).first()) = BoardTile(id++, kind, ref, size)
+        val tiles = listOf(
+            t(Board.CLOCK), t(Board.LAST_PLAYED, size = "2x2"), t(Board.WEEK),
+            t(Board.RANDOM), t(Board.SHORTCUT, "wifi"), t(Board.ACHIEVEMENTS, size = "2x1"),
+            t(Board.COLLECTION, "c:1"), t(Board.GAME, game("gc", "Coral Drift").uri), t(Board.APP, app("Music").key), t(Board.APP, app("Camera").key), t(Board.SHORTCUT, "bluetooth"),
+        )
+        BoardUi(
+            tiles = Board.normalize(tiles, 6, 3),
+            games = mapOf(game("gc", "Coral Drift").uri to library.first { it.title == "Coral Drift" }),
+            random = library.first { it.title == "Lumen Island" },
+            week = listOf(45L, 0L, 80L, 20L, 130L, 0L, 0L).map { it * 60_000L },
+            today = 4,
+            achievements = RecentUnlocks.Ready(
+                listOf(
+                    RaRecent(1, "First Flight", "", 5, "1", 1, "Paper Pilots", "Nintendo 64", "2026-11-20 18:04:11", false),
+                    RaRecent(2, "Night Owl", "", 10, "2", 2, "Night Market", "PlayStation 2", "2026-11-19 22:40:00", true),
+                    RaRecent(3, "Green Thumb", "", 25, "3", 3, "Garden Days", "Nintendo DS", "2026-11-18 09:12:00", false),
+                ),
+            ),
+        )
+    }
+
+    private fun boardKey(kind: String, ref: String = "") = HomeViewModel.boardKey(sampleBoard.tiles.first { it.kind == kind && (ref.isEmpty() || it.ref == ref) }.id)
+
+    private fun withBoard(focus: String?) = home(focus = focus).copy(collections = sampleCollections, board = sampleBoard, games = library.sortedBy { it.title })
+
+    @Test fun boardPage() = shoot("top-24-board", withBoard(boardKey(Board.CLOCK)))
+
+    @Test fun boardPageDark() = shoot("top-25-board-dark", withBoard(boardKey(Board.WEEK)), dark = true)
+
+    @Test fun boardEmpty() = shoot("top-26-board-empty", withBoard("board:empty").copy(board = BoardUi()))
+
+    /** Down from the pinned row: Home slides up and the page below slides in; Up slides it back. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun boardSlide() {
+        val live = Live(withBoard(HomeViewModel.pinKey(game("gc", "Coral Drift"))))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.DirectionDown) }
+        for ((i, at) in listOf(60L, 140L, 240L).withIndex()) {
+            compose.mainClock.advanceTimeBy(if (i == 0) at else at - listOf(60L, 140L, 240L)[i - 1])
+            compose.waitForIdle()
+            compose.onRoot().captureRoboImage(File(outDir, "board-slide-${i + 1}.png").path)
+        }
+        settle()
+        val down = where(live)
+        compose.onRoot().captureRoboImage(File(outDir, "board-slide-4.png").path)
+        val up = walk(live, Key.DirectionUp, 1)
+        settle()
+        println("NAV board slide: down $down | up ${up.joinToString()}")
+        check(down.startsWith("tile:")) { "Down from the pinned row: $down" }
+        check(up.first().startsWith("Coral Drift")) { "Up from the page below: $up" }
+    }
+
+    /** Around the page: across its rows, down to the dock, up from the dock, and B back to Home. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun boardNavigation() {
+        val live = Live(withBoard(boardKey(Board.CLOCK)))
+        render({ live.state }, live)
+        val right = walk(live, Key.DirectionRight, 3)
+        val down = walk(live, Key.DirectionDown, 3)
+        val up = walk(live, Key.DirectionUp, 1)
+        val left = walk(live, Key.DirectionLeft, 5)
+        val upTop = walk(live, Key.DirectionUp, 3)
+        println("NAV board: right ${right.joinToString(" | ")} || down ${down.joinToString(" | ")} || up from the dock ${up.joinToString()} || left ${left.joinToString(" | ")} || up ${upTop.joinToString(" | ")}")
+        check(right.map { it.substringBefore(" @") } == listOf("tile:lastPlayed", "tile:week", "tile:week")) { "right: $right" }
+        check(down[0].startsWith("tile:achievements") && down[2].startsWith("dock")) { "down: $down" }
+        check(up.first().startsWith("tile:")) { "up from the dock: $up" }
+        check(upTop.last().startsWith("Lumen Island") || upTop.any { !it.startsWith("tile:") }) { "up to Home: $upTop" }
+        // B from the page below: back to Home where focus was.
+        live.state = live.state.copy(heroFocus = HeroFocus(boardKey(Board.CLOCK), 50L))
+        settle()
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonB) }
+        settle()
+        println("NAV board B: ${where(live)}")
+        check(!where(live).startsWith("tile:")) { "B below Home: ${where(live)}" }
+    }
+
+    /** Hold Down from Jump back in: the pinned row, the page below row by row, then the dock. */
+    @Test fun boardHoldDown() {
+        val live = Live(withBoard(HomeViewModel.KEY_HERO))
+        render({ live.state }, live)
+        val trail = walk(live, Key.DirectionDown, 10)
+        println("NAV board hold down: " + trail.joinToString(" | "))
+        check(trail[0].startsWith("Tiny Kingdom") && trail[1].startsWith("tile:")) { "down: $trail" }
+        check(trail.takeLast(3).all { it.startsWith("dock") }) { "held down: $trail" }
+    }
+
+    /**
+     * Hold A on Random game: it lifts and the D-pad carries it (Wi-Fi makes room), Y makes it
+     * wider, A puts it down; the page stays in arranging, with its outlines; B is done.
+     */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun boardHoldToArrange() {
+        val live = Live(withBoard(boardKey(Board.RANDOM)))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { keyDown(Key.ButtonA) }
+        compose.mainClock.advanceTimeBy(spec.motion.holdMs + 100L)
+        compose.waitForIdle()
+        compose.onNode(isFocused()).performKeyInput { keyUp(Key.ButtonA) }
+        settle()
+        check(live.state.board.edit?.carrying != null) { "hold A: ${live.state.board.edit}" }
+        compose.onRoot().captureRoboImage(File(outDir, "top-27-board-carry.png").path)
+        walk(live, Key.DirectionRight, 1)
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-28-board-carry-moved.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonY) }
+        settle()
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        val placed = Board.layout(live.state.board.tiles, 6, 3).first { it.tile.kind == Board.RANDOM }
+        println("ARRANGE random now at ${placed.col},${placed.row} ${placed.w}x${placed.h}; edit ${live.state.board.edit}")
+        check(live.state.board.edit == BoardEdit(sticky = true)) { "after A: ${live.state.board.edit}" }
+        check(Board.fits(live.state.board.tiles, 6, 3)) { "a tile fell off the page" }
+        compose.onRoot().captureRoboImage(File(outDir, "top-29-board-arranging.png").path)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonB) }
+        settle()
+        check(live.state.board.edit == null) { "B: ${live.state.board.edit}" }
+    }
+
+    /** Select on a tile: its menu (Move, Size, Remove, Add a tile here…), then the Add picker and its widgets. */
+    @OptIn(androidx.compose.ui.test.ExperimentalTestApi::class)
+    @Test fun boardMenus() {
+        val live = Live(withBoard(boardKey(Board.APP, app("Music").key)))
+        render({ live.state }, live)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonSelect) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-30-board-menu.png").path)
+        // Open, Move, Size, Remove, Add a tile here…
+        walk(live, Key.DirectionDown, 4)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-31-board-add.png").path)
+        walk(live, Key.DirectionDown, 3)
+        compose.onNode(isFocused()).performKeyInput { pressKey(Key.ButtonA) }
+        settle()
+        compose.onRoot().captureRoboImage(File(outDir, "top-32-board-add-widgets.png").path)
+    }
+
+    /** Arranging after removing a tile: its cell shows "+", which adds a tile there. */
+    @Test fun boardPlus() {
+        val gone = sampleBoard.tiles.first { it.kind == Board.SHORTCUT && it.ref == "bluetooth" }
+        val tiles = Board.remove(app.wiis.launcher.home.BoardFile(sampleBoard.tiles), gone.id, 6, 3).tiles
+        shoot("top-33-board-plus", withBoard(HomeViewModel.cellKey(5, 2)).copy(board = sampleBoard.copy(tiles = tiles, edit = BoardEdit(sticky = true))))
+    }
+
     // ---- Navigation audit: the controller paths, as fast as a held button repeats ---------------
 
     /** The home screen driven like the view model drives it, with a trail of what took focus. */
@@ -221,6 +377,28 @@ class HeroScreenshots {
         override fun focusSystem(entry: SystemEntry) { last = entry.name }
         override fun focusApp(app: AppEntry) { last = app.label }
         override fun focusApplied() { state = state.copy(heroFocus = null) }
+        override fun focusBoardTile(tile: BoardTile) { last = "tile:" + tile.kind }
+        override fun boardPickUp(id: Int, sticky: Boolean) {
+            state = state.copy(board = state.board.copy(edit = BoardEdit(sticky || state.board.edit?.sticky == true, id)))
+        }
+        override fun boardStep(dx: Int, dy: Int): Boolean {
+            val b = state.board
+            val id = b.edit?.carrying ?: return false
+            val next = Board.step(b.tiles, id, dx, dy, b.cols, b.rows) ?: return false
+            state = state.copy(board = b.copy(tiles = next))
+            return true
+        }
+        override fun boardDrop() {
+            val e = state.board.edit ?: return
+            state = state.copy(board = state.board.copy(edit = if (e.sticky) e.copy(carrying = null) else null))
+        }
+        override fun boardEndEdit() { state = state.copy(board = state.board.copy(edit = null)) }
+        override fun boardResize(id: Int): Boolean {
+            val b = state.board
+            val next = Board.resize(b.tiles, id, b.cols, b.rows)
+            state = state.copy(board = b.copy(tiles = next))
+            return next != b.tiles
+        }
     }
 
     /** "title @ x,y" of the focused element, in dp. */
@@ -243,14 +421,17 @@ class HeroScreenshots {
         where(live)
     }
 
-    /** Hold Down from Jump back in: the first pinned game, then the dock, and it stays there (0.5.4 bounced along the row). */
+    /**
+     * Hold Down from Jump back in: the first pinned game, the page below (here empty: its one
+     * card), then the dock, and it stays there (0.5.4 bounced along the row).
+     */
     @Test fun navHoldDown() {
         val live = Live(home(focus = HomeViewModel.KEY_HERO))
         render({ live.state }, live)
         val trail = walk(live, Key.DirectionDown, 16)
         println("NAV hold down from the card: " + trail.joinToString(" | "))
         check(trail.first().startsWith("Tiny Kingdom")) { "card down: ${trail.first()}" }
-        check(trail.drop(1).all { it.startsWith("dock") }) { "held down: $trail" }
+        check(trail.drop(2).all { it.startsWith("dock") }) { "held down: $trail" }
         compose.onRoot().captureRoboImage(File(outDir, "nav-1-hold-down.png").path)
     }
 

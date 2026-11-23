@@ -11,7 +11,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -52,12 +57,14 @@ import androidx.compose.ui.unit.dp
  * press-in, fill colours and border. Works with touch, D-pad and gamepad.
  *
  * Gamepad: A confirms, Y is the secondary action. D-pad moves focus; when there is nowhere to go
- * it plays the "bump" feedback instead of doing nothing silently.
+ * it plays the "bump" feedback instead of doing nothing silently. With [onLongClick], holding A
+ * (motion.holdMs) does that instead, and letting go then does nothing more.
  *
  * @param clickSound feedback for a confirm; null when the caller emits its own (e.g. a game
  *   launch reports Launch or Error once the outcome is known).
  * @param ring false for elements that show focus another way (e.g. tabs).
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun WiisTile(
     onClick: () -> Unit,
@@ -73,6 +80,8 @@ fun WiisTile(
     ringRadius: androidx.compose.ui.unit.Dp? = null,
     /** False: no grow, lift or bob on focus (the dock shows focus with its gliding highlight). */
     grow: Boolean = true,
+    /** Holding A (or a long press): e.g. picking a tile up to move it. */
+    onLongClick: (() -> Unit)? = null,
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     val style = LocalWiis.current
@@ -84,6 +93,9 @@ fun WiisTile(
     val focused by interaction.collectIsFocusedAsState()
     val touchPressed by interaction.collectIsPressedAsState()
     var padPressed by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+    var hold by remember { mutableStateOf<Job?>(null) }
+    var held by remember { mutableStateOf(false) }
     val pressed = touchPressed || padPressed
     val tileShape = shape ?: style.tileShape
 
@@ -126,8 +138,25 @@ fun WiisTile(
             .onKeyEvent { e ->
                 when (e.key) {
                     Key.ButtonA -> {
-                        if (e.type == KeyEventType.KeyDown) padPressed = true
-                        if (e.type == KeyEventType.KeyUp) { padPressed = false; clickSound?.let(feedback::emit); onClick() }
+                        if (e.type == KeyEventType.KeyDown && e.nativeKeyEvent.repeatCount == 0) {
+                            padPressed = true
+                            held = false
+                            hold?.cancel()
+                            if (onLongClick != null) {
+                                hold = scope.launch {
+                                    delay(motion.holdMs.coerceIn(150, 3_000).toLong())
+                                    held = true
+                                    padPressed = false
+                                    onLongClick()
+                                }
+                            }
+                        }
+                        if (e.type == KeyEventType.KeyUp) {
+                            hold?.cancel()
+                            padPressed = false
+                            if (!held) { clickSound?.let(feedback::emit); onClick() }
+                            held = false
+                        }
                         true
                     }
                     Key.ButtonY -> {
@@ -149,7 +178,7 @@ fun WiisTile(
                     else -> false
                 }
             }
-            .clickable(interactionSource = interaction, indication = null) {
+            .combinedClickable(interactionSource = interaction, indication = null, onLongClick = onLongClick) {
                 clickSound?.let(feedback::emit)
                 onClick()
             }

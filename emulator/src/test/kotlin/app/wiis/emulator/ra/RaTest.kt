@@ -164,6 +164,19 @@ class RaParseTest {
         assertEquals("mastered", RaParse.completion("""[{"GameID":3,"HighestAwardKind":"mastered"},{"GameID":4,"HighestAwardKind":""}]""").let { it[0].highestAwardKind + "/" + it[1].highestAwardKind }.substringBefore("/"))
     }
 
+    @Test fun `recent unlocks, newest first, badge from either field`() {
+        val r = RaParse.recent("""[
+            {"Date":"2026-11-19 20:01:00","HardcoreMode":0,"AchievementID":"7","Title":"Older","BadgeName":"111","Points":5,"GameTitle":"A","GameID":1,"ConsoleName":"Game Boy"},
+            {"Date":"2026-11-20 18:04:11","HardcoreMode":1,"AchievementID":9,"Title":"Newer","BadgeURL":"/Badge/222.png","Points":"10","GameTitle":"B","GameID":2,"ConsoleName":"SNES"},
+            {"Title":"no id"}]""")
+        assertEquals(listOf("Newer", "Older"), r.map { it.title })
+        assertEquals("https://media.retroachievements.org/Badge/222.png", r[0].badgeUrl)
+        assertTrue(r[0].hardcore)
+        assertEquals(10, r[0].points)
+        assertTrue(RaParse.recent("{}").isEmpty())
+        assertTrue(RaParse.recent("[]").isEmpty())
+    }
+
     @Test fun `api urls carry the key and parameters encoded`() {
         val url = RaRepository.url("API_GetGameInfoAndUserProgress.php", RaCredentials("me", "k&y"), "g" to 12, "u" to "me two")
         assertEquals("https://retroachievements.org/API/API_GetGameInfoAndUserProgress.php?y=k%26y&g=12&u=me+two", url)
